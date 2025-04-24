@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import Search from "./pages/Search";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import ServiceDetails from "./pages/ServiceDetails";
+import Booking from "./pages/Booking";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/service/:id" element={<ServiceDetails />} />
             <Route path="/professionals" element={<Navigate to="/search?type=company" />} />
             <Route path="/services" element={<Navigate to="/search?type=service" />} />
+            <Route path="/booking/:serviceId" element={<Booking />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
