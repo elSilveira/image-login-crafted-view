@@ -10,7 +10,7 @@ import { PageFooter } from "@/components/home/PageFooter";
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50">
+    <div className="min-h-screen bg-white">
       <Navigation />
       
       <main className="container mx-auto px-4 pt-20 pb-12">

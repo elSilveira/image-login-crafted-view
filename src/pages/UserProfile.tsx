@@ -1,7 +1,6 @@
 
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Navigation from "@/components/Navigation";
 import { UserProfileInfo } from "@/components/profile/UserProfileInfo";
 import { UserAddresses } from "@/components/profile/UserAddresses";
@@ -12,19 +11,49 @@ import { UserPrivacy } from "@/components/profile/UserPrivacy";
 
 const UserProfile = () => {
   return (
-    <>
+    <div className="min-h-screen bg-white">
       <Navigation />
-      <div className="container mx-auto px-4 py-8 mt-16">
+      <div className="container-padding">
         <h1 className="text-3xl font-bold mb-6 text-iazi-text font-playfair">Meu Perfil</h1>
 
         <Tabs defaultValue="personal" className="space-y-4">
-          <TabsList className="bg-iazi-background-alt">
-            <TabsTrigger value="personal">Informações Pessoais</TabsTrigger>
-            <TabsTrigger value="addresses">Endereços</TabsTrigger>
-            <TabsTrigger value="payments">Pagamento</TabsTrigger>
-            <TabsTrigger value="notifications">Notificações</TabsTrigger>
-            <TabsTrigger value="reviews">Avaliações</TabsTrigger>
-            <TabsTrigger value="privacy">Privacidade</TabsTrigger>
+          <TabsList className="bg-iazi-background-alt border border-iazi-border rounded-lg p-1">
+            <TabsTrigger 
+              value="personal"
+              className="data-[state=active]:bg-white data-[state=active]:text-iazi-primary data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium"
+            >
+              Informações Pessoais
+            </TabsTrigger>
+            <TabsTrigger 
+              value="addresses"
+              className="data-[state=active]:bg-white data-[state=active]:text-iazi-primary data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium"
+            >
+              Endereços
+            </TabsTrigger>
+            <TabsTrigger 
+              value="payments"
+              className="data-[state=active]:bg-white data-[state=active]:text-iazi-primary data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium"
+            >
+              Pagamento
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notifications"
+              className="data-[state=active]:bg-white data-[state=active]:text-iazi-primary data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium"
+            >
+              Notificações
+            </TabsTrigger>
+            <TabsTrigger 
+              value="reviews"
+              className="data-[state=active]:bg-white data-[state=active]:text-iazi-primary data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium"
+            >
+              Avaliações
+            </TabsTrigger>
+            <TabsTrigger 
+              value="privacy"
+              className="data-[state=active]:bg-white data-[state=active]:text-iazi-primary data-[state=active]:shadow-sm rounded-md px-4 py-2 font-medium"
+            >
+              Privacidade
+            </TabsTrigger>
           </TabsList>
 
           <div className="grid gap-6">
@@ -49,7 +78,7 @@ const UserProfile = () => {
           </div>
         </Tabs>
       </div>
-    </>
+    </div>
   );
 };
 
