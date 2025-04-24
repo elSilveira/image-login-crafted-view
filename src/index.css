@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,23 +8,23 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 0 0% 20%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 20%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 20%;
+    --popover-foreground: 222 47% 11%;
     --primary: 228 84% 60%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 97%;
-    --secondary-foreground: 0 0% 20%;
-    --muted: 0 0% 97%;
-    --muted-foreground: 0 0% 40%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 228 84% 60%;
-    --accent-foreground: 0 0% 20%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 87%;
-    --input: 0 0% 87%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 228 84% 60%;
     --radius: 0.75rem;
   }
@@ -34,21 +36,22 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
   h1 {
-    @apply text-4xl font-playfair font-bold mb-6 text-iazi-text;
+    @apply text-4xl font-outfit font-bold mb-6 text-iazi-text tracking-tight;
   }
   h2 {
-    @apply text-3xl font-playfair font-semibold mb-4 text-iazi-text;
+    @apply text-3xl font-outfit font-semibold mb-4 text-iazi-text tracking-tight;
   }
   h3 {
-    @apply text-2xl font-playfair font-medium mb-3 text-iazi-text;
+    @apply text-2xl font-outfit font-medium mb-3 text-iazi-text tracking-tight;
   }
   h4 {
-    @apply text-xl font-playfair font-medium mb-2 text-iazi-text;
+    @apply text-xl font-outfit font-medium mb-2 text-iazi-text;
   }
   p {
-    @apply text-base font-lato text-iazi-text leading-relaxed;
+    @apply text-base font-inter text-iazi-text leading-relaxed;
   }
   .card-shadow {
     @apply shadow-md hover:shadow-lg transition-shadow duration-200;

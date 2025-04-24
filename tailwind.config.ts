@@ -19,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        'playfair': ['Playfair Display', 'serif'],
-        'lato': ['Lato', 'sans-serif'],
+        'inter': ['Inter', 'sans-serif'],
+        'outfit': ['Outfit', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -34,11 +34,11 @@ export default {
           'rosa-2': '#edc4c4',
           'rosa-medio': '#e9b6b6',
           'rosa-escuro': '#e5a8a9',
-          'text': '#333333',
+          'text': '#1f2937',
           'primary': '#4664EA',
           'primary-hover': '#3651D4',
-          'border': '#dddddd',
-          'background-alt': '#f7f7f7'
+          'border': '#e5e7eb',
+          'background-alt': '#f8fafc'
         },
         primary: {
           DEFAULT: "#4664EA",
