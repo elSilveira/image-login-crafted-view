@@ -9,17 +9,18 @@ import BookingCalendar from "@/components/booking/BookingCalendar";
 import BookingTimeSlots from "@/components/booking/BookingTimeSlots";
 import BookingConfirmation from "@/components/booking/BookingConfirmation";
 import Navigation from "@/components/Navigation";
+import { useNavigate } from "react-router-dom";
 
 const STEPS = [
-  { id: 1, title: "Selecionar Data" },
-  { id: 2, title: "Escolher Horário" },
-  { id: 3, title: "Confirmar Agendamento" },
+  { id: 1, title: "Selecionar Horário" },
+  { id: 2, title: "Confirmar Agendamento" },
 ];
 
 const Booking = () => {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = React.useState<string>();
+  const navigate = useNavigate();
 
   // Mock data - In a real app, this would come from an API
   const service = {
@@ -37,34 +38,54 @@ const Booking = () => {
 
   const progress = (currentStep / STEPS.length) * 100;
 
+  const handleFinishBooking = (formData: any) => {
+    // In a real app, this would make an API call
+    console.log("Booking confirmed:", {
+      service,
+      professional,
+      date: selectedDate,
+      time: selectedTime,
+      formData
+    });
+    
+    // Navigate to booking history after successful booking
+    navigate("/booking-history");
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return (
-          <BookingCalendar
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            onNext={() => selectedDate && setCurrentStep(2)}
-          />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Selecione uma data</h3>
+              <BookingCalendar
+                selectedDate={selectedDate}
+                onDateSelect={setSelectedDate}
+                onNext={() => {}}
+              />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Selecione um horário</h3>
+              <BookingTimeSlots
+                date={selectedDate || new Date()}
+                onTimeSelect={setSelectedTime}
+                selectedTime={selectedTime}
+                onBack={() => {}}
+                onNext={() => selectedDate && selectedTime && setCurrentStep(2)}
+              />
+            </div>
+          </div>
         );
       case 2:
-        return (
-          <BookingTimeSlots
-            date={selectedDate!}
-            onTimeSelect={setSelectedTime}
-            selectedTime={selectedTime}
-            onBack={() => setCurrentStep(1)}
-            onNext={() => selectedTime && setCurrentStep(3)}
-          />
-        );
-      case 3:
         return (
           <BookingConfirmation
             service={service}
             professional={professional}
             date={selectedDate!}
             time={selectedTime!}
-            onBack={() => setCurrentStep(2)}
+            onBack={() => setCurrentStep(1)}
+            onSubmit={handleFinishBooking}
           />
         );
       default:

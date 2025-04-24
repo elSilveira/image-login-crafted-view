@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -36,6 +35,7 @@ interface BookingConfirmationProps {
   date: Date;
   time: string;
   onBack: () => void;
+  onSubmit: (data: z.infer<typeof formSchema>) => void;
 }
 
 const BookingConfirmation = ({
@@ -44,6 +44,7 @@ const BookingConfirmation = ({
   date,
   time,
   onBack,
+  onSubmit,
 }: BookingConfirmationProps) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,11 +55,6 @@ const BookingConfirmation = ({
       notes: "",
     },
   });
-
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // In a real app, this would make an API call
-    console.log("Form submitted:", values);
-  };
 
   return (
     <div className="space-y-6">
@@ -168,7 +164,7 @@ const BookingConfirmation = ({
                 Voltar
               </Button>
               <Button type="submit">
-                Confirmar Agendamento
+                Finalizar Agendamento
               </Button>
             </div>
           </form>
