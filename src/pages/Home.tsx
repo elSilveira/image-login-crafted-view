@@ -12,47 +12,48 @@ const Home = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
+        {/* Feature Cards - Now at the top */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <Card className="bg-white/70 backdrop-blur">
+            <CardContent className="p-4 text-center">
+              <Search className="mx-auto h-8 w-8 text-[#4664EA] mb-2" />
+              <h3 className="text-lg font-semibold mb-1">Encontre Profissionais</h3>
+              <p className="text-sm text-gray-600">
+                Pesquise profissionais qualificados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/70 backdrop-blur">
+            <CardContent className="p-4 text-center">
+              <Calendar className="mx-auto h-8 w-8 text-[#4664EA] mb-2" />
+              <h3 className="text-lg font-semibold mb-1">Escolha a Data</h3>
+              <p className="text-sm text-gray-600">
+                Selecione o melhor horário
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/70 backdrop-blur">
+            <CardContent className="p-4 text-center">
+              <Clock className="mx-auto h-8 w-8 text-[#4664EA] mb-2" />
+              <h3 className="text-lg font-semibold mb-1">Confirme o Agendamento</h3>
+              <p className="text-sm text-gray-600">
+                Confirmação instantânea
+              </p>
+            </CardContent>
+          </Card>
+        </section>
+
         <div className="grid md:grid-cols-12 gap-8">
-          {/* Lado esquerdo - Feed Social */}
+          {/* Main Feed */}
           <div className="md:col-span-8">
             <SocialFeed />
           </div>
 
-          {/* Lado direito - Agendamentos e Cards */}
-          <div className="md:col-span-4 space-y-6">
+          {/* Appointments Section */}
+          <div className="md:col-span-4">
             <AppointmentSection />
-            
-            <section className="grid gap-4">
-              <Card className="bg-white/70 backdrop-blur">
-                <CardContent className="p-6 text-center">
-                  <Search className="mx-auto h-12 w-12 text-[#4664EA] mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Encontre Profissionais</h3>
-                  <p className="text-gray-600">
-                    Pesquise e compare profissionais qualificados na sua região
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/70 backdrop-blur">
-                <CardContent className="p-6 text-center">
-                  <Calendar className="mx-auto h-12 w-12 text-[#4664EA] mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Escolha a Data</h3>
-                  <p className="text-gray-600">
-                    Selecione o melhor dia e horário para seu atendimento
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-white/70 backdrop-blur">
-                <CardContent className="p-6 text-center">
-                  <Clock className="mx-auto h-12 w-12 text-[#4664EA] mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Confirme o Agendamento</h3>
-                  <p className="text-gray-600">
-                    Receba a confirmação instantânea do seu horário
-                  </p>
-                </CardContent>
-              </Card>
-            </section>
           </div>
         </div>
       </main>

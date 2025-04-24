@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 
 const SocialFeed = () => {
-  // Temporary mock data - will be replaced with real data later
+  // Updated mock data with images
   const posts = [
     {
       id: 1,
@@ -15,6 +15,7 @@ const SocialFeed = () => {
         profession: "Cabeleireira"
       },
       content: "Acabei de fazer um curso incrível de colorimetria! Ansiosa para trazer novas técnicas para minhas clientes 💇‍♀️",
+      image: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?q=80&w=800",
       likes: 24,
       comments: 5,
       time: "2h"
@@ -27,6 +28,7 @@ const SocialFeed = () => {
         profession: "Barbeiro"
       },
       content: "Novo horário de atendimento: Segunda a Sábado das 9h às 20h. Agende seu horário! ✂️",
+      image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=800",
       likes: 15,
       comments: 3,
       time: "4h"
@@ -43,7 +45,7 @@ const SocialFeed = () => {
       </CardHeader>
       <CardContent className="space-y-6">
         {posts.map((post) => (
-          <div key={post.id} className="border-b pb-6 last:border-0 hover:bg-gray-50 rounded-lg p-4 transition-colors">
+          <div key={post.id} className="border-b pb-6 last:border-0">
             <div className="flex items-start gap-4">
               <Avatar className="cursor-pointer">
                 <AvatarImage src={post.author.avatar} alt={post.author.name} />
@@ -59,7 +61,16 @@ const SocialFeed = () => {
                   </div>
                   <span className="text-sm text-gray-500">{post.time}</span>
                 </div>
-                <p className="mt-2">{post.content}</p>
+                <p className="mt-2 mb-4">{post.content}</p>
+                {post.image && (
+                  <div className="mt-3 mb-4 rounded-lg overflow-hidden">
+                    <img 
+                      src={post.image} 
+                      alt="Post content" 
+                      className="w-full h-auto object-cover rounded-lg hover:opacity-95 transition-opacity cursor-pointer"
+                    />
+                  </div>
+                )}
                 <div className="mt-4 flex items-center gap-4">
                   <Button variant="ghost" size="sm" className="hover:text-[#4664EA]">
                     👍 {post.likes}
