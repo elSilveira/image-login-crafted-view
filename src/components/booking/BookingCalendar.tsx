@@ -1,6 +1,4 @@
-
 import React from "react";
-import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 
 interface BookingCalendarProps {
@@ -12,7 +10,6 @@ interface BookingCalendarProps {
 const BookingCalendar = ({
   selectedDate,
   onDateSelect,
-  onNext,
 }: BookingCalendarProps) => {
   // In a real app, these would come from an API
   const disabledDays = [
@@ -39,16 +36,6 @@ const BookingCalendar = ({
         ]}
         className="rounded-md border-iazi-border mx-auto"
       />
-
-      <div className="flex justify-end">
-        <Button 
-          onClick={onNext} 
-          disabled={!selectedDate}
-          className="bg-iazi-primary hover:bg-iazi-primary-hover text-white"
-        >
-          Próximo
-        </Button>
-      </div>
     </div>
   );
 };

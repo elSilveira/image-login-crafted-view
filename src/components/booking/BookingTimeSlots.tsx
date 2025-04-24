@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,7 +14,6 @@ const BookingTimeSlots = ({
   date,
   selectedTime,
   onTimeSelect,
-  onBack,
   onNext,
 }: BookingTimeSlotsProps) => {
   // Mock data - In a real app, these would come from an API
@@ -46,6 +44,7 @@ const BookingTimeSlots = ({
               variant={selectedTime === time ? "default" : "outline"}
               onClick={() => onTimeSelect(time)}
               className="w-full"
+              disabled={!date}
             >
               {time}
             </Button>
@@ -53,10 +52,7 @@ const BookingTimeSlots = ({
         </div>
       </ScrollArea>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={onBack}>
-          Voltar
-        </Button>
+      <div className="flex justify-end">
         <Button onClick={onNext} disabled={!selectedTime}>
           Próximo
         </Button>
