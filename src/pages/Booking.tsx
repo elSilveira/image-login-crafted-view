@@ -1,9 +1,7 @@
 
 import React from "react";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Clock, MapPin, AlertCircle } from "lucide-react";
 import BookingCalendar from "@/components/booking/BookingCalendar";
 import BookingTimeSlots from "@/components/booking/BookingTimeSlots";
@@ -58,7 +56,6 @@ const Booking = () => {
         return (
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="text-lg font-semibold mb-4">Selecione uma data</h3>
               <BookingCalendar
                 selectedDate={selectedDate}
                 onDateSelect={setSelectedDate}
@@ -66,14 +63,14 @@ const Booking = () => {
               />
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Selecione um horário</h3>
-              <BookingTimeSlots
-                date={selectedDate || new Date()}
-                onTimeSelect={setSelectedTime}
-                selectedTime={selectedTime}
-                onBack={() => {}}
-                onNext={() => selectedDate && selectedTime && setCurrentStep(2)}
-              />
+              {selectedDate && (
+                <BookingTimeSlots
+                  date={selectedDate}
+                  onTimeSelect={setSelectedTime}
+                  selectedTime={selectedTime}
+                  onNext={() => selectedDate && selectedTime && setCurrentStep(2)}
+                />
+              )}
             </div>
           </div>
         );

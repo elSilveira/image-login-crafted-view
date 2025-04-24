@@ -55,7 +55,11 @@ const ServiceDetails = () => {
                 <Badge variant="secondary" className="mb-2">
                   {service.category}
                 </Badge>
-                <h1 className="text-3xl font-bold mb-2">{service.name}</h1>
+                <h1 className="text-3xl font-bold mb-2">
+                  <Link to={`/service/${service.id}`} className="hover:text-primary transition-colors">
+                    {service.name}
+                  </Link>
+                </h1>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                   <span>{service.rating}</span>
