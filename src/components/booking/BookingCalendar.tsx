@@ -21,10 +21,10 @@ const BookingCalendar = ({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-md mx-auto bg-white p-6 rounded-lg shadow-sm">
       <div>
-        <h3 className="text-lg font-semibold mb-2">Selecione uma data</h3>
-        <p className="text-muted-foreground">
+        <h3 className="text-lg font-playfair font-semibold mb-2 text-iazi-text">Selecione uma data</h3>
+        <p className="text-muted-foreground font-lato">
           Escolha o dia para seu agendamento
         </p>
       </div>
@@ -37,11 +37,15 @@ const BookingCalendar = ({
           { before: new Date() },
           ...disabledDays,
         ]}
-        className="rounded-md border mx-auto"
+        className="rounded-md border-iazi-border mx-auto"
       />
 
       <div className="flex justify-end">
-        <Button onClick={onNext} disabled={!selectedDate}>
+        <Button 
+          onClick={onNext} 
+          disabled={!selectedDate}
+          className="bg-iazi-primary hover:bg-iazi-primary-hover text-white"
+        >
           Próximo
         </Button>
       </div>
