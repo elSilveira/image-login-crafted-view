@@ -3,22 +3,22 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, Lock } from "lucide-react";
+import { Mail, User, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
 
-const Index = () => {
+const Register = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
-      title: "Login em andamento",
-      description: "Processando suas credenciais...",
+      title: "Conta criada",
+      description: "Sua conta foi criada com sucesso!",
     });
-    // Add actual login logic here
   };
 
   return (
@@ -26,15 +26,26 @@ const Index = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3">
           <CardTitle className="text-3xl font-bold text-center text-gray-800">
-            Bem-vindo de volta
+            Criar conta
           </CardTitle>
           <CardDescription className="text-center text-gray-600 text-lg">
-            Acesse sua conta para gerenciar seus agendamentos
+            Preencha seus dados para criar sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleRegister} className="space-y-6">
             <div className="space-y-4">
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Nome completo"
+                  className="pl-10 h-12 text-base"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <Input
@@ -63,23 +74,17 @@ const Index = () => {
               type="submit" 
               className="w-full h-12 text-lg bg-[#4664EA] hover:bg-[#3651D3] transition-colors"
             >
-              Entrar
+              Criar conta
             </Button>
             
-            <div className="text-center space-y-2">
-              <Link 
-                to="/forgot-password" 
-                className="text-sm text-[#4664EA] hover:underline block"
-              >
-                Esqueceu sua senha?
-              </Link>
+            <div className="text-center">
               <p className="text-sm text-gray-600">
-                Não tem uma conta?{" "}
+                Já tem uma conta?{" "}
                 <Link 
-                  to="/register" 
+                  to="/" 
                   className="text-[#4664EA] hover:underline"
                 >
-                  Cadastre-se
+                  Faça login
                 </Link>
               </p>
             </div>
@@ -90,4 +95,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Register;
