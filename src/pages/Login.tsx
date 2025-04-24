@@ -7,7 +7,7 @@ import { Mail, Lock } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
 
-const Index = () => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const { toast } = useToast();
@@ -22,13 +22,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-blue-50 p-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
+      <Card className="w-full max-w-md shadow-lg border-iazi-border">
         <CardHeader className="space-y-3">
-          <CardTitle className="text-3xl font-bold text-center text-gray-800">
+          <CardTitle className="text-3xl font-playfair text-center text-iazi-text">
             Bem-vindo de volta
           </CardTitle>
-          <CardDescription className="text-center text-gray-600 text-lg">
+          <CardDescription className="text-center text-iazi-text text-lg font-inter">
             Acesse sua conta para gerenciar seus agendamentos
           </CardDescription>
         </CardHeader>
@@ -36,22 +36,22 @@ const Index = () => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="email"
                   placeholder="Email"
-                  className="pl-10 h-12 text-base"
+                  className="pl-10 h-12 text-base focus:border-iazi-primary"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="password"
                   placeholder="Senha"
-                  className="pl-10 h-12 text-base"
+                  className="pl-10 h-12 text-base focus:border-iazi-primary"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -61,7 +61,7 @@ const Index = () => {
             
             <Button 
               type="submit" 
-              className="w-full h-12 text-lg bg-[#4664EA] hover:bg-[#3651D3] transition-colors"
+              className="w-full h-12 text-lg font-medium bg-iazi-primary hover:bg-iazi-primary-hover transition-colors"
             >
               Entrar
             </Button>
@@ -69,15 +69,15 @@ const Index = () => {
             <div className="text-center space-y-2">
               <Link 
                 to="/forgot-password" 
-                className="text-sm text-[#4664EA] hover:underline block"
+                className="text-sm text-iazi-primary hover:underline block"
               >
                 Esqueceu sua senha?
               </Link>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground font-inter">
                 Não tem uma conta?{" "}
                 <Link 
                   to="/register" 
-                  className="text-[#4664EA] hover:underline"
+                  className="text-iazi-primary hover:underline"
                 >
                   Cadastre-se
                 </Link>
@@ -90,4 +90,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Login;

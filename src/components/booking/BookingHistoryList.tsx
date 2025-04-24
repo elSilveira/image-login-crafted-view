@@ -77,10 +77,10 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
       case "scheduled":
         return (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50">
+            <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50 font-inter">
               Cancelar
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className="font-inter">
               <RefreshCw className="h-3 w-3 mr-1" />
               Reagendar
             </Button>
@@ -89,15 +89,15 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
       case "completed":
         return (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className="font-inter">
               <Star className="h-3 w-3 mr-1" />
               Avaliar
             </Button>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className="font-inter">
               <FileText className="h-3 w-3 mr-1" />
               Recibo
             </Button>
-            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover">
+            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter">
               Agendar Novamente
             </Button>
           </div>
@@ -105,7 +105,7 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
       case "cancelled":
         return (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover">
+            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter">
               Agendar Novamente
             </Button>
           </div>
@@ -119,12 +119,12 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
     <div className="space-y-4">
       {appointments.length > 0 ? (
         appointments.map((appointment) => (
-          <Card key={appointment.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
+          <Card key={appointment.id} className="hover:shadow-md transition-shadow border-iazi-border">
+            <CardContent className="p-5">
               <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center flex-1">
-                  <div className="bg-iazi-background-alt rounded-md p-3 text-center min-w-[60px]">
-                    <p className="text-sm font-medium">
+                  <div className="bg-iazi-background-alt rounded-md p-3 text-center min-w-[70px]">
+                    <p className="text-sm font-medium font-inter">
                       {new Date(appointment.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                     </p>
                     <div className="flex items-center justify-center mt-1 text-sm text-muted-foreground">
@@ -134,11 +134,11 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
                   </div>
                   
                   <div className="flex-1">
-                    <h3 className="font-medium text-lg">{appointment.service}</h3>
-                    <p className="text-muted-foreground">com {appointment.professional}</p>
-                    <div className="flex items-center justify-between mt-1">
+                    <h3 className="font-medium text-lg font-playfair text-iazi-text">{appointment.service}</h3>
+                    <p className="text-muted-foreground font-inter">com {appointment.professional}</p>
+                    <div className="flex items-center justify-between mt-2">
                       {getStatusBadge(appointment.status)}
-                      <span className="font-medium">R$ {appointment.price}</span>
+                      <span className="font-medium font-inter text-iazi-text">R$ {appointment.price}</span>
                     </div>
                   </div>
                 </div>
@@ -152,7 +152,7 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
         ))
       ) : (
         <div className="text-center p-10">
-          <p className="text-muted-foreground">Nenhum agendamento encontrado</p>
+          <p className="text-muted-foreground font-inter">Nenhum agendamento encontrado</p>
         </div>
       )}
     </div>
