@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
 import { User, Search } from "lucide-react";
@@ -16,6 +15,9 @@ const Navigation = () => {
           <div className="hidden md:flex space-x-6 mx-4">
             <Link to="/" className="text-gray-700 hover:text-[#4664EA]">
               Início
+            </Link>
+            <Link to="/search" className="text-gray-700 hover:text-[#4664EA]">
+              Buscar
             </Link>
             <Link to="/professionals" className="text-gray-700 hover:text-[#4664EA]">
               Empresas
