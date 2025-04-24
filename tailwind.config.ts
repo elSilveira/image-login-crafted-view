@@ -35,13 +35,13 @@ export default {
           'rosa-medio': '#e9b6b6',
           'rosa-escuro': '#e5a8a9',
           'text': '#333333',
-          'primary': '#cc6677',
-          'primary-hover': '#993344',
+          'primary': '#4664EA',
+          'primary-hover': '#3651D4',
           'border': '#dddddd',
           'background-alt': '#f7f7f7'
         },
         primary: {
-          DEFAULT: "#cc6677",
+          DEFAULT: "#4664EA",
           foreground: "#ffffff",
         },
         secondary: {

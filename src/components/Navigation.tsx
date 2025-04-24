@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Search, User, Calendar } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { SearchDropdown } from "./SearchDropdown";
 
 const Navigation = () => {
@@ -10,7 +10,7 @@ const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="text-2xl font-bold text-iazi-primary font-playfair">
-            IAZI
+            <img src="/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png" alt="IAZI" className="h-8" />
           </Link>
           
           <div className="hidden md:flex space-x-6 mx-4">
