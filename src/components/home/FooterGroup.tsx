@@ -12,7 +12,7 @@ interface FooterGroupProps {
 export const FooterGroup = ({ title, links }: FooterGroupProps) => {
   return (
     <div>
-      <h3 className="font-outfit font-semibold mb-4 text-iazi-text">{title}</h3>
+      <h3 className="font-playfair font-semibold mb-4 text-iazi-text">{title}</h3>
       <ul className="space-y-2 text-sm">
         {links.map((link) => (
           <li key={link.title}>

@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -21,6 +22,7 @@ export default {
       fontFamily: {
         'inter': ['Inter', 'sans-serif'],
         'outfit': ['Outfit', 'sans-serif'],
+        'playfair': ['Playfair Display', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -34,14 +36,14 @@ export default {
           'rosa-2': '#edc4c4',
           'rosa-medio': '#e9b6b6',
           'rosa-escuro': '#e5a8a9',
-          'text': '#1f2937',
-          'primary': '#4664EA',
-          'primary-hover': '#3651D4',
-          'border': '#e5e7eb',
-          'background-alt': '#f8fafc'
+          'text': '#333333',
+          'primary': '#cc6677',
+          'primary-hover': '#993344',
+          'border': '#dddddd',
+          'background-alt': '#f7f7f7'
         },
         primary: {
-          DEFAULT: "#4664EA",
+          DEFAULT: "#cc6677",
           foreground: "#ffffff",
         },
         secondary: {

@@ -20,10 +20,10 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-blue-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-iazi-rosa-1/20 p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3">
-          <CardTitle className="text-3xl font-bold text-center text-gray-800">
+          <CardTitle className="text-3xl font-bold text-center text-iazi-text font-playfair">
             Esqueceu sua senha?
           </CardTitle>
           <CardDescription className="text-center text-gray-600 text-lg">
@@ -46,7 +46,7 @@ const ForgotPassword = () => {
             
             <Button 
               type="submit" 
-              className="w-full h-12 text-lg bg-[#4664EA] hover:bg-[#3651D3] transition-colors"
+              className="w-full h-12 text-lg"
             >
               Enviar instruções
             </Button>
@@ -54,7 +54,7 @@ const ForgotPassword = () => {
             <div className="text-center">
               <Link 
                 to="/" 
-                className="text-sm text-[#4664EA] hover:underline"
+                className="text-sm text-iazi-primary hover:underline"
               >
                 Voltar para o login
               </Link>

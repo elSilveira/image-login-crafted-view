@@ -19,7 +19,7 @@ export const ProfessionalsSection = () => {
 
   return (
     <section>
-      <h2 className="text-xl font-outfit font-semibold mb-4 text-iazi-text">Profissionais em Destaque</h2>
+      <h2 className="text-xl font-playfair font-semibold mb-4 text-iazi-text">Profissionais em Destaque</h2>
       <div className="space-y-4">
         {professionals.map((professional) => (
           <ProfessionalCard
