@@ -1,23 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { 
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Calendar, Search, Star, Filter, MoreHorizontal } from "lucide-react";
+import { ServiceFilters } from "@/components/services/ServiceFilters";
+import { ServiceCard } from "@/components/services/ServiceCard";
+import { ServicePagination } from "@/components/services/ServicePagination";
 
-// Mock data for services
+// Mock data moved to a separate file
 export const services = [
   {
     id: 1,
@@ -111,38 +98,6 @@ export const services = [
   }
 ];
 
-// Category options
-const categories = [
-  "Todas categorias",
-  "Tratamento Facial",
-  "Fisioterapia",
-  "Cabelo",
-  "Fitness",
-  "Nutrição",
-  "Odontologia",
-  "Massagem",
-  "Estética",
-  "Unhas",
-];
-
-// Price range options
-const priceRanges = [
-  "Qualquer preço",
-  "Até R$100",
-  "R$100 a R$200",
-  "R$200 a R$300",
-  "Acima de R$300",
-];
-
-// Availability options
-const availabilityOptions = [
-  "Qualquer data",
-  "Hoje",
-  "Amanhã",
-  "Esta semana",
-  "Próxima semana",
-];
-
 const Services = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("Todas categorias");
@@ -152,25 +107,6 @@ const Services = () => {
   const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
   const [currentPage, setCurrentPage] = useState(1);
   
-  const ratingValue = ratingFilter[0];
-
-  // Function to render stars based on rating
-  const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-          }`}
-        />
-      );
-    }
-    return stars;
-  };
-
-  // Filter services based on search, category, rating, price, and availability
   const filteredServices = services.filter((service) => {
     const matchesSearch = 
       searchTerm === "" || 
@@ -183,9 +119,8 @@ const Services = () => {
       category === "Todas categorias" || 
       service.category === category;
     
-    const matchesRating = service.rating >= ratingValue;
+    const matchesRating = service.rating >= ratingFilter[0];
     
-    // Simplified price matching - in a real app you'd parse the actual price value
     const matchesPriceRange = 
       priceRange === "Qualquer preço" || 
       (priceRange === "Até R$100" && service.price.replace("R$", "") <= "100") ||
@@ -207,7 +142,6 @@ const Services = () => {
     return matchesSearch && matchesCategory && matchesRating && matchesPriceRange && matchesAvailability;
   });
 
-  // Sort services
   const sortedServices = [...filteredServices].sort((a, b) => {
     if (sortBy === "rating") {
       return b.rating - a.rating;
@@ -218,7 +152,6 @@ const Services = () => {
     } else if (sortBy === "price-desc") {
       return parseInt(b.price.replace(/\D/g, '')) - parseInt(a.price.replace(/\D/g, ''));
     }
-    // Default sort by rating
     return b.rating - a.rating;
   });
 
@@ -227,150 +160,6 @@ const Services = () => {
   const indexOfLastService = currentPage * servicesPerPage;
   const indexOfFirstService = indexOfLastService - servicesPerPage;
   const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
-
-  // Update the service card rendering with proper font classes and connected links
-  const renderServiceCard = (service: any) => {
-    return (
-      <Card key={service.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-        highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-      }`}>
-        <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-              <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
-                <img 
-                  src={service.image} 
-                  alt={service.name} 
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="flex items-center gap-1 mb-1">
-                {renderStars(service.rating)}
-              </div>
-              <div className="text-sm text-center">
-                <span className="font-semibold">{service.rating}</span>
-                <span className="text-gray-500"> ({service.reviews})</span>
-              </div>
-            </div>
-            
-            <div className="md:w-3/4 p-6">
-              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
-              <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
-              
-              <div className="flex flex-wrap gap-2 mb-3">
-                <Badge variant="outline" className="bg-gray-50">
-                  {service.duration}
-                </Badge>
-                <Badge variant="outline" className="bg-gray-50">
-                  {service.price}
-                </Badge>
-              </div>
-              
-              <Link 
-                to={`/professional/${service.company_id}`} 
-                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
-              >
-                <span className="font-medium">Empresa:</span> {service.company}
-              </Link>
-              
-              <Link
-                to={`/professional/${service.professional_id}`}
-                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
-              >
-                <span className="font-medium">Profissional:</span> {service.professional}
-              </Link>
-              
-              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Disponível: {service.availability}</span>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link to={`/service/${service.id}`}>
-                    Ver detalhes
-                  </Link>
-                </Button>
-                <Button className="flex-1" asChild>
-                  <Link to={`/booking/${service.id}`}>Agendar</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  // Update the company card rendering with proper font classes and connected links
-  const renderCompanyCard = (company: any) => {
-    return (
-      <Card key={company.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-        highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-      }`}>
-        <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-              <Avatar className="h-24 w-24 mb-3">
-                <AvatarImage src={company.image} alt={company.name} />
-                <AvatarFallback>{company.name.substring(0, 2)}</AvatarFallback>
-              </Avatar>
-              <div className="flex items-center gap-1 mb-1">
-                {renderStars(company.rating)}
-              </div>
-              <div className="text-sm text-center">
-                <span className="font-semibold">{company.rating}</span>
-                <span className="text-gray-500"> ({company.reviews})</span>
-              </div>
-            </div>
-            
-            <div className="md:w-3/4 p-6">
-              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{company.name}</h3>
-              <p className="text-[#4664EA] text-sm font-inter mb-2">{company.specialty}</p>
-              
-              <div className="flex flex-wrap gap-2 mb-3">
-                <Badge variant="outline" className="bg-gray-50">
-                  {company.duration}
-                </Badge>
-                <Badge variant="outline" className="bg-gray-50">
-                  {company.price}
-                </Badge>
-              </div>
-              
-              <p className="text-sm text-gray-600 font-inter mb-3">
-                <span className="font-medium">Profissionais:</span>{" "}
-                {company.professionals.map((prof: string, index: number) => (
-                  <Link
-                    key={index}
-                    to={`/professional/${company.professional_ids[index]}`}
-                    className="hover:text-iazi-primary"
-                  >
-                    {prof}{index < company.professionals.length - 1 ? ", " : ""}
-                  </Link>
-                ))}
-              </p>
-              
-              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Disponível: {company.availability}</span>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link to={`/professional/${company.id}`}>
-                    Ver detalhes
-                  </Link>
-                </Button>
-                <Button className="flex-1" asChild>
-                  <Link to={`/booking/company/${company.id}`}>Agendar</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -382,161 +171,38 @@ const Services = () => {
           Encontre os melhores serviços disponíveis na plataforma
         </p>
 
-        {/* Filters Section */}
-        <div className="bg-white p-5 rounded-lg shadow-sm mb-6">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center mb-5">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-              <Input 
-                placeholder="Buscar por nome, categoria ou empresa..." 
-                className="pl-10 w-full bg-gray-50 border-gray-200 focus:bg-white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className="w-full md:w-60">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full md:w-60">
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="rating">Melhor avaliação</SelectItem>
-                <SelectItem value="reviews">Mais avaliações</SelectItem>
-                <SelectItem value="price-asc">Menor preço</SelectItem>
-                <SelectItem value="price-desc">Maior preço</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Advanced filters */}
-          <div className="flex flex-col md:flex-row gap-6 pt-4 border-t border-gray-100">
-            <div className="w-full md:w-1/3">
-              <label className="flex items-center text-sm font-medium mb-2">
-                <Filter className="h-4 w-4 mr-2" />
-                Avaliação mínima: {ratingValue}+ estrelas
-              </label>
-              <Slider
-                defaultValue={[0]}
-                max={5}
-                step={0.5}
-                value={ratingFilter}
-                onValueChange={setRatingFilter}
-                className="py-2"
-              />
-            </div>
-
-            <div className="w-full md:w-1/3">
-              <label className="flex items-center text-sm font-medium mb-2">
-                <Calendar className="h-4 w-4 mr-2" />
-                Disponibilidade
-              </label>
-              <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Qualquer data" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availabilityOptions.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="w-full md:w-1/3">
-              <label className="flex items-center text-sm font-medium mb-2">
-                <Filter className="h-4 w-4 mr-2" />
-                Faixa de preço
-              </label>
-              <Select value={priceRange} onValueChange={setPriceRange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Qualquer preço" />
-                </SelectTrigger>
-                <SelectContent>
-                  {priceRanges.map((range) => (
-                    <SelectItem key={range} value={range}>
-                      {range}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
+        <ServiceFilters
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          category={category}
+          setCategory={setCategory}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          ratingFilter={ratingFilter}
+          setRatingFilter={setRatingFilter}
+          priceRange={priceRange}
+          setPriceRange={setPriceRange}
+          availabilityFilter={availabilityFilter}
+          setAvailabilityFilter={setAvailabilityFilter}
+        />
         
-        {/* Results count */}
         <div className="text-gray-600 mb-4">
           <p>
             <span className="font-semibold">{filteredServices.length}</span> serviços encontrados
           </p>
         </div>
 
-        {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {currentServices.map((service) => (
-            renderServiceCard(service)
+            <ServiceCard key={service.id} service={service} />
           ))}
         </div>
 
-        {/* Pagination */}
-        <Pagination className="mt-6">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage > 1) setCurrentPage(currentPage - 1);
-                }}
-              />
-            </PaginationItem>
-            
-            {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
-              <PaginationItem key={i}>
-                <PaginationLink 
-                  href="#" 
-                  isActive={currentPage === i + 1}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentPage(i + 1);
-                  }}
-                >
-                  {i + 1}
-                </PaginationLink>
-              </PaginationItem>
-            ))}
-            
-            {totalPages > 5 && (
-              <PaginationItem>
-                <MoreHorizontal className="h-4 w-4 mx-2" />
-              </PaginationItem>
-            )}
-            
-            <PaginationItem>
-              <PaginationNext 
-                href="#" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                }}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+        <ServicePagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+        />
       </main>
     </div>
   );
