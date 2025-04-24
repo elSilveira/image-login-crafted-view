@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Search, Star, User, Instagram, Facebook, Linkedin } from "lucide-react";
 import AppointmentSection from "@/components/AppointmentSection";
 import SocialFeed from "@/components/SocialFeed";
-import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const Home = () => {
@@ -13,63 +12,66 @@ const Home = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
-        {/* Feature Cards - Smaller size */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-          <Card className="bg-white/70 backdrop-blur">
-            <CardContent className="p-3 text-center">
-              <Search className="mx-auto h-6 w-6 text-[#4664EA] mb-1" />
-              <h3 className="text-base font-semibold mb-1">Encontre Profissionais</h3>
-              <p className="text-xs text-gray-600">
-                Pesquise profissionais qualificados
+        {/* Feature Cards - Larger size */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <Card className="bg-white/70 backdrop-blur hover:shadow-lg transition-all">
+            <CardContent className="p-6 text-center">
+              <Search className="mx-auto h-8 w-8 text-[#4664EA] mb-3" />
+              <h3 className="text-lg font-semibold mb-2">Encontre Profissionais</h3>
+              <p className="text-sm text-gray-600">
+                Pesquise e encontre os melhores profissionais qualificados para seu serviço
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur">
-            <CardContent className="p-3 text-center">
-              <Calendar className="mx-auto h-6 w-6 text-[#4664EA] mb-1" />
-              <h3 className="text-base font-semibold mb-1">Escolha a Data</h3>
-              <p className="text-xs text-gray-600">
-                Selecione o melhor horário
+          <Card className="bg-white/70 backdrop-blur hover:shadow-lg transition-all">
+            <CardContent className="p-6 text-center">
+              <Calendar className="mx-auto h-8 w-8 text-[#4664EA] mb-3" />
+              <h3 className="text-lg font-semibold mb-2">Escolha a Data</h3>
+              <p className="text-sm text-gray-600">
+                Selecione o melhor horário que se encaixa na sua agenda
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/70 backdrop-blur">
-            <CardContent className="p-3 text-center">
-              <Clock className="mx-auto h-6 w-6 text-[#4664EA] mb-1" />
-              <h3 className="text-base font-semibold mb-1">Confirme o Agendamento</h3>
-              <p className="text-xs text-gray-600">
-                Confirmação instantânea
+          <Card className="bg-white/70 backdrop-blur hover:shadow-lg transition-all">
+            <CardContent className="p-6 text-center">
+              <Clock className="mx-auto h-8 w-8 text-[#4664EA] mb-3" />
+              <h3 className="text-lg font-semibold mb-2">Confirme o Agendamento</h3>
+              <p className="text-sm text-gray-600">
+                Receba confirmação instantânea do seu agendamento
               </p>
             </CardContent>
           </Card>
         </section>
 
-        {/* Search Bar */}
-        <div className="relative mb-8">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-          <Input 
-            placeholder="Buscar serviços ou profissionais..." 
-            className="pl-10 bg-white"
-          />
-        </div>
-
-        {/* Popular Categories - Now with horizontal scroll */}
-        <section className="mb-8">
+        {/* Popular Categories - Enhanced with better icons */}
+        <section className="mb-12">
           <h2 className="text-xl font-semibold mb-4">Categorias Populares</h2>
           <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex gap-2">
-              {['Cabelo', 'Barba', 'Manicure', 'Maquiagem', 'Massagem', 'Estética'].map((category) => (
-                <Button
-                  key={category}
-                  variant="outline"
-                  className="h-16 w-16 flex flex-col items-center justify-center gap-1 p-0 shrink-0 hover:bg-[#4664EA] hover:text-white group"
-                >
-                  <User className="h-5 w-5 group-hover:text-white" />
-                  <span className="text-xs">{category}</span>
-                </Button>
-              ))}
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                className="h-20 w-20 flex flex-col items-center justify-center gap-2 p-0 shrink-0 bg-white hover:bg-[#4664EA] hover:text-white group shadow-sm"
+              >
+                <User className="h-8 w-8 group-hover:text-white" />
+                <span className="text-xs font-medium">Cabelo</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-20 w-20 flex flex-col items-center justify-center gap-2 p-0 shrink-0 bg-white hover:bg-[#4664EA] hover:text-white group shadow-sm"
+              >
+                <Clock className="h-8 w-8 group-hover:text-white" />
+                <span className="text-xs font-medium">Barba</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="h-20 w-20 flex flex-col items-center justify-center gap-2 p-0 shrink-0 bg-white hover:bg-[#4664EA] hover:text-white group shadow-sm"
+              >
+                <Star className="h-8 w-8 group-hover:text-white" />
+                <span className="text-xs font-medium">Manicure</span>
+              </Button>
+              {/* ... Add more category buttons with appropriate icons */}
             </div>
             <ScrollBar orientation="horizontal" />
           </ScrollArea>
@@ -86,20 +88,52 @@ const Home = () => {
             {/* Appointments Section */}
             <AppointmentSection />
 
-            {/* Recent Services */}
+            {/* Recent Services - Enhanced */}
             <section>
               <h2 className="text-xl font-semibold mb-4">Serviços Recentes</h2>
               <div className="space-y-4">
                 {[1, 2, 3].map((service) => (
-                  <Card key={service} className="hover:shadow-lg transition-shadow">
+                  <Card key={service} className="overflow-hidden hover:shadow-lg transition-all">
+                    <CardContent className="p-0">
+                      <div className="aspect-video bg-gray-100" />
+                      <div className="p-4">
+                        <h3 className="font-semibold mb-2">Serviço Premium {service}</h3>
+                        <p className="text-sm text-gray-600 mb-3">
+                          Serviço profissional com atendimento personalizado...
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                            <span className="text-sm font-medium">4.8</span>
+                          </div>
+                          <span className="text-[#4664EA] font-semibold">R$ 50,00</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+
+            {/* Featured Professionals - Under Recent Services */}
+            <section>
+              <h2 className="text-xl font-semibold mb-4">Profissionais em Destaque</h2>
+              <div className="space-y-4">
+                {[1, 2].map((pro) => (
+                  <Card key={pro} className="hover:shadow-lg transition-all">
                     <CardContent className="p-4">
-                      <h3 className="font-semibold mb-2">Serviço {service}</h3>
-                      <p className="text-sm text-gray-600 mb-3">
-                        Descrição breve do serviço oferecido...
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[#4664EA] font-semibold">R$ 50,00</span>
-                        <Button size="sm">Agendar</Button>
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                          <User className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-1">Profissional {pro}</h3>
+                          <div className="flex items-center text-sm text-yellow-500 mb-2">
+                            <Star className="h-4 w-4 fill-current" />
+                            <span className="ml-1">4.8</span>
+                          </div>
+                          <Button size="sm" className="w-full">Ver Perfil</Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -108,32 +142,6 @@ const Home = () => {
             </section>
           </div>
         </div>
-
-        {/* Featured Professionals */}
-        <section className="mt-12">
-          <h2 className="text-xl font-semibold mb-4">Profissionais em Destaque</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((pro) => (
-              <Card key={pro} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="h-6 w-6 text-gray-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold">Profissional {pro}</h3>
-                      <div className="flex items-center text-sm text-yellow-500">
-                        <Star className="h-4 w-4 fill-current" />
-                        <span className="ml-1">4.8</span>
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="w-full" size="sm">Ver Perfil</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t">
