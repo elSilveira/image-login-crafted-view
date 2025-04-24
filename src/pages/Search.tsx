@@ -1,18 +1,12 @@
-
-import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search as SearchIcon } from "lucide-react";
-
-// Import directly from the files
 import { professionals } from "./Professionals";
 import { services } from "./Services";
 
 const Search = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("all");
+  const [searchParams] = useSearchParams();
+  const searchTerm = searchParams.get("q") || "";
 
   // Filter both services and companies based on search term
   const filteredServices = services.filter((service) =>
@@ -35,24 +29,13 @@ const Search = () => {
       
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Buscar</h1>
+          <h1 className="text-3xl font-bold mb-2">Resultados para "{searchTerm}"</h1>
           <p className="text-gray-600 mb-8">
-            Encontre serviços e empresas disponíveis na plataforma
+            Encontramos {filteredServices.length + filteredCompanies.length} resultados para sua busca
           </p>
 
-          {/* Search Input */}
-          <div className="relative mb-8">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-5 w-5" />
-            <Input 
-              placeholder="Digite o que você procura..."
-              className="pl-10 py-6 text-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-
           {/* Results Tabs */}
-          <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
+          <Tabs defaultValue="all" className="w-full">
             <TabsList className="w-full border-b mb-6">
               <TabsTrigger value="all" className="flex-1">
                 Todos ({filteredServices.length + filteredCompanies.length})
@@ -69,14 +52,9 @@ const Search = () => {
               {/* Services Section */}
               {filteredServices.length > 0 && (
                 <div className="mb-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Serviços</h2>
-                    <Button variant="link" onClick={() => setActiveTab("services")}>
-                      Ver todos os serviços
-                    </Button>
-                  </div>
+                  <h2 className="text-xl font-semibold mb-4">Serviços</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredServices.slice(0, 4).map((service) => (
+                    {filteredServices.map((service) => (
                       <div key={service.id} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                         <h3 className="font-medium mb-1">{service.name}</h3>
                         <p className="text-sm text-[#4664EA]">{service.category}</p>
@@ -96,20 +74,15 @@ const Search = () => {
               {/* Companies Section */}
               {filteredCompanies.length > 0 && (
                 <div>
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Empresas</h2>
-                    <Button variant="link" onClick={() => setActiveTab("companies")}>
-                      Ver todas as empresas
-                    </Button>
-                  </div>
+                  <h2 className="text-xl font-semibold mb-4">Empresas</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {filteredCompanies.slice(0, 4).map((company) => (
+                    {filteredCompanies.map((company) => (
                       <div key={company.id} className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                         <h3 className="font-medium mb-1">{company.name}</h3>
                         <p className="text-sm text-[#4664EA]">{company.specialty}</p>
                         <div className="mt-2 text-sm text-gray-600">
-                          <p>Serviços: {company.services.slice(0, 2).join(", ")}</p>
-                          <p className="mt-1">Profissionais: {company.professionals.slice(0, 2).join(", ")}</p>
+                          <p>Serviços: {company.services.join(", ")}</p>
+                          <p className="mt-1">Profissionais: {company.professionals.join(", ")}</p>
                         </div>
                       </div>
                     ))}
