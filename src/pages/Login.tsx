@@ -4,21 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Lock } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { toast } = useToast();
+  const { login, isLoading } = useAuth();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Login em andamento",
-      description: "Processando suas credenciais...",
-    });
-    // Add actual login logic here
+    login(email, password);
   };
 
   return (
@@ -62,8 +59,16 @@ const Login = () => {
             <Button 
               type="submit" 
               className="w-full h-12 text-lg font-medium bg-iazi-primary hover:bg-iazi-primary-hover transition-colors"
+              disabled={isLoading}
             >
-              Entrar
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                "Entrar"
+              )}
             </Button>
             
             <div className="text-center space-y-2">
