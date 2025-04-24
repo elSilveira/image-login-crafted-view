@@ -62,7 +62,7 @@ const Booking = () => {
               <BookingCalendar
                 selectedDate={selectedDate}
                 onDateSelect={setSelectedDate}
-                onNext={() => {}}
+                onNext={() => selectedDate && setCurrentStep(2)}
               />
             </div>
             <div>
