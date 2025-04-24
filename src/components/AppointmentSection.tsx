@@ -1,4 +1,3 @@
-
 import { CalendarDays, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -23,67 +22,35 @@ const AppointmentSection = () => {
   ];
 
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Próximos Agendamentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {appointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-gray-50"
-              >
-                <div>
-                  <h4 className="font-semibold">{appointment.service}</h4>
-                  <p className="text-sm text-gray-600">{appointment.professional}</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(appointment.date).toLocaleDateString('pt-BR')} às {appointment.time}
-                  </p>
-                </div>
-                <Button variant="outline" size="sm">
-                  Reagendar
-                </Button>
+    <Card className="bg-white shadow-sm">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Clock className="h-5 w-5" />
+          Próximos Agendamentos
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {appointments.map((appointment) => (
+            <div
+              key={appointment.id}
+              className="flex items-center justify-between p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <div>
+                <h4 className="font-semibold">{appointment.service}</h4>
+                <p className="text-sm text-gray-600">{appointment.professional}</p>
+                <p className="text-sm text-gray-600">
+                  {new Date(appointment.date).toLocaleDateString('pt-BR')} às {appointment.time}
+                </p>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            Histórico de Agendamentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {appointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="flex items-center justify-between p-4 rounded-lg bg-gray-50"
-              >
-                <div>
-                  <h4 className="font-semibold">{appointment.service}</h4>
-                  <p className="text-sm text-gray-600">{appointment.professional}</p>
-                  <p className="text-sm text-gray-600">
-                    {new Date(appointment.date).toLocaleDateString('pt-BR')} às {appointment.time}
-                  </p>
-                </div>
-                <Button variant="secondary" size="sm">
-                  Agendar Novamente
-                </Button>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              <Button variant="outline" size="sm" className="hover:bg-[#4664EA] hover:text-white">
+                Reagendar
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -34,15 +34,18 @@ const SocialFeed = () => {
   ];
 
   return (
-    <Card className="mt-6">
-      <CardHeader>
+    <Card className="bg-white shadow-sm">
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Feed de Atualizações</CardTitle>
+        <Button variant="outline" className="hover:bg-[#4664EA] hover:text-white">
+          Nova Publicação
+        </Button>
       </CardHeader>
       <CardContent className="space-y-6">
         {posts.map((post) => (
-          <div key={post.id} className="border-b pb-6 last:border-0">
+          <div key={post.id} className="border-b pb-6 last:border-0 hover:bg-gray-50 rounded-lg p-4 transition-colors">
             <div className="flex items-start gap-4">
-              <Avatar>
+              <Avatar className="cursor-pointer">
                 <AvatarImage src={post.author.avatar} alt={post.author.name} />
                 <AvatarFallback>
                   <User className="h-5 w-5" />
@@ -50,7 +53,7 @@ const SocialFeed = () => {
               </Avatar>
               <div className="flex-1">
                 <div className="flex items-start justify-between">
-                  <div>
+                  <div className="cursor-pointer hover:text-[#4664EA]">
                     <h4 className="font-semibold">{post.author.name}</h4>
                     <p className="text-sm text-gray-600">{post.author.profession}</p>
                   </div>
@@ -58,12 +61,15 @@ const SocialFeed = () => {
                 </div>
                 <p className="mt-2">{post.content}</p>
                 <div className="mt-4 flex items-center gap-4">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="hover:text-[#4664EA]">
                     👍 {post.likes}
                   </Button>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="hover:text-[#4664EA]">
                     <MessageSquare className="h-4 w-4 mr-1" />
                     {post.comments}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="hover:text-[#4664EA]">
+                    Agendar Serviço
                   </Button>
                 </div>
               </div>
