@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -253,7 +254,7 @@ const Search = () => {
               <p className="text-[#4664EA] text-sm font-inter mb-2">{company.specialty}</p>
               
               <div className="flex flex-wrap gap-2 mb-3">
-                {company.services.slice(0, 3).map((service: string, i: number) => (
+                {company.services && company.services.slice(0, 3).map((service: string, i: number) => (
                   <Badge key={i} variant="outline" className="bg-gray-50">
                     {service}
                   </Badge>
@@ -262,10 +263,10 @@ const Search = () => {
               
               <p className="text-sm text-gray-600 font-inter mb-3">
                 <span className="font-medium">Profissionais:</span>{" "}
-                {company.professionals.map((prof: string, index: number) => (
+                {company.professionals && company.professionals.map((prof: string, index: number) => (
                   <Link
                     key={index}
-                    to={`/professional/${company.professional_ids[index]}`}
+                    to={`/professional/${company.professional_ids && company.professional_ids[index] ? company.professional_ids[index] : index}`}
                     className="hover:text-iazi-primary"
                   >
                     {prof}{index < company.professionals.length - 1 ? ", " : ""}
