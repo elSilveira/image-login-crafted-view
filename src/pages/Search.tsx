@@ -19,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Star, Filter, ChevronDown, MoreHorizontal } from "lucide-react";
 import { popularCategories } from "@/components/SearchDropdown";
 import { professionals } from "./Professionals";
-import { services } from "./Services";
+import { services } from "@/lib/mock-services";
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -153,9 +153,10 @@ const Search = () => {
   };
 
   const renderServiceCard = (service: any) => {
+    const serviceId = service.id.toString();
     return (
-      <Card key={service.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-        highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+      <Card key={serviceId} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+        highlightId && serviceId === highlightId ? "ring-2 ring-[#4664EA]" : ""
       }`}>
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
@@ -226,9 +227,10 @@ const Search = () => {
   };
 
   const renderCompanyCard = (company: any) => {
+    const companyId = company.id.toString();
     return (
-      <Card key={company.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-        highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+      <Card key={companyId} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+        highlightId && companyId === highlightId ? "ring-2 ring-[#4664EA]" : ""
       }`}>
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
