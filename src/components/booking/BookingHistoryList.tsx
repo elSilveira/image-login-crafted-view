@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, Calendar, FileText, RefreshCw, Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface BookingHistoryListProps {
   status: "scheduled" | "completed" | "cancelled";
@@ -77,36 +78,42 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
       case "scheduled":
         return (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50 font-inter">
-              Cancelar
+            <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50 font-inter" asChild>
+              <Link to={`/booking/${id}/cancel`}>Cancelar</Link>
             </Button>
-            <Button size="sm" variant="outline" className="font-inter">
-              <RefreshCw className="h-3 w-3 mr-1" />
-              Reagendar
+            <Button size="sm" variant="outline" className="font-inter" asChild>
+              <Link to={`/booking/${id}/reschedule`}>
+                <RefreshCw className="h-3 w-3 mr-1" />
+                Reagendar
+              </Link>
             </Button>
           </div>
         );
       case "completed":
         return (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="font-inter">
-              <Star className="h-3 w-3 mr-1" />
-              Avaliar
+            <Button size="sm" variant="outline" className="font-inter" asChild>
+              <Link to={`/reviews/create/${id}`}>
+                <Star className="h-3 w-3 mr-1" />
+                Avaliar
+              </Link>
             </Button>
-            <Button size="sm" variant="outline" className="font-inter">
-              <FileText className="h-3 w-3 mr-1" />
-              Recibo
+            <Button size="sm" variant="outline" className="font-inter" asChild>
+              <Link to={`/booking/${id}/receipt`}>
+                <FileText className="h-3 w-3 mr-1" />
+                Recibo
+              </Link>
             </Button>
-            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter">
-              Agendar Novamente
+            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter" asChild>
+              <Link to={`/booking/${id}/repeat`}>Agendar Novamente</Link>
             </Button>
           </div>
         );
       case "cancelled":
         return (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter">
-              Agendar Novamente
+            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter" asChild>
+              <Link to={`/booking/${id}/repeat`}>Agendar Novamente</Link>
             </Button>
           </div>
         );
@@ -135,7 +142,12 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
                   
                   <div className="flex-1">
                     <h3 className="font-medium text-lg font-playfair text-iazi-text">{appointment.service}</h3>
-                    <p className="text-muted-foreground font-inter">com {appointment.professional}</p>
+                    <Link 
+                      to={`/professional/${appointment.professional.toLowerCase().replace(/\s+/g, '-')}`}
+                      className="text-muted-foreground hover:text-iazi-primary font-inter"
+                    >
+                      com {appointment.professional}
+                    </Link>
                     <div className="flex items-center justify-between mt-2">
                       {getStatusBadge(appointment.status)}
                       <span className="font-medium font-inter text-iazi-text">R$ {appointment.price}</span>

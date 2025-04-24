@@ -10,10 +10,14 @@ const Settings = () => {
     <>
       <Navigation />
       <SidebarProvider>
-        <div className="container-padding flex min-h-screen w-full flex-col md:flex-row gap-6">
-          <SettingsSidebar />
-          <div className="flex-1">
-            <SettingsContent />
+        <div className="min-h-screen flex w-full">
+          <div className="flex flex-col md:flex-row w-full gap-6 container mx-auto px-4 py-8 mt-16">
+            <div className="w-full md:w-64 shrink-0">
+              <SettingsSidebar />
+            </div>
+            <div className="flex-1 min-w-0">
+              <SettingsContent />
+            </div>
           </div>
         </div>
       </SidebarProvider>

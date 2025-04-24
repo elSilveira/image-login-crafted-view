@@ -2,6 +2,7 @@
 import { CalendarDays, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
+import { Link } from "react-router-dom";
 
 const AppointmentSection = () => {
   const appointments = [
@@ -38,15 +39,32 @@ const AppointmentSection = () => {
             >
               <div className="flex flex-col gap-2">
                 <div>
-                  <h4 className="font-playfair font-semibold text-base">{appointment.service}</h4>
-                  <p className="text-sm text-gray-600 font-inter">{appointment.professional}</p>
+                  <Link 
+                    to={`/booking/${appointment.id}`}
+                    className="block font-playfair font-semibold text-base hover:text-iazi-primary"
+                  >
+                    {appointment.service}
+                  </Link>
+                  <Link 
+                    to={`/professional/${appointment.professional.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="text-sm text-gray-600 hover:text-iazi-primary font-inter"
+                  >
+                    {appointment.professional}
+                  </Link>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600 font-inter">
                     {new Date(appointment.date).toLocaleDateString('pt-BR')} às {appointment.time}
                   </p>
-                  <Button variant="outline" size="sm" className="hover:bg-[#4664EA] hover:text-white font-inter">
-                    Reagendar
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="hover:bg-[#4664EA] hover:text-white font-inter"
+                    asChild
+                  >
+                    <Link to={`/booking/${appointment.id}/reschedule`}>
+                      Reagendar
+                    </Link>
                   </Button>
                 </div>
               </div>
