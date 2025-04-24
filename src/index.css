@@ -35,7 +35,28 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-playfair;
+  h1 {
+    @apply text-4xl font-playfair font-bold mb-6 text-iazi-text;
+  }
+  h2 {
+    @apply text-3xl font-playfair font-semibold mb-4 text-iazi-text;
+  }
+  h3 {
+    @apply text-2xl font-playfair font-medium mb-3 text-iazi-text;
+  }
+  h4 {
+    @apply text-xl font-playfair font-medium mb-2 text-iazi-text;
+  }
+  p {
+    @apply text-base font-lato text-iazi-text leading-relaxed;
+  }
+  .card-shadow {
+    @apply shadow-md hover:shadow-lg transition-shadow duration-200;
+  }
+  .section-padding {
+    @apply py-8 px-4 md:py-12 md:px-6 lg:py-16 lg:px-8;
+  }
+  .container-padding {
+    @apply container mx-auto px-4 py-8 mt-16;
   }
 }
