@@ -1,3 +1,4 @@
+
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,34 +13,34 @@ const Home = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
-        {/* Feature Cards - Larger size */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* Feature Cards - More compact size */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <Card className="bg-white/70 backdrop-blur hover:shadow-lg transition-all">
-            <CardContent className="p-6 text-center">
-              <Search className="mx-auto h-8 w-8 text-[#4664EA] mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Encontre Profissionais</h3>
-              <p className="text-sm text-gray-600">
-                Pesquise e encontre os melhores profissionais qualificados para seu serviço
+            <CardContent className="p-4 text-center">
+              <Search className="mx-auto h-6 w-6 text-[#4664EA] mb-2" />
+              <h3 className="text-base font-semibold mb-1">Encontre Profissionais</h3>
+              <p className="text-xs text-gray-600">
+                Pesquise e encontre os melhores profissionais
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-white/70 backdrop-blur hover:shadow-lg transition-all">
-            <CardContent className="p-6 text-center">
-              <Calendar className="mx-auto h-8 w-8 text-[#4664EA] mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Escolha a Data</h3>
-              <p className="text-sm text-gray-600">
-                Selecione o melhor horário que se encaixa na sua agenda
+            <CardContent className="p-4 text-center">
+              <Calendar className="mx-auto h-6 w-6 text-[#4664EA] mb-2" />
+              <h3 className="text-base font-semibold mb-1">Escolha a Data</h3>
+              <p className="text-xs text-gray-600">
+                Selecione o melhor horário disponível
               </p>
             </CardContent>
           </Card>
 
           <Card className="bg-white/70 backdrop-blur hover:shadow-lg transition-all">
-            <CardContent className="p-6 text-center">
-              <Clock className="mx-auto h-8 w-8 text-[#4664EA] mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Confirme o Agendamento</h3>
-              <p className="text-sm text-gray-600">
-                Receba confirmação instantânea do seu agendamento
+            <CardContent className="p-4 text-center">
+              <Clock className="mx-auto h-6 w-6 text-[#4664EA] mb-2" />
+              <h3 className="text-base font-semibold mb-1">Confirme o Agendamento</h3>
+              <p className="text-xs text-gray-600">
+                Receba confirmação instantânea
               </p>
             </CardContent>
           </Card>
