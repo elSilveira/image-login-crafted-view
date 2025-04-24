@@ -1,5 +1,7 @@
 
 import { ServiceCard } from "@/components/home/ServiceCard";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 export const ServicesSection = () => {
   const services = [
@@ -28,11 +30,17 @@ export const ServicesSection = () => {
 
   return (
     <section>
-      <h2 className="text-xl font-outfit font-semibold mb-4 text-iazi-text">Serviços Recentes</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-playfair font-semibold text-iazi-text">Serviços Recentes</h2>
+        <Button variant="link" asChild>
+          <Link to="/services">Ver todos</Link>
+        </Button>
+      </div>
       <div className="space-y-4">
         {services.map((service) => (
           <ServiceCard
             key={service.id}
+            id={service.id}
             title={service.title}
             description={service.description}
             rating={service.rating}

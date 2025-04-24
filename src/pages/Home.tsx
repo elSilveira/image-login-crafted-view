@@ -14,6 +14,10 @@ const Home = () => {
       <Navigation />
       
       <main className="container mx-auto px-4 pt-20 pb-12">
+        <h1 className="text-3xl md:text-4xl font-playfair font-bold mb-6 text-iazi-text text-center">
+          Encontre os melhores serviços de beleza
+        </h1>
+        
         <HeroSection />
         <CategorySection />
 
