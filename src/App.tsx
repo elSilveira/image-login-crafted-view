@@ -15,6 +15,7 @@ import ServiceDetails from "./pages/ServiceDetails";
 import Booking from "./pages/Booking";
 import BookingHistory from "./pages/BookingHistory";
 import UserProfile from "./pages/UserProfile";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/booking/:serviceId" element={<Booking />} />
             <Route path="/booking-history" element={<BookingHistory />} />
             <Route path="/profile" element={<UserProfile />} />
+            <Route path="/notifications" element={<Notifications />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>
