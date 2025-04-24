@@ -7,24 +7,24 @@ export const ServicesSection = () => {
   const services = [
     {
       id: 1,
-      title: "Corte Masculino",
-      description: "Corte profissional com acabamento personalizado...",
+      title: "Manutenção de Ar Condicionado",
+      description: "Limpeza e manutenção do seu ar condicionado...",
       rating: 4.8,
-      price: 50,
+      price: 150,
     },
     {
       id: 2,
-      title: "Design de Sobrancelha",
-      description: "Modelagem com técnicas exclusivas para realçar seu olhar...",
+      title: "Pintura Residencial",
+      description: "Serviço profissional de pintura para sua casa...",
       rating: 4.7,
-      price: 35,
+      price: 500,
     },
     {
       id: 3,
-      title: "Manicure Premium",
-      description: "Tratamento completo para unhas com esmaltação em gel...",
+      title: "Aulas de Inglês",
+      description: "Aulas particulares com professor nativo...",
       rating: 4.9,
-      price: 70,
+      price: 80,
     },
   ];
 
@@ -33,7 +33,7 @@ export const ServicesSection = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-playfair font-semibold text-iazi-text">Serviços Recentes</h2>
         <Button variant="link" asChild>
-          <Link to="/services">Ver todos</Link>
+          <Link to="/services" className="font-inter">Ver todos</Link>
         </Button>
       </div>
       <div className="space-y-4">

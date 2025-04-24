@@ -24,7 +24,7 @@ export const ProfessionalsSection = () => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-playfair font-semibold text-iazi-text">Profissionais em Destaque</h2>
         <Button variant="link" asChild>
-          <Link to="/professionals">Ver todos</Link>
+          <Link to="/professionals" className="font-inter">Ver todos</Link>
         </Button>
       </div>
       <div className="space-y-4">

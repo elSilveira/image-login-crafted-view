@@ -29,9 +29,12 @@ export const ServiceCard = ({ title, description, rating, price, id }: ServiceCa
             </div>
             <span className="text-iazi-primary font-semibold font-inter">R$ {price},00</span>
           </div>
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" className="font-inter">
+              Remarcar
+            </Button>
             <Button size="sm" asChild>
-              <Link to={`/service/${id}`}>Ver detalhes</Link>
+              <Link to={`/service/${id}`} className="font-inter">Ver detalhes</Link>
             </Button>
           </div>
         </div>
