@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search as SearchIcon } from "lucide-react";
 
-// Import directly from the files instead of using named exports
+// Import directly from the files
 import { professionals } from "./Professionals";
 import { services } from "./Services";
 
