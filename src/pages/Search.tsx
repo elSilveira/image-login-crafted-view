@@ -6,9 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search as SearchIcon } from "lucide-react";
 
-// Using the mock data from Services and Professionals
-import { services } from "./Services";
+// Import directly from the files instead of using named exports
 import { professionals } from "./Professionals";
+import { services } from "./Services";
 
 const Search = () => {
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -20,7 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Search, Star, Filter, ChevronDown, MoreHorizontal } from "lucide-react";
 
 // Mock data for companies
-const professionals = [
+export const professionals = [
   {
     id: 1,
     name: "Clínica DermaBem",

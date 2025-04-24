@@ -11,6 +11,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Professionals from "./pages/Professionals";
 import Services from "./pages/Services";
+import Search from "./pages/Search";
 
 const queryClient = new QueryClient();
 

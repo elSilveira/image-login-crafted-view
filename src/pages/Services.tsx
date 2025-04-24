@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -19,7 +18,7 @@ import {
 import { Calendar, Search, Star, Filter, MoreHorizontal } from "lucide-react";
 
 // Mock data for services
-const services = [
+export const services = [
   {
     id: 1,
     name: "Limpeza de Pele Profunda",
