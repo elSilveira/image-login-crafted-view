@@ -10,8 +10,6 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
-import Professionals from "./pages/Professionals";
-import Services from "./pages/Services";
 import Search from "./pages/Search";
 
 const queryClient = new QueryClient();
@@ -25,12 +23,12 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/professionals" element={<Professionals />} />
-            <Route path="/services" element={<Services />} />
             <Route path="/search" element={<Search />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/professionals" element={<Navigate to="/search?type=company" />} />
+            <Route path="/services" element={<Navigate to="/search?type=service" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

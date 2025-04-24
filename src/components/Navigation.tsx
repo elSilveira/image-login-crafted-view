@@ -1,7 +1,7 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { User } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { SearchDropdown } from "./SearchDropdown";
 
 const Navigation = () => {
@@ -17,11 +17,8 @@ const Navigation = () => {
             <Link to="/" className="text-gray-700 hover:text-[#4664EA]">
               Início
             </Link>
-            <Link to="/professionals" className="text-gray-700 hover:text-[#4664EA]">
-              Empresas
-            </Link>
-            <Link to="/services" className="text-gray-700 hover:text-[#4664EA]">
-              Serviços
+            <Link to="/search" className="text-gray-700 hover:text-[#4664EA]">
+              Explorar
             </Link>
           </div>
           
