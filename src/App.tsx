@@ -16,6 +16,7 @@ import Booking from "./pages/Booking";
 import BookingHistory from "./pages/BookingHistory";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/booking-history" element={<BookingHistory />} />
             <Route path="/profile" element={<UserProfile />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/settings/*" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

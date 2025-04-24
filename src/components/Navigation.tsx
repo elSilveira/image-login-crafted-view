@@ -1,7 +1,6 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Home, Calendar, Search, User } from "lucide-react";
+import { Home, Calendar, Search, User, Settings } from "lucide-react";
 import { SearchDropdown } from "./SearchDropdown";
 import { useState } from "react";
 
@@ -41,6 +40,18 @@ const Navigation = () => {
                 <SearchDropdown />
               </div>
             </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-iazi-text hover:text-iazi-primary font-inter transition-colors text-sm"
+              asChild
+            >
+              <Link to="/settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="font-medium">Configurações</span>
+              </Link>
+            </Button>
 
             <Button
               variant="ghost"
