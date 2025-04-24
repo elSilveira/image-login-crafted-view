@@ -1,3 +1,4 @@
+
 export const services = [
   {
     id: 1,
@@ -13,6 +14,7 @@ export const services = [
     availability: "Hoje",
     company_id: "clinica-dermabem-123",
     professional_id: "dra-ana-silva-456",
+    description: "Limpeza de pele completa com extração de cravos e espinhas, esfoliação e hidratação profunda para todos os tipos de pele.",
   },
   {
     id: 2,
@@ -28,6 +30,7 @@ export const services = [
     availability: "Amanhã",
     company_id: "fisiosaude-789",
     professional_id: "dr-carlos-mendes-101",
+    description: "Tratamento quiroprático para alinhamento da coluna, alívio de tensões musculares e melhora da postura corporal.",
   },
   {
     id: 3,
@@ -43,6 +46,7 @@ export const services = [
     availability: "Hoje",
     company_id: "bella-hair-studio-112",
     professional_id: "julia-ferreira-131",
+    description: "Corte personalizado seguido de tratamento de hidratação profunda com produtos profissionais para todos os tipos de cabelo.",
   },
   {
     id: 4,
@@ -58,6 +62,7 @@ export const services = [
     availability: "3 dias",
     company_id: "fit-performance-141",
     professional_id: "ricardo-almeida-151",
+    description: "Sessão de treinamento funcional personalizado com foco em fortalecimento muscular, equilíbrio e condicionamento físico.",
   },
   {
     id: 5,
@@ -73,6 +78,7 @@ export const services = [
     availability: "2 dias",
     company_id: "nutrivida-161",
     professional_id: "dra-beatriz-costa-171",
+    description: "Avaliação completa do perfil nutricional com elaboração de plano alimentar personalizado conforme objetivos e necessidades individuais.",
   },
   {
     id: 6,
@@ -88,6 +94,7 @@ export const services = [
     availability: "Hoje",
     company_id: "odontoexcelencia-181",
     professional_id: "dr-marcos-oliveira-191",
+    description: "Procedimento de clareamento dental profissional com gel de alta concentração e luz LED para resultados imediatos e duradouros.",
   }
 ];
 

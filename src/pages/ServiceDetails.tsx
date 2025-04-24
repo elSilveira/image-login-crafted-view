@@ -16,7 +16,7 @@ import { services } from "@/lib/mock-services";
 const ServiceDetails = () => {
   const { id } = useParams();
   
-  // Find the service by ID from mock data, or use a fallback
+  // Find the service by ID from mock data, or use a fallback with description field added
   const service = services.find(s => s.id === Number(id)) || {
     id: 1,
     name: "Corte de Cabelo Masculino",
