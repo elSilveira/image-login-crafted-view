@@ -1,11 +1,11 @@
-
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, Search, Star, User } from "lucide-react";
+import { Calendar, Clock, Search, Star, User, Instagram, Facebook, Linkedin } from "lucide-react";
 import AppointmentSection from "@/components/AppointmentSection";
 import SocialFeed from "@/components/SocialFeed";
 import { Input } from "@/components/ui/input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const Home = () => {
   return (
@@ -55,25 +55,62 @@ const Home = () => {
           />
         </div>
 
-        {/* Popular Categories */}
+        {/* Popular Categories - Now with horizontal scroll */}
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4">Categorias Populares</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {['Cabelo', 'Barba', 'Manicure', 'Maquiagem', 'Massagem', 'Estética'].map((category) => (
-              <Button
-                key={category}
-                variant="outline"
-                className="h-auto py-6 flex flex-col gap-2 hover:bg-[#4664EA] hover:text-white group"
-              >
-                <User className="h-6 w-6 group-hover:text-white" />
-                {category}
-              </Button>
-            ))}
-          </div>
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-2">
+              {['Cabelo', 'Barba', 'Manicure', 'Maquiagem', 'Massagem', 'Estética'].map((category) => (
+                <Button
+                  key={category}
+                  variant="outline"
+                  className="h-16 w-16 flex flex-col items-center justify-center gap-1 p-0 shrink-0 hover:bg-[#4664EA] hover:text-white group"
+                >
+                  <User className="h-5 w-5 group-hover:text-white" />
+                  <span className="text-xs">{category}</span>
+                </Button>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </section>
 
+        <div className="grid md:grid-cols-12 gap-8">
+          {/* Main Feed */}
+          <div className="md:col-span-8">
+            <SocialFeed />
+          </div>
+
+          {/* Side Content */}
+          <div className="md:col-span-4 space-y-8">
+            {/* Appointments Section */}
+            <AppointmentSection />
+
+            {/* Recent Services */}
+            <section>
+              <h2 className="text-xl font-semibold mb-4">Serviços Recentes</h2>
+              <div className="space-y-4">
+                {[1, 2, 3].map((service) => (
+                  <Card key={service} className="hover:shadow-lg transition-shadow">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold mb-2">Serviço {service}</h3>
+                      <p className="text-sm text-gray-600 mb-3">
+                        Descrição breve do serviço oferecido...
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[#4664EA] font-semibold">R$ 50,00</span>
+                        <Button size="sm">Agendar</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </section>
+          </div>
+        </div>
+
         {/* Featured Professionals */}
-        <section className="mb-8">
+        <section className="mt-12">
           <h2 className="text-xl font-semibold mb-4">Profissionais em Destaque</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[1, 2, 3, 4].map((pro) => (
@@ -97,39 +134,6 @@ const Home = () => {
             ))}
           </div>
         </section>
-
-        {/* Recent Services */}
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Serviços Recentes</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((service) => (
-              <Card key={service} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-2">Serviço {service}</h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    Descrição breve do serviço oferecido...
-                  </p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[#4664EA] font-semibold">R$ 50,00</span>
-                    <Button size="sm">Agendar</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
-
-        <div className="grid md:grid-cols-12 gap-8">
-          {/* Main Feed */}
-          <div className="md:col-span-8">
-            <SocialFeed />
-          </div>
-
-          {/* Appointments Section */}
-          <div className="md:col-span-4">
-            <AppointmentSection />
-          </div>
-        </div>
 
         {/* Footer */}
         <footer className="mt-12 pt-8 border-t">
@@ -162,19 +166,30 @@ const Home = () => {
               <h3 className="font-semibold mb-4">Redes Sociais</h3>
               <div className="flex gap-4">
                 <a href="#" className="hover:text-[#4664EA]">
-                  <instagram className="h-5 w-5" />
+                  <Instagram className="h-5 w-5" />
                 </a>
                 <a href="#" className="hover:text-[#4664EA]">
-                  <facebook className="h-5 w-5" />
+                  <Facebook className="h-5 w-5" />
                 </a>
                 <a href="#" className="hover:text-[#4664EA]">
-                  <linkedin className="h-5 w-5" />
+                  <Linkedin className="h-5 w-5" />
                 </a>
               </div>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t text-center text-sm text-gray-600">
-            <p>&copy; 2025 AgendaFácil. Todos os direitos reservados.</p>
+          <div className="mt-8 pt-8 border-t">
+            <div className="flex justify-center gap-4">
+              <a href="#" className="hover:text-[#4664EA]">
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a href="#" className="hover:text-[#4664EA]">
+                <Facebook className="h-5 w-5" />
+              </a>
+              <a href="#" className="hover:text-[#4664EA]">
+                <Linkedin className="h-5 w-5" />
+              </a>
+            </div>
+            <p className="mt-4 text-center text-sm text-gray-600">&copy; 2025 AgendaFácil. Todos os direitos reservados.</p>
           </div>
         </footer>
       </main>
