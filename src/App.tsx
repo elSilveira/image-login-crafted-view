@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,6 +14,7 @@ import Search from "./pages/Search";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import ServiceDetails from "./pages/ServiceDetails";
 import Booking from "./pages/Booking";
+import BookingHistory from "./pages/BookingHistory";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ const App = () => (
             <Route path="/professionals" element={<Navigate to="/search?type=company" />} />
             <Route path="/services" element={<Navigate to="/search?type=service" />} />
             <Route path="/booking/:serviceId" element={<Booking />} />
+            <Route path="/booking-history" element={<BookingHistory />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

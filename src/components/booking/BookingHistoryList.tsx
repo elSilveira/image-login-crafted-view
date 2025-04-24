@@ -1,0 +1,162 @@
+
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Star, Calendar, FileText, RefreshCw, Clock } from "lucide-react";
+
+interface BookingHistoryListProps {
+  status: "scheduled" | "completed" | "cancelled";
+}
+
+const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
+  // Mock data - in a real app this would come from an API
+  const appointments = [
+    {
+      id: 1,
+      service: "Corte de Cabelo Masculino",
+      professional: "João Silva",
+      date: "2025-05-15",
+      time: "14:00",
+      price: 80,
+      status: "scheduled",
+    },
+    {
+      id: 2,
+      service: "Barba",
+      professional: "João Silva",
+      date: "2025-05-10",
+      time: "15:30",
+      price: 40,
+      status: "scheduled",
+    },
+    {
+      id: 3,
+      service: "Coloração",
+      professional: "Maria Santos",
+      date: "2025-03-25",
+      time: "10:00",
+      price: 150,
+      status: "completed",
+    },
+    {
+      id: 4,
+      service: "Manicure",
+      professional: "Ana Oliveira",
+      date: "2025-03-20",
+      time: "16:00",
+      price: 60,
+      status: "completed",
+    },
+    {
+      id: 5,
+      service: "Pedicure",
+      professional: "Ana Oliveira",
+      date: "2025-03-15",
+      time: "09:00",
+      price: 80,
+      status: "cancelled",
+    }
+  ].filter(appointment => appointment.status === status);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return <Badge className="bg-iazi-primary">Confirmado</Badge>;
+      case "completed":
+        return <Badge className="bg-green-500">Concluído</Badge>;
+      case "cancelled":
+        return <Badge variant="outline" className="border-red-500 text-red-500">Cancelado</Badge>;
+      default:
+        return <Badge variant="outline">Pendente</Badge>;
+    }
+  };
+
+  const getActionButtons = (status: string, id: number) => {
+    switch (status) {
+      case "scheduled":
+        return (
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50">
+              Cancelar
+            </Button>
+            <Button size="sm" variant="outline">
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Reagendar
+            </Button>
+          </div>
+        );
+      case "completed":
+        return (
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline">
+              <Star className="h-3 w-3 mr-1" />
+              Avaliar
+            </Button>
+            <Button size="sm" variant="outline">
+              <FileText className="h-3 w-3 mr-1" />
+              Recibo
+            </Button>
+            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover">
+              Agendar Novamente
+            </Button>
+          </div>
+        );
+      case "cancelled":
+        return (
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover">
+              Agendar Novamente
+            </Button>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {appointments.length > 0 ? (
+        appointments.map((appointment) => (
+          <Card key={appointment.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row justify-between gap-4">
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center flex-1">
+                  <div className="bg-iazi-background-alt rounded-md p-3 text-center min-w-[60px]">
+                    <p className="text-sm font-medium">
+                      {new Date(appointment.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                    </p>
+                    <div className="flex items-center justify-center mt-1 text-sm text-muted-foreground">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {appointment.time}
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-medium text-lg">{appointment.service}</h3>
+                    <p className="text-muted-foreground">com {appointment.professional}</p>
+                    <div className="flex items-center justify-between mt-1">
+                      {getStatusBadge(appointment.status)}
+                      <span className="font-medium">R$ {appointment.price}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-3 md:mt-0">
+                  {getActionButtons(appointment.status, appointment.id)}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <div className="text-center p-10">
+          <p className="text-muted-foreground">Nenhum agendamento encontrado</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BookingHistoryList;
