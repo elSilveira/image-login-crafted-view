@@ -17,7 +17,7 @@ const Settings = () => {
       <Navigation />
       <SidebarProvider>
         <div className="min-h-screen flex w-full">
-          <div className="flex flex-col md:flex-row w-full gap-6 container mx-auto px-4 py-8 pt-20">
+          <div className="flex flex-col md:flex-row w-full gap-6 container mx-auto px-4 py-8 mt-16">
             {isMobile ? (
               <Sheet>
                 <SheetTrigger asChild>

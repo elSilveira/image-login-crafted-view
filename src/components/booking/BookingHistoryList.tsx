@@ -1,9 +1,8 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Calendar, FileText, RefreshCw, Clock } from "lucide-react";
+import { Calendar, FileText, RefreshCw, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface BookingHistoryListProps {
@@ -105,7 +104,7 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
               </Link>
             </Button>
             <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter" asChild>
-              <Link to={`/booking/${id}/repeat`}>Agendar Novamente</Link>
+              <Link to={`/booking/${id}/reschedule`}>Agendar Novamente</Link>
             </Button>
           </div>
         );
@@ -113,7 +112,7 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
         return (
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter" asChild>
-              <Link to={`/booking/${id}/repeat`}>Agendar Novamente</Link>
+              <Link to={`/booking/${id}/reschedule`}>Agendar Novamente</Link>
             </Button>
           </div>
         );

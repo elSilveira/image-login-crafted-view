@@ -1,7 +1,6 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Home, Calendar, Search, User, Settings, LogOut, Menu } from "lucide-react";
+import { Calendar, Search, User, Settings, LogOut, Menu } from "lucide-react";
 import { SearchDropdown } from "./SearchDropdown";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,17 +20,15 @@ const Navigation = () => {
   const { user, isAuthenticated, logout } = useAuth();
 
   const navItems = [
-    { name: "Início", path: "/", icon: Home },
     { name: "Explorar", path: "/search", icon: Search },
     { name: "Agendamentos", path: "/booking-history", icon: Calendar },
-    { name: "Configurações", path: "/settings", icon: Settings },
   ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
             <img src="/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png" alt="IAZI" className="h-8" />
           </Link>
           
@@ -59,7 +56,6 @@ const Navigation = () => {
               </div>
             </div>
 
-            {/* Mobile menu */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="md:hidden">
@@ -107,7 +103,6 @@ const Navigation = () => {
               </SheetContent>
             </Sheet>
 
-            {/* Desktop user menu */}
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
