@@ -31,6 +31,8 @@ export const services = [
     price: "R$180",
     duration: "60 min",
     availability: "Hoje",
+    company_id: "clinica-dermabem-123",
+    professional_id: "dra-ana-silva-456",
   },
   {
     id: 2,
@@ -44,6 +46,8 @@ export const services = [
     price: "R$150",
     duration: "45 min",
     availability: "Amanhã",
+    company_id: "fisiosaude-789",
+    professional_id: "dr-carlos-mendes-101",
   },
   {
     id: 3,
@@ -57,6 +61,8 @@ export const services = [
     price: "R$120",
     duration: "90 min",
     availability: "Hoje",
+    company_id: "bella-hair-studio-112",
+    professional_id: "julia-ferreira-131",
   },
   {
     id: 4,
@@ -70,6 +76,8 @@ export const services = [
     price: "R$90",
     duration: "60 min",
     availability: "3 dias",
+    company_id: "fit-performance-141",
+    professional_id: "ricardo-almeida-151",
   },
   {
     id: 5,
@@ -83,6 +91,8 @@ export const services = [
     price: "R$200",
     duration: "60 min",
     availability: "2 dias",
+    company_id: "nutrivida-161",
+    professional_id: "dra-beatriz-costa-171",
   },
   {
     id: 6,
@@ -96,6 +106,8 @@ export const services = [
     price: "R$450",
     duration: "120 min",
     availability: "Hoje",
+    company_id: "odontoexcelencia-181",
+    professional_id: "dr-marcos-oliveira-191",
   }
 ];
 
@@ -216,6 +228,150 @@ const Services = () => {
   const indexOfFirstService = indexOfLastService - servicesPerPage;
   const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
 
+  // Update the service card rendering with proper font classes and connected links
+  const renderServiceCard = (service: any) => {
+    return (
+      <Card key={service.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+        highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+      }`}>
+        <CardContent className="p-0">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
+              <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
+                <img 
+                  src={service.image} 
+                  alt={service.name} 
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="flex items-center gap-1 mb-1">
+                {renderStars(service.rating)}
+              </div>
+              <div className="text-sm text-center">
+                <span className="font-semibold">{service.rating}</span>
+                <span className="text-gray-500"> ({service.reviews})</span>
+              </div>
+            </div>
+            
+            <div className="md:w-3/4 p-6">
+              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
+              <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
+              
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge variant="outline" className="bg-gray-50">
+                  {service.duration}
+                </Badge>
+                <Badge variant="outline" className="bg-gray-50">
+                  {service.price}
+                </Badge>
+              </div>
+              
+              <Link 
+                to={`/professional/${service.company_id}`} 
+                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
+              >
+                <span className="font-medium">Empresa:</span> {service.company}
+              </Link>
+              
+              <Link
+                to={`/professional/${service.professional_id}`}
+                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
+              >
+                <span className="font-medium">Profissional:</span> {service.professional}
+              </Link>
+              
+              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
+                <Calendar className="h-4 w-4 mr-1" />
+                <span>Disponível: {service.availability}</span>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link to={`/service/${service.id}`}>
+                    Ver detalhes
+                  </Link>
+                </Button>
+                <Button className="flex-1" asChild>
+                  <Link to={`/booking/${service.id}`}>Agendar</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Update the company card rendering with proper font classes and connected links
+  const renderCompanyCard = (company: any) => {
+    return (
+      <Card key={company.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+        highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+      }`}>
+        <CardContent className="p-0">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
+              <Avatar className="h-24 w-24 mb-3">
+                <AvatarImage src={company.image} alt={company.name} />
+                <AvatarFallback>{company.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+              <div className="flex items-center gap-1 mb-1">
+                {renderStars(company.rating)}
+              </div>
+              <div className="text-sm text-center">
+                <span className="font-semibold">{company.rating}</span>
+                <span className="text-gray-500"> ({company.reviews})</span>
+              </div>
+            </div>
+            
+            <div className="md:w-3/4 p-6">
+              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{company.name}</h3>
+              <p className="text-[#4664EA] text-sm font-inter mb-2">{company.specialty}</p>
+              
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge variant="outline" className="bg-gray-50">
+                  {company.duration}
+                </Badge>
+                <Badge variant="outline" className="bg-gray-50">
+                  {company.price}
+                </Badge>
+              </div>
+              
+              <p className="text-sm text-gray-600 font-inter mb-3">
+                <span className="font-medium">Profissionais:</span>{" "}
+                {company.professionals.map((prof: string, index: number) => (
+                  <Link
+                    key={index}
+                    to={`/professional/${company.professional_ids[index]}`}
+                    className="hover:text-iazi-primary"
+                  >
+                    {prof}{index < company.professionals.length - 1 ? ", " : ""}
+                  </Link>
+                ))}
+              </p>
+              
+              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
+                <Calendar className="h-4 w-4 mr-1" />
+                <span>Disponível: {company.availability}</span>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link to={`/professional/${company.id}`}>
+                    Ver detalhes
+                  </Link>
+                </Button>
+                <Button className="flex-1" asChild>
+                  <Link to={`/booking/company/${company.id}`}>Agendar</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -332,64 +488,7 @@ const Services = () => {
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {currentServices.map((service) => (
-            <Card key={service.id} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
-              <CardContent className="p-0">
-                <div className="flex flex-col md:flex-row">
-                  <div className="md:w-1/3 p-4 flex flex-col items-center justify-center bg-gray-50">
-                    <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
-                      <img 
-                        src={service.image} 
-                        alt={service.name} 
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex items-center gap-1 mb-1">
-                      {renderStars(service.rating)}
-                    </div>
-                    <div className="text-sm text-center">
-                      <span className="font-semibold">{service.rating}</span>
-                      <span className="text-gray-500"> ({service.reviews})</span>
-                    </div>
-                  </div>
-                  
-                  <div className="md:w-2/3 p-6">
-                    <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
-                    <p className="text-[#4664EA] text-sm mb-2">{service.category}</p>
-                    
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      <Badge variant="outline" className="bg-gray-50">
-                        {service.duration}
-                      </Badge>
-                      <Badge variant="outline" className="bg-gray-50">
-                        {service.price}
-                      </Badge>
-                    </div>
-                    
-                    <p className="text-sm text-gray-600 mb-3">
-                      <span className="font-medium">Empresa:</span> {service.company}
-                    </p>
-                    
-                    <p className="text-sm text-gray-600 mb-3">
-                      <span className="font-medium">Profissional:</span> {service.professional}
-                    </p>
-                    
-                    <div className="flex items-center text-sm text-gray-500 mb-4">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      <span>Disponível: {service.availability}</span>
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <Button variant="outline" className="flex-1" asChild>
-                        <Link to={`/service/${service.id}`}>
-                          Ver detalhes
-                        </Link>
-                      </Button>
-                      <Button className="flex-1">Agendar</Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            renderServiceCard(service)
           ))}
         </div>
 

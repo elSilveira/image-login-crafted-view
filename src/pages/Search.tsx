@@ -33,13 +33,11 @@ const Search = () => {
   const [sortBy, setSortBy] = useState("rating");
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFilter);
 
-  // Update view type when URL changes
   useEffect(() => {
     setViewType(typeFilter);
     setSelectedCategory(categoryFilter);
   }, [typeFilter, categoryFilter]);
 
-  // Update URL when filters change
   const updateFilters = (params: Record<string, string>) => {
     const newSearchParams = new URLSearchParams(searchParams);
     
@@ -54,7 +52,6 @@ const Search = () => {
     setSearchParams(newSearchParams);
   };
 
-  // Filter services and companies based on search criteria
   const filteredServices = services.filter((service) => {
     const matchesSearch = !searchTerm || 
       service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -81,12 +78,10 @@ const Search = () => {
     return matchesSearch && matchesCategory;
   });
 
-  // Create lists of all categories from both services and companies
   const serviceCategories = [...new Set(services.map(service => service.category))];
   const companyCategories = [...new Set(professionals.map(company => company.specialty))];
   const allCategories = [...new Set([...serviceCategories, ...companyCategories])].sort();
 
-  // Sort results
   const sortedServices = [...filteredServices].sort((a, b) => {
     if (sortBy === "rating") {
       return b.rating - a.rating;
@@ -105,7 +100,6 @@ const Search = () => {
     return 0;
   });
 
-  // Pagination
   const itemsPerPage = 4;
   const totalServices = sortedServices.length;
   const totalCompanies = sortedCompanies.length;
@@ -126,7 +120,6 @@ const Search = () => {
     viewType === "all" ? Math.max(0, endIdx - totalServices) : endIdx
   );
 
-  // Function to render stars based on rating
   const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -142,35 +135,28 @@ const Search = () => {
     return stars;
   };
 
-  // Handle category selection
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     updateFilters({ category: category });
     setCurrentPage(1);
   };
 
-  // Handle tab change
   const handleTabChange = (value: string) => {
     setViewType(value);
     updateFilters({ type: value });
     setCurrentPage(1);
   };
 
-  // Handle sort change
   const handleSortChange = (value: string) => {
     setSortBy(value);
     setCurrentPage(1);
   };
 
-  // Render service card
   const renderServiceCard = (service: any) => {
     return (
-      <Card 
-        key={service.id} 
-        className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-          highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-        }`}
-      >
+      <Card key={service.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+        highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+      }`}>
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
             <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
@@ -191,8 +177,8 @@ const Search = () => {
             </div>
             
             <div className="md:w-3/4 p-6">
-              <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
-              <p className="text-[#4664EA] text-sm mb-2">{service.category}</p>
+              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
+              <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
               
               <div className="flex flex-wrap gap-2 mb-3">
                 <Badge variant="outline" className="bg-gray-50">
@@ -203,15 +189,21 @@ const Search = () => {
                 </Badge>
               </div>
               
-              <p className="text-sm text-gray-600 mb-3">
+              <Link 
+                to={`/professional/${service.company_id}`}
+                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
+              >
                 <span className="font-medium">Empresa:</span> {service.company}
-              </p>
+              </Link>
               
-              <p className="text-sm text-gray-600 mb-3">
+              <Link
+                to={`/professional/${service.professional_id}`}
+                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
+              >
                 <span className="font-medium">Profissional:</span> {service.professional}
-              </p>
+              </Link>
               
-              <div className="flex items-center text-sm text-gray-500 mb-4">
+              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
                 <Calendar className="h-4 w-4 mr-1" />
                 <span>Disponível: {service.availability}</span>
               </div>
@@ -222,7 +214,9 @@ const Search = () => {
                     Ver detalhes
                   </Link>
                 </Button>
-                <Button className="flex-1">Agendar</Button>
+                <Button className="flex-1" asChild>
+                  <Link to={`/booking/${service.id}`}>Agendar</Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -231,15 +225,11 @@ const Search = () => {
     );
   };
 
-  // Render company card
   const renderCompanyCard = (company: any) => {
     return (
-      <Card 
-        key={company.id} 
-        className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-          highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-        }`}
-      >
+      <Card key={company.id} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+        highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+      }`}>
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
             <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
@@ -257,8 +247,8 @@ const Search = () => {
             </div>
             
             <div className="md:w-3/4 p-6">
-              <h3 className="text-lg font-semibold mb-1">{company.name}</h3>
-              <p className="text-[#4664EA] text-sm mb-2">{company.specialty}</p>
+              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{company.name}</h3>
+              <p className="text-[#4664EA] text-sm font-inter mb-2">{company.specialty}</p>
               
               <div className="flex flex-wrap gap-2 mb-3">
                 {company.services.slice(0, 3).map((service: string, i: number) => (
@@ -268,11 +258,20 @@ const Search = () => {
                 ))}
               </div>
               
-              <p className="text-sm text-gray-600 mb-3">
-                <span className="font-medium">Profissionais:</span> {company.professionals.join(", ")}
+              <p className="text-sm text-gray-600 font-inter mb-3">
+                <span className="font-medium">Profissionais:</span>{" "}
+                {company.professionals.map((prof: string, index: number) => (
+                  <Link
+                    key={index}
+                    to={`/professional/${company.professional_ids[index]}`}
+                    className="hover:text-iazi-primary"
+                  >
+                    {prof}{index < company.professionals.length - 1 ? ", " : ""}
+                  </Link>
+                ))}
               </p>
               
-              <div className="flex items-center text-sm text-gray-500 mb-4">
+              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
                 <Calendar className="h-4 w-4 mr-1" />
                 <span>Disponível: {company.availability}</span>
               </div>
@@ -283,7 +282,9 @@ const Search = () => {
                     Ver detalhes
                   </Link>
                 </Button>
-                <Button className="flex-1">Agendar</Button>
+                <Button className="flex-1" asChild>
+                  <Link to={`/booking/company/${company.id}`}>Agendar</Link>
+                </Button>
               </div>
             </div>
           </div>
@@ -312,7 +313,6 @@ const Search = () => {
               'Explore empresas e serviços disponíveis'}
           </p>
 
-          {/* Categories section */}
           <div className="mb-6">
             <h2 className="font-medium mb-3">Categorias populares</h2>
             <div className="flex flex-wrap gap-2">
@@ -336,7 +336,6 @@ const Search = () => {
             </div>
           </div>
 
-          {/* Filters and sorting */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <Tabs defaultValue={viewType} value={viewType} onValueChange={handleTabChange} className="w-full">
               <TabsList>
@@ -404,7 +403,6 @@ const Search = () => {
             </Tabs>
           </div>
 
-          {/* Pagination */}
           {totalPages > 1 && (
             <Pagination className="mt-8">
               <PaginationContent>
