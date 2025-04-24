@@ -17,23 +17,27 @@ const Navigation = () => {
           </Link>
           
           <div className={`hidden md:flex items-center space-x-6 ${isSearchExpanded ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}>
-            <Link to="/" className="text-iazi-text hover:text-iazi-primary font-lato text-sm transition-colors flex items-center gap-2">
+            <Link to="/" className="text-iazi-text hover:text-iazi-primary font-inter text-sm transition-colors flex items-center gap-2">
               <Home className="h-4 w-4" />
               <span className="font-medium">Início</span>
             </Link>
-            <Link to="/search" className="text-iazi-text hover:text-iazi-primary font-lato text-sm transition-colors flex items-center gap-2">
+            <Link to="/search" className="text-iazi-text hover:text-iazi-primary font-inter text-sm transition-colors flex items-center gap-2">
               <Search className="h-4 w-4" />
               <span className="font-medium">Explorar</span>
             </Link>
-            <Link to="/booking-history" className="text-iazi-text hover:text-iazi-primary font-lato text-sm transition-colors flex items-center gap-2">
+            <Link to="/booking-history" className="text-iazi-text hover:text-iazi-primary font-inter text-sm transition-colors flex items-center gap-2">
               <Calendar className="h-4 w-4" />
               <span className="font-medium">Agendamentos</span>
             </Link>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className={`transition-all duration-200 ${isSearchExpanded ? 'w-[500px]' : 'w-[200px]'}`}>
-              <div onClick={() => setIsSearchExpanded(true)} onBlur={() => setIsSearchExpanded(false)} tabIndex={0}>
+            <div className={`transition-all duration-200 ${isSearchExpanded ? 'w-[300px] md:w-[400px]' : 'w-[180px]'}`}>
+              <div 
+                onClick={() => setIsSearchExpanded(true)} 
+                onBlur={() => setIsSearchExpanded(false)} 
+                tabIndex={0}
+              >
                 <SearchDropdown />
               </div>
             </div>
@@ -41,7 +45,7 @@ const Navigation = () => {
             <Button
               variant="ghost"
               size="sm"
-              className="text-iazi-text hover:text-iazi-primary font-lato transition-colors text-sm"
+              className="text-iazi-text hover:text-iazi-primary font-inter transition-colors text-sm"
               asChild
             >
               <Link to="/login" className="flex items-center gap-2">
