@@ -16,97 +16,111 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Search, Star, Filter, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Calendar, Search, Star, Filter, MoreHorizontal } from "lucide-react";
 
-// Mock data for companies
-const professionals = [
+// Mock data for services
+const services = [
   {
     id: 1,
-    name: "Clínica DermaBem",
-    specialty: "Clínica Dermatológica",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+    name: "Limpeza de Pele Profunda",
+    category: "Tratamento Facial",
+    company: "Clínica DermaBem",
+    professional: "Dra. Ana Silva",
+    image: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881",
     rating: 4.8,
-    reviews: 124,
-    services: ["Limpeza de Pele", "Peeling", "Botox"],
-    professionals: ["Dra. Ana Silva", "Dr. Miguel Santos"],
+    reviews: 87,
+    price: "R$180",
+    duration: "60 min",
     availability: "Hoje",
-    price: "R$150-300",
   },
   {
     id: 2,
-    name: "FisioSaúde",
-    specialty: "Centro de Fisioterapia",
-    image: "https://images.unsplash.com/photo-1568602471122-7832951cc4c5",
-    rating: 4.6,
-    reviews: 98,
-    services: ["Quiropraxia", "RPG", "Acupuntura"],
-    professionals: ["Dr. Carlos Mendes", "Dra. Paula Lima"],
+    name: "Quiropraxia",
+    category: "Fisioterapia",
+    company: "FisioSaúde",
+    professional: "Dr. Carlos Mendes",
+    image: "https://images.unsplash.com/photo-1552693673-1bf958298935",
+    rating: 4.9,
+    reviews: 112,
+    price: "R$150",
+    duration: "45 min",
     availability: "Amanhã",
-    price: "R$100-200",
   },
   {
     id: 3,
-    name: "Bella Hair Studio",
-    specialty: "Salão de Beleza",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2",
-    rating: 4.9,
-    reviews: 213,
-    services: ["Corte", "Coloração", "Hidratação"],
-    professionals: ["Julia Ferreira", "Roberto Gomes"],
+    name: "Corte e Hidratação",
+    category: "Cabelo",
+    company: "Bella Hair Studio",
+    professional: "Julia Ferreira",
+    image: "https://images.unsplash.com/photo-1560869713-7d0a29430803",
+    rating: 4.7,
+    reviews: 95,
+    price: "R$120",
+    duration: "90 min",
     availability: "Hoje",
-    price: "R$80-250",
   },
   {
     id: 4,
-    name: "Fit Performance",
-    specialty: "Academia e Personal Training",
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
-    rating: 4.7,
-    reviews: 86,
-    services: ["Musculação", "Funcional", "Pilates"],
-    professionals: ["Ricardo Almeida", "Camila Souza"],
+    name: "Treinamento Funcional",
+    category: "Fitness",
+    company: "Fit Performance",
+    professional: "Ricardo Almeida",
+    image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
+    rating: 4.6,
+    reviews: 64,
+    price: "R$90",
+    duration: "60 min",
     availability: "3 dias",
-    price: "R$90-120",
   },
   {
     id: 5,
-    name: "NutriVida",
-    specialty: "Consultório Nutricional",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-    rating: 4.5,
-    reviews: 76,
-    services: ["Avaliação", "Plano Alimentar", "Reeducação"],
-    professionals: ["Dra. Beatriz Costa", "Dr. André Martins"],
+    name: "Consulta Nutricional",
+    category: "Nutrição",
+    company: "NutriVida",
+    professional: "Dra. Beatriz Costa",
+    image: "https://images.unsplash.com/photo-1490818387583-1baba5e638af",
+    rating: 4.8,
+    reviews: 53,
+    price: "R$200",
+    duration: "60 min",
     availability: "2 dias",
-    price: "R$120-300",
   },
   {
     id: 6,
-    name: "OdontoExcelência",
-    specialty: "Clínica Odontológica",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e",
+    name: "Clareamento Dental",
+    category: "Odontologia",
+    company: "OdontoExcelência",
+    professional: "Dr. Marcos Oliveira",
+    image: "https://images.unsplash.com/photo-1606811971618-4486d14f3f99",
     rating: 4.9,
-    reviews: 154,
-    services: ["Limpeza", "Clareamento", "Restauração"],
-    professionals: ["Dr. Marcos Oliveira", "Dra. Luiza Dias"],
+    reviews: 78,
+    price: "R$450",
+    duration: "120 min",
     availability: "Hoje",
-    price: "R$200-600",
   }
 ];
 
-// Specialty options
-const specialties = [
-  "Todas especialidades",
-  "Clínica Dermatológica",
-  "Centro de Fisioterapia",
-  "Salão de Beleza",
-  "Academia e Personal Training",
-  "Consultório Nutricional",
-  "Clínica Odontológica",
-  "Consultório Psicológico",
-  "Centro de Massagem",
-  "Estúdio de Manicure",
+// Category options
+const categories = [
+  "Todas categorias",
+  "Tratamento Facial",
+  "Fisioterapia",
+  "Cabelo",
+  "Fitness",
+  "Nutrição",
+  "Odontologia",
+  "Massagem",
+  "Estética",
+  "Unhas",
+];
+
+// Price range options
+const priceRanges = [
+  "Qualquer preço",
+  "Até R$100",
+  "R$100 a R$200",
+  "R$200 a R$300",
+  "Acima de R$300",
 ];
 
 // Availability options
@@ -118,11 +132,12 @@ const availabilityOptions = [
   "Próxima semana",
 ];
 
-const Professionals = () => {
+const Services = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [specialty, setSpecialty] = useState("Todas especialidades");
+  const [category, setCategory] = useState("Todas categorias");
   const [sortBy, setSortBy] = useState("rating");
   const [ratingFilter, setRatingFilter] = useState([0]);
+  const [priceRange, setPriceRange] = useState("Qualquer preço");
   const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -144,58 +159,72 @@ const Professionals = () => {
     return stars;
   };
 
-  // Filter professionals based on search, specialty, rating, and availability
-  const filteredProfessionals = professionals.filter((pro) => {
+  // Filter services based on search, category, rating, price, and availability
+  const filteredServices = services.filter((service) => {
     const matchesSearch = 
       searchTerm === "" || 
-      pro.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pro.specialty.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pro.services.some(service => service.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      pro.professionals.some(prof => prof.toLowerCase().includes(searchTerm.toLowerCase()));
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.professional.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesSpecialty = 
-      specialty === "Todas especialidades" || 
-      pro.specialty === specialty;
+    const matchesCategory = 
+      category === "Todas categorias" || 
+      service.category === category;
     
-    const matchesRating = pro.rating >= ratingValue;
+    const matchesRating = service.rating >= ratingValue;
+    
+    // Simplified price matching - in a real app you'd parse the actual price value
+    const matchesPriceRange = 
+      priceRange === "Qualquer preço" || 
+      (priceRange === "Até R$100" && service.price.replace("R$", "") <= "100") ||
+      (priceRange === "R$100 a R$200" && 
+        service.price.replace("R$", "") >= "100" && 
+        service.price.replace("R$", "") <= "200") ||
+      (priceRange === "R$200 a R$300" && 
+        service.price.replace("R$", "") >= "200" && 
+        service.price.replace("R$", "") <= "300") ||
+      (priceRange === "Acima de R$300" && service.price.replace("R$", "") > "300");
     
     const matchesAvailability = 
       availabilityFilter === "Qualquer data" || 
-      (availabilityFilter === "Hoje" && pro.availability === "Hoje") ||
-      (availabilityFilter === "Amanhã" && pro.availability === "Amanhã") ||
+      (availabilityFilter === "Hoje" && service.availability === "Hoje") ||
+      (availabilityFilter === "Amanhã" && service.availability === "Amanhã") ||
       (availabilityFilter === "Esta semana") ||
       (availabilityFilter === "Próxima semana");
     
-    return matchesSearch && matchesSpecialty && matchesRating && matchesAvailability;
+    return matchesSearch && matchesCategory && matchesRating && matchesPriceRange && matchesAvailability;
   });
 
-  // Sort professionals
-  const sortedProfessionals = [...filteredProfessionals].sort((a, b) => {
+  // Sort services
+  const sortedServices = [...filteredServices].sort((a, b) => {
     if (sortBy === "rating") {
       return b.rating - a.rating;
     } else if (sortBy === "reviews") {
       return b.reviews - a.reviews;
-    } else if (sortBy === "recent") {
-      return b.id - a.id;  // Using ID as a proxy for "recent"
+    } else if (sortBy === "price-asc") {
+      return parseInt(a.price.replace(/\D/g, '')) - parseInt(b.price.replace(/\D/g, ''));
+    } else if (sortBy === "price-desc") {
+      return parseInt(b.price.replace(/\D/g, '')) - parseInt(a.price.replace(/\D/g, ''));
     }
     // Default sort by rating
     return b.rating - a.rating;
   });
 
-  const professionalPerPage = 4;
-  const totalPages = Math.ceil(sortedProfessionals.length / professionalPerPage);
-  const indexOfLastProfessional = currentPage * professionalPerPage;
-  const indexOfFirstProfessional = indexOfLastProfessional - professionalPerPage;
-  const currentProfessionals = sortedProfessionals.slice(indexOfFirstProfessional, indexOfLastProfessional);
+  const servicesPerPage = 4;
+  const totalPages = Math.ceil(sortedServices.length / servicesPerPage);
+  const indexOfLastService = currentPage * servicesPerPage;
+  const indexOfFirstService = indexOfLastService - servicesPerPage;
+  const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
-        <h1 className="text-3xl font-bold mb-2">Empresas</h1>
+        <h1 className="text-3xl font-bold mb-2">Serviços</h1>
         <p className="text-gray-600 mb-8">
-          Encontre as melhores empresas e profissionais para o serviço que você precisa
+          Encontre os melhores serviços disponíveis na plataforma
         </p>
 
         {/* Filters Section */}
@@ -204,21 +233,21 @@ const Professionals = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
               <Input 
-                placeholder="Buscar por nome, especialidade ou serviço..." 
+                placeholder="Buscar por nome, categoria ou empresa..." 
                 className="pl-10 w-full bg-gray-50 border-gray-200 focus:bg-white"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <Select value={specialty} onValueChange={setSpecialty}>
+            <Select value={category} onValueChange={setCategory}>
               <SelectTrigger className="w-full md:w-60">
-                <SelectValue placeholder="Especialidade" />
+                <SelectValue placeholder="Categoria" />
               </SelectTrigger>
               <SelectContent>
-                {specialties.map((spec) => (
-                  <SelectItem key={spec} value={spec}>
-                    {spec}
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -231,7 +260,8 @@ const Professionals = () => {
               <SelectContent>
                 <SelectItem value="rating">Melhor avaliação</SelectItem>
                 <SelectItem value="reviews">Mais avaliações</SelectItem>
-                <SelectItem value="recent">Mais recentes</SelectItem>
+                <SelectItem value="price-asc">Menor preço</SelectItem>
+                <SelectItem value="price-desc">Maior preço</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -271,63 +301,87 @@ const Professionals = () => {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="w-full md:w-1/3">
+              <label className="flex items-center text-sm font-medium mb-2">
+                <Filter className="h-4 w-4 mr-2" />
+                Faixa de preço
+              </label>
+              <Select value={priceRange} onValueChange={setPriceRange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Qualquer preço" />
+                </SelectTrigger>
+                <SelectContent>
+                  {priceRanges.map((range) => (
+                    <SelectItem key={range} value={range}>
+                      {range}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
         
         {/* Results count */}
         <div className="text-gray-600 mb-4">
           <p>
-            <span className="font-semibold">{filteredProfessionals.length}</span> empresas encontradas
+            <span className="font-semibold">{filteredServices.length}</span> serviços encontrados
           </p>
         </div>
 
-        {/* Professionals Grid */}
+        {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {currentProfessionals.map((company) => (
-            <Card key={company.id} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
+          {currentServices.map((service) => (
+            <Card key={service.id} className="overflow-hidden hover:shadow-md transition-shadow duration-300">
               <CardContent className="p-0">
                 <div className="flex flex-col md:flex-row">
                   <div className="md:w-1/3 p-4 flex flex-col items-center justify-center bg-gray-50">
-                    <Avatar className="h-24 w-24 mb-3">
-                      <AvatarImage src={company.image} alt={company.name} />
-                      <AvatarFallback>{company.name.substring(0, 2)}</AvatarFallback>
-                    </Avatar>
+                    <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
+                      <img 
+                        src={service.image} 
+                        alt={service.name} 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                     <div className="flex items-center gap-1 mb-1">
-                      {renderStars(company.rating)}
+                      {renderStars(service.rating)}
                     </div>
                     <div className="text-sm text-center">
-                      <span className="font-semibold">{company.rating}</span>
-                      <span className="text-gray-500"> ({company.reviews})</span>
+                      <span className="font-semibold">{service.rating}</span>
+                      <span className="text-gray-500"> ({service.reviews})</span>
                     </div>
                   </div>
                   
                   <div className="md:w-2/3 p-6">
-                    <h3 className="text-lg font-semibold mb-1">{company.name}</h3>
-                    <p className="text-[#4664EA] text-sm mb-2">{company.specialty}</p>
+                    <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
+                    <p className="text-[#4664EA] text-sm mb-2">{service.category}</p>
                     
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {company.services.map((service, i) => (
-                        <Badge key={i} variant="outline" className="bg-gray-50">
-                          {service}
-                        </Badge>
-                      ))}
+                      <Badge variant="outline" className="bg-gray-50">
+                        {service.duration}
+                      </Badge>
+                      <Badge variant="outline" className="bg-gray-50">
+                        {service.price}
+                      </Badge>
                     </div>
                     
                     <p className="text-sm text-gray-600 mb-3">
-                      <span className="font-medium">Profissionais:</span> {company.professionals.join(", ")}
+                      <span className="font-medium">Empresa:</span> {service.company}
                     </p>
                     
-                    <div className="flex flex-wrap justify-between items-center text-sm text-gray-500 mb-4">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>Disponível: {company.availability}</span>
-                      </div>
-                      <div>{company.price}</div>
+                    <p className="text-sm text-gray-600 mb-3">
+                      <span className="font-medium">Profissional:</span> {service.professional}
+                    </p>
+                    
+                    <div className="flex items-center text-sm text-gray-500 mb-4">
+                      <Calendar className="h-4 w-4 mr-1" />
+                      <span>Disponível: {service.availability}</span>
                     </div>
                     
                     <div className="flex gap-2">
                       <Button variant="outline" className="flex-1" asChild>
-                        <Link to={`/professional/${company.id}`}>
+                        <Link to={`/service/${service.id}`}>
                           Ver detalhes
                         </Link>
                       </Button>
@@ -390,4 +444,4 @@ const Professionals = () => {
   );
 };
 
-export default Professionals;
+export default Services;

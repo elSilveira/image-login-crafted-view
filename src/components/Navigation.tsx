@@ -18,7 +18,10 @@ const Navigation = () => {
               Início
             </Link>
             <Link to="/professionals" className="text-gray-700 hover:text-[#4664EA]">
-              Profissionais
+              Empresas
+            </Link>
+            <Link to="/services" className="text-gray-700 hover:text-[#4664EA]">
+              Serviços
             </Link>
           </div>
           
@@ -26,7 +29,7 @@ const Navigation = () => {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
               <Input 
-                placeholder="Buscar serviços ou profissionais..." 
+                placeholder="Buscar serviços ou empresas..." 
                 className="pl-10 w-full bg-gray-50 border-gray-200 focus:bg-white"
               />
             </div>

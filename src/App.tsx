@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Professionals from "./pages/Professionals";
+import Services from "./pages/Services";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/professionals" element={<Professionals />} />
+          <Route path="/services" element={<Services />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
