@@ -1,8 +1,9 @@
-
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Clock, Search } from "lucide-react";
+import AppointmentSection from "@/components/AppointmentSection";
+import SocialFeed from "@/components/SocialFeed";
 
 const Home = () => {
   return (
@@ -25,7 +26,9 @@ const Home = () => {
           </Button>
         </section>
 
-        <section className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <AppointmentSection />
+        
+        <section className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto mt-12">
           <Card className="bg-white/70 backdrop-blur">
             <CardContent className="p-6 text-center">
               <Search className="mx-auto h-12 w-12 text-[#4664EA] mb-4" />
@@ -56,6 +59,8 @@ const Home = () => {
             </CardContent>
           </Card>
         </section>
+
+        <SocialFeed />
       </main>
     </div>
   );
