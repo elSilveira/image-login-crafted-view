@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const ServiceProviders = () => {
+interface ServiceProvidersProps {
+  serviceId?: number;
+}
+
+const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
   // Mock data - In a real app, this would come from props or an API
   const providers = [
     {
@@ -57,7 +61,11 @@ const ServiceProviders = () => {
                   <div className="font-semibold">R$ {provider.price}</div>
                   <div className="text-sm text-muted-foreground">por serviço</div>
                 </div>
-                <Button>Agendar</Button>
+                <Button asChild>
+                  <Link to={`/booking/${serviceId || 1}?provider=${provider.id}`}>
+                    Agendar
+                  </Link>
+                </Button>
               </div>
             </div>
           </CardContent>

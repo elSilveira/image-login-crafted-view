@@ -2,23 +2,23 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
+import { services } from "@/lib/mock-services";
 
-const RelatedServices = () => {
-  // Mock data - In a real app, this would come from props or an API
-  const relatedServices = [
-    {
-      id: "2",
-      name: "Barba",
-      image: "https://source.unsplash.com/random/100x100/?beard",
-      price: 40,
-    },
-    {
-      id: "3",
-      name: "Coloração",
-      image: "https://source.unsplash.com/random/100x100/?hair-color",
-      price: 150,
-    },
-  ];
+interface RelatedServicesProps {
+  currentServiceId?: number;
+}
+
+const RelatedServices = ({ currentServiceId }: RelatedServicesProps) => {
+  // Filter services to exclude the current one and limit to 2
+  const relatedServices = services
+    .filter(service => service.id !== currentServiceId)
+    .slice(0, 2)
+    .map(service => ({
+      id: service.id,
+      name: service.name,
+      image: service.image,
+      price: service.price,
+    }));
 
   return (
     <div className="space-y-4">
@@ -35,7 +35,7 @@ const RelatedServices = () => {
                 <div>
                   <div className="font-medium">{service.name}</div>
                   <div className="text-sm text-muted-foreground">
-                    A partir de R$ {service.price}
+                    A partir de {service.price}
                   </div>
                 </div>
               </div>
