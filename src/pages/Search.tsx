@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -163,6 +162,136 @@ const Search = () => {
     setCurrentPage(1);
   };
 
+  // Render service card
+  const renderServiceCard = (service: any) => {
+    return (
+      <Card 
+        key={service.id} 
+        className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+          highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+        }`}
+      >
+        <CardContent className="p-0">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
+              <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
+                <img 
+                  src={service.image} 
+                  alt={service.name} 
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="flex items-center gap-1 mb-1">
+                {renderStars(service.rating)}
+              </div>
+              <div className="text-sm text-center">
+                <span className="font-semibold">{service.rating}</span>
+                <span className="text-gray-500"> ({service.reviews})</span>
+              </div>
+            </div>
+            
+            <div className="md:w-3/4 p-6">
+              <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
+              <p className="text-[#4664EA] text-sm mb-2">{service.category}</p>
+              
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge variant="outline" className="bg-gray-50">
+                  {service.duration}
+                </Badge>
+                <Badge variant="outline" className="bg-gray-50">
+                  {service.price}
+                </Badge>
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-3">
+                <span className="font-medium">Empresa:</span> {service.company}
+              </p>
+              
+              <p className="text-sm text-gray-600 mb-3">
+                <span className="font-medium">Profissional:</span> {service.professional}
+              </p>
+              
+              <div className="flex items-center text-sm text-gray-500 mb-4">
+                <Calendar className="h-4 w-4 mr-1" />
+                <span>Disponível: {service.availability}</span>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link to={`/service/${service.id}`}>
+                    Ver detalhes
+                  </Link>
+                </Button>
+                <Button className="flex-1">Agendar</Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Render company card
+  const renderCompanyCard = (company: any) => {
+    return (
+      <Card 
+        key={company.id} 
+        className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+          highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
+        }`}
+      >
+        <CardContent className="p-0">
+          <div className="flex flex-col md:flex-row">
+            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
+              <Avatar className="h-24 w-24 mb-3">
+                <AvatarImage src={company.image} alt={company.name} />
+                <AvatarFallback>{company.name.substring(0, 2)}</AvatarFallback>
+              </Avatar>
+              <div className="flex items-center gap-1 mb-1">
+                {renderStars(company.rating)}
+              </div>
+              <div className="text-sm text-center">
+                <span className="font-semibold">{company.rating}</span>
+                <span className="text-gray-500"> ({company.reviews})</span>
+              </div>
+            </div>
+            
+            <div className="md:w-3/4 p-6">
+              <h3 className="text-lg font-semibold mb-1">{company.name}</h3>
+              <p className="text-[#4664EA] text-sm mb-2">{company.specialty}</p>
+              
+              <div className="flex flex-wrap gap-2 mb-3">
+                {company.services.slice(0, 3).map((service: string, i: number) => (
+                  <Badge key={i} variant="outline" className="bg-gray-50">
+                    {service}
+                  </Badge>
+                ))}
+              </div>
+              
+              <p className="text-sm text-gray-600 mb-3">
+                <span className="font-medium">Profissionais:</span> {company.professionals.join(", ")}
+              </p>
+              
+              <div className="flex items-center text-sm text-gray-500 mb-4">
+                <Calendar className="h-4 w-4 mr-1" />
+                <span>Disponível: {company.availability}</span>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" asChild>
+                  <Link to={`/professional/${company.id}`}>
+                    Ver detalhes
+                  </Link>
+                </Button>
+                <Button className="flex-1">Agendar</Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -209,7 +338,7 @@ const Search = () => {
 
           {/* Filters and sorting */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <Tabs defaultValue={viewType} value={viewType} onValueChange={handleTabChange} className="w-auto">
+            <Tabs defaultValue={viewType} value={viewType} onValueChange={handleTabChange} className="w-full">
               <TabsList>
                 <TabsTrigger value="all">
                   Todos ({filteredServices.length + filteredCompanies.length})
@@ -221,298 +350,59 @@ const Search = () => {
                   Empresas ({filteredCompanies.length})
                 </TabsTrigger>
               </TabsList>
+
+              <div className="flex justify-between items-center mt-6 mb-4">
+                <div className="mt-4 sm:mt-0">
+                  <Select value={sortBy} onValueChange={handleSortChange}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rating">Melhor avaliação</SelectItem>
+                      {viewType !== "company" && (
+                        <>
+                          <SelectItem value="price-asc">Menor preço</SelectItem>
+                          <SelectItem value="price-desc">Maior preço</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <TabsContent value="all">
+                {paginatedServices.length > 0 && (
+                  <div className="mb-8">
+                    <h2 className="text-xl font-semibold mb-4">Serviços</h2>
+                    <div className="grid grid-cols-1 gap-4">
+                      {paginatedServices.map(service => renderServiceCard(service))}
+                    </div>
+                  </div>
+                )}
+
+                {paginatedCompanies.length > 0 && (
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">Empresas</h2>
+                    <div className="grid grid-cols-1 gap-4">
+                      {paginatedCompanies.map(company => renderCompanyCard(company))}
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="service">
+                <div className="grid grid-cols-1 gap-4">
+                  {sortedServices.slice(startIdx, endIdx).map(service => renderServiceCard(service))}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="company">
+                <div className="grid grid-cols-1 gap-4">
+                  {sortedCompanies.slice(startIdx, endIdx).map(company => renderCompanyCard(company))}
+                </div>
+              </TabsContent>
             </Tabs>
-
-            <div className="mt-4 sm:mt-0">
-              <Select value={sortBy} onValueChange={handleSortChange}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="rating">Melhor avaliação</SelectItem>
-                  {viewType !== "company" && (
-                    <>
-                      <SelectItem value="price-asc">Menor preço</SelectItem>
-                      <SelectItem value="price-desc">Maior preço</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
-
-          {/* Results */}
-          <TabsContent value="all" className="mt-0">
-            {paginatedServices.length > 0 && (
-              <div className="mb-8">
-                {viewType === "all" && <h2 className="text-xl font-semibold mb-4">Serviços</h2>}
-                <div className="grid grid-cols-1 gap-4">
-                  {paginatedServices.map((service) => (
-                    <Card 
-                      key={service.id} 
-                      className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-                        highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-                      }`}
-                    >
-                      <CardContent className="p-0">
-                        <div className="flex flex-col md:flex-row">
-                          <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-                            <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
-                              <img 
-                                src={service.image} 
-                                alt={service.name} 
-                                className="h-full w-full object-cover"
-                              />
-                            </div>
-                            <div className="flex items-center gap-1 mb-1">
-                              {renderStars(service.rating)}
-                            </div>
-                            <div className="text-sm text-center">
-                              <span className="font-semibold">{service.rating}</span>
-                              <span className="text-gray-500"> ({service.reviews})</span>
-                            </div>
-                          </div>
-                          
-                          <div className="md:w-3/4 p-6">
-                            <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
-                            <p className="text-[#4664EA] text-sm mb-2">{service.category}</p>
-                            
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              <Badge variant="outline" className="bg-gray-50">
-                                {service.duration}
-                              </Badge>
-                              <Badge variant="outline" className="bg-gray-50">
-                                {service.price}
-                              </Badge>
-                            </div>
-                            
-                            <p className="text-sm text-gray-600 mb-3">
-                              <span className="font-medium">Empresa:</span> {service.company}
-                            </p>
-                            
-                            <p className="text-sm text-gray-600 mb-3">
-                              <span className="font-medium">Profissional:</span> {service.professional}
-                            </p>
-                            
-                            <div className="flex items-center text-sm text-gray-500 mb-4">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              <span>Disponível: {service.availability}</span>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <Button variant="outline" className="flex-1" asChild>
-                                <Link to={`/service/${service.id}`}>
-                                  Ver detalhes
-                                </Link>
-                              </Button>
-                              <Button className="flex-1">Agendar</Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {paginatedCompanies.length > 0 && (
-              <div>
-                {viewType === "all" && <h2 className="text-xl font-semibold mb-4">Empresas</h2>}
-                <div className="grid grid-cols-1 gap-4">
-                  {paginatedCompanies.map((company) => (
-                    <Card 
-                      key={company.id} 
-                      className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-                        highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-                      }`}
-                    >
-                      <CardContent className="p-0">
-                        <div className="flex flex-col md:flex-row">
-                          <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-                            <Avatar className="h-24 w-24 mb-3">
-                              <AvatarImage src={company.image} alt={company.name} />
-                              <AvatarFallback>{company.name.substring(0, 2)}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex items-center gap-1 mb-1">
-                              {renderStars(company.rating)}
-                            </div>
-                            <div className="text-sm text-center">
-                              <span className="font-semibold">{company.rating}</span>
-                              <span className="text-gray-500"> ({company.reviews})</span>
-                            </div>
-                          </div>
-                          
-                          <div className="md:w-3/4 p-6">
-                            <h3 className="text-lg font-semibold mb-1">{company.name}</h3>
-                            <p className="text-[#4664EA] text-sm mb-2">{company.specialty}</p>
-                            
-                            <div className="flex flex-wrap gap-2 mb-3">
-                              {company.services.slice(0, 3).map((service, i) => (
-                                <Badge key={i} variant="outline" className="bg-gray-50">
-                                  {service}
-                                </Badge>
-                              ))}
-                            </div>
-                            
-                            <p className="text-sm text-gray-600 mb-3">
-                              <span className="font-medium">Profissionais:</span> {company.professionals.join(", ")}
-                            </p>
-                            
-                            <div className="flex items-center text-sm text-gray-500 mb-4">
-                              <Calendar className="h-4 w-4 mr-1" />
-                              <span>Disponível: {company.availability}</span>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <Button variant="outline" className="flex-1" asChild>
-                                <Link to={`/professional/${company.id}`}>
-                                  Ver detalhes
-                                </Link>
-                              </Button>
-                              <Button className="flex-1">Agendar</Button>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="service" className="mt-0">
-            <div className="grid grid-cols-1 gap-4">
-              {sortedServices.slice(startIdx, endIdx).map((service) => (
-                <Card 
-                  key={service.id} 
-                  className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-                    highlightId && service.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-                  }`}
-                >
-                  <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-                        <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
-                          <img 
-                            src={service.image} 
-                            alt={service.name} 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <div className="flex items-center gap-1 mb-1">
-                          {renderStars(service.rating)}
-                        </div>
-                        <div className="text-sm text-center">
-                          <span className="font-semibold">{service.rating}</span>
-                          <span className="text-gray-500"> ({service.reviews})</span>
-                        </div>
-                      </div>
-                      
-                      <div className="md:w-3/4 p-6">
-                        <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
-                        <p className="text-[#4664EA] text-sm mb-2">{service.category}</p>
-                        
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <Badge variant="outline" className="bg-gray-50">
-                            {service.duration}
-                          </Badge>
-                          <Badge variant="outline" className="bg-gray-50">
-                            {service.price}
-                          </Badge>
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">Empresa:</span> {service.company}
-                        </p>
-                        
-                        <p className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">Profissional:</span> {service.professional}
-                        </p>
-                        
-                        <div className="flex items-center text-sm text-gray-500 mb-4">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          <span>Disponível: {service.availability}</span>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Button variant="outline" className="flex-1" asChild>
-                            <Link to={`/service/${service.id}`}>
-                              Ver detalhes
-                            </Link>
-                          </Button>
-                          <Button className="flex-1">Agendar</Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="company" className="mt-0">
-            <div className="grid grid-cols-1 gap-4">
-              {sortedCompanies.slice(startIdx, endIdx).map((company) => (
-                <Card 
-                  key={company.id} 
-                  className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-                    highlightId && company.id.toString() === highlightId ? "ring-2 ring-[#4664EA]" : ""
-                  }`}
-                >
-                  <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row">
-                      <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-                        <Avatar className="h-24 w-24 mb-3">
-                          <AvatarImage src={company.image} alt={company.name} />
-                          <AvatarFallback>{company.name.substring(0, 2)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex items-center gap-1 mb-1">
-                          {renderStars(company.rating)}
-                        </div>
-                        <div className="text-sm text-center">
-                          <span className="font-semibold">{company.rating}</span>
-                          <span className="text-gray-500"> ({company.reviews})</span>
-                        </div>
-                      </div>
-                      
-                      <div className="md:w-3/4 p-6">
-                        <h3 className="text-lg font-semibold mb-1">{company.name}</h3>
-                        <p className="text-[#4664EA] text-sm mb-2">{company.specialty}</p>
-                        
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {company.services.slice(0, 3).map((service, i) => (
-                            <Badge key={i} variant="outline" className="bg-gray-50">
-                              {service}
-                            </Badge>
-                          ))}
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 mb-3">
-                          <span className="font-medium">Profissionais:</span> {company.professionals.join(", ")}
-                        </p>
-                        
-                        <div className="flex items-center text-sm text-gray-500 mb-4">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          <span>Disponível: {company.availability}</span>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                          <Button variant="outline" className="flex-1" asChild>
-                            <Link to={`/professional/${company.id}`}>
-                              Ver detalhes
-                            </Link>
-                          </Button>
-                          <Button className="flex-1">Agendar</Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
 
           {/* Pagination */}
           {totalPages > 1 && (
