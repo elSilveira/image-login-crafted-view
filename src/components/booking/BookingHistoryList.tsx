@@ -1,8 +1,9 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, FileText, RefreshCw, Clock } from "lucide-react";
+import { Calendar, FileText, RefreshCw, Clock, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface BookingHistoryListProps {
