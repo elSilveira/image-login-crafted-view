@@ -1,6 +1,8 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { SearchDropdown } from "@/components/SearchDropdown";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +22,7 @@ export default function Navigation() {
       <nav className="container flex h-14 items-center px-4">
         <div className="flex items-center space-x-2 md:space-x-4">
           <Link to="/" className="flex items-center space-x-2">
-            <span className="font-bold">iAzi</span>
+            <span className="font-bold text-2xl text-[#4664EA]">iAzi</span>
           </Link>
           <Link to="/professionals" className="text-sm font-medium transition-colors hover:text-primary">
             Profissionais
@@ -29,7 +31,12 @@ export default function Navigation() {
             Serviços
           </Link>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        
+        <div className="flex-1 mx-4 md:mx-8 max-w-md">
+          <SearchDropdown />
+        </div>
+        
+        <div className="flex items-center justify-end space-x-4">
           {user ? (
             <div className="flex items-center space-x-4">
               <Link to="/notifications" className="text-sm font-medium transition-colors hover:text-primary">
