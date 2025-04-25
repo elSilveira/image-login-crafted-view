@@ -25,6 +25,7 @@ import Settings from "./pages/Settings";
 import Reviews from "./pages/Reviews";
 import Gamification from "./pages/Gamification";
 import ProfessionalProfileSettings from "./pages/ProfessionalProfileSettings";
+import CompanyRegister from "./pages/CompanyRegister";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
               <Route path="/professional/:id" element={<ProfessionalProfile />} />
               <Route path="/company/:id" element={<CompanyProfile />} />
               <Route path="/company/:id/services" element={<CompanyServices />} />
+              <Route path="/company/register" element={<CompanyRegister />} />
               <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
               <Route path="/service/:id" element={<ServiceDetails />} />
               <Route path="/services" element={<Navigate to="/search?type=service" />} />

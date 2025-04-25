@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,39 +27,17 @@ export const UserCompanyManagement = () => {
             <CardTitle>Criar Empresa</CardTitle>
           </CardHeader>
           <CardContent>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto">
+            <div className="space-y-4">
+              <p className="text-muted-foreground">
+                Crie sua empresa na plataforma para oferecer serviços e gerenciar agendamentos
+              </p>
+              <Button className="w-full sm:w-auto" asChild>
+                <Link to="/company/register">
                   <Building className="mr-2" />
                   Criar Nova Empresa
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Criar Nova Empresa</DialogTitle>
-                  <DialogDescription>
-                    Preencha as informações da sua empresa
-                  </DialogDescription>
-                </DialogHeader>
-                <form className="space-y-4">
-                  <div>
-                    <Label htmlFor="companyName">Nome da Empresa</Label>
-                    <Input id="companyName" placeholder="Digite o nome da empresa" />
-                  </div>
-                  <div>
-                    <Label htmlFor="cnpj">CNPJ</Label>
-                    <Input id="cnpj" placeholder="Digite o CNPJ" />
-                  </div>
-                  <div>
-                    <Label htmlFor="address">Endereço</Label>
-                    <Input id="address" placeholder="Digite o endereço completo" />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    Criar Empresa
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
