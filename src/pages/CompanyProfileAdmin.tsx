@@ -3,7 +3,7 @@ import React from "react";
 import { CompanyLayout } from "@/components/company/admin/CompanyLayout";
 import { CompanyProfileForm } from "@/components/company/admin/CompanyProfileForm";
 
-const CompanyProfileAdmin = () => {
+const CompanyProfileAdmin: React.FC = () => {
   return (
     <CompanyLayout>
       <div>

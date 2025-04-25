@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,6 +29,7 @@ import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyStaff from "./pages/CompanyStaff";
 import CompanyCalendar from "./pages/CompanyCalendar";
 import StaffCalendar from "./pages/StaffCalendar";
+import CompanyProfileAdmin from "./pages/CompanyProfileAdmin";
 
 const queryClient = new QueryClient();
 
