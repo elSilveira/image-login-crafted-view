@@ -74,7 +74,7 @@ export const CompanySidebar = () => {
   const location = useLocation();
   
   return (
-    <Sidebar className="fixed left-0 top-14 h-[calc(100vh-56px)] z-30 border-r bg-background">
+    <Sidebar className="fixed left-0 top-14 h-[calc(100vh-56px)] z-30 border-r bg-background hidden lg:block">
       <SidebarHeader>
         <div className="p-2">
           <h2 className="text-xl font-bold">iAzi Admin</h2>

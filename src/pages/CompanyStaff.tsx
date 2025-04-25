@@ -6,7 +6,7 @@ import { StaffList } from "@/components/company/staff/StaffList";
 const CompanyStaff = () => {
   return (
     <CompanyLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 w-full">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-semibold">Funcionários</h1>
         </div>

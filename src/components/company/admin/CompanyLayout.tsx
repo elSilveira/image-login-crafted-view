@@ -14,9 +14,9 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
       <div className="min-h-screen flex w-full bg-background">
         <Navigation />
         <CompanySidebar />
-        <div className="flex-1 pl-0 md:pl-[16rem] pt-14">
-          <main className="p-4 md:p-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="flex-1 pl-0 lg:pl-[16rem] pt-14">
+          <main className="p-4 md:p-6 lg:p-8">
+            <div className="w-full max-w-5xl mx-auto">
               {children}
             </div>
           </main>
