@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,14 +19,20 @@ export default function Navigation() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container flex h-14 items-center px-4">
-        <div className="flex items-center space-x-2 md:space-x-4">
-          <Link to="/" className="flex items-center space-x-2">
+      <nav className="container flex h-14 items-center justify-between px-4">
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center">
             <span className="font-bold text-2xl text-[#4664EA]">iAzi</span>
           </Link>
-          <Link to="/services" className="text-sm font-medium transition-colors hover:text-primary">
-            Serviços
-          </Link>
+          
+          <div className="hidden md:flex items-center space-x-6">
+            <Link to="/booking-history" className="text-sm font-medium transition-colors hover:text-primary">
+              Meus Agendamentos
+            </Link>
+            <Link to="/services" className="text-sm font-medium transition-colors hover:text-primary">
+              Explorar
+            </Link>
+          </div>
         </div>
         
         <div className="flex-1 mx-4 md:mx-8 max-w-md">
@@ -43,7 +50,7 @@ export default function Navigation() {
                   <Button variant="ghost" className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={user.avatar} />
-                      <AvatarFallback>{user.name[0]}</AvatarFallback>
+                      <AvatarFallback>{user.name?.[0]}</AvatarFallback>
                     </Avatar>
                     <span className="hidden md:inline">{user.name}</span>
                   </Button>
