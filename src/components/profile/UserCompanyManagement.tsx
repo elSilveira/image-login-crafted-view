@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, UserPlus } from "lucide-react";
-import { Calendar } from "lucide-react";
+import { Building, Calendar, LayoutDashboard, UserPlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -46,12 +45,20 @@ export const UserCompanyManagement = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Minha Empresa</CardTitle>
-                <Button variant="outline" asChild>
-                  <Link to="/company/my-company/booking">
-                    <Calendar className="mr-2 h-4 w-4" />
-                    Ver Agenda
-                  </Link>
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" asChild>
+                    <Link to="/company/my-company/booking">
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Ver Agenda
+                    </Link>
+                  </Button>
+                  <Button variant="default" asChild>
+                    <Link to="/company/my-company/dashboard">
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Painel Admin
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
