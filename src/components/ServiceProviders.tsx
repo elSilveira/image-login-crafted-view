@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,9 +8,10 @@ import { Link } from "react-router-dom";
 
 interface ServiceProvidersProps {
   serviceId?: number;
+  onProviderSelect?: (providerId: string) => void;
 }
 
-const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
+const ServiceProviders = ({ serviceId, onProviderSelect }: ServiceProvidersProps) => {
   // Mock data - In a real app, this would come from props or an API
   const providers = [
     {
@@ -34,10 +36,20 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
     },
   ];
 
+  const handleProviderClick = (providerId: string) => {
+    if (onProviderSelect) {
+      onProviderSelect(providerId);
+    }
+  };
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {providers.map((provider) => (
-        <Card key={provider.id} className="hover:shadow-md transition-shadow">
+        <Card 
+          key={provider.id} 
+          className={`hover:shadow-md transition-shadow ${onProviderSelect ? "cursor-pointer" : ""}`}
+          onClick={() => onProviderSelect && handleProviderClick(provider.id)}
+        >
           <CardContent className="p-4">
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4">
@@ -49,6 +61,7 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
                   <Link
                     to={`/professional/${provider.id}`}
                     className="font-semibold hover:text-iazi-primary"
+                    onClick={(e) => onProviderSelect && e.preventDefault()}
                   >
                     {provider.name}
                   </Link>
@@ -68,11 +81,17 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
                   <div className="font-semibold">R$ {provider.price}</div>
                   <div className="text-sm text-muted-foreground">por serviço</div>
                 </div>
-                <Button asChild>
-                  <Link to={`/company/${provider.companyId}/booking?provider=${provider.id}`}>
-                    Agendar
-                  </Link>
-                </Button>
+                {!onProviderSelect ? (
+                  <Button asChild>
+                    <Link to={`/company/${provider.companyId}/booking?provider=${provider.id}`}>
+                      Agendar
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button onClick={() => handleProviderClick(provider.id)}>
+                    Selecionar
+                  </Button>
+                )}
               </div>
             </div>
           </CardContent>
