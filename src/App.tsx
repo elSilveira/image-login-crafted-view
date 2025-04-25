@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -27,6 +26,7 @@ import Gamification from "./pages/Gamification";
 import ProfessionalProfileSettings from "./pages/ProfessionalProfileSettings";
 import CompanyRegister from "./pages/CompanyRegister";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import CompanyStaff from "./pages/CompanyStaff";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +49,7 @@ const App = () => (
               <Route path="/company/:id/services" element={<CompanyServices />} />
               <Route path="/company/register" element={<CompanyRegister />} />
               <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />
+              <Route path="/company/my-company/staff" element={<CompanyStaff />} />
               <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
               <Route path="/service/:id" element={<ServiceDetails />} />
               <Route path="/services" element={<Navigate to="/search?type=service" />} />
