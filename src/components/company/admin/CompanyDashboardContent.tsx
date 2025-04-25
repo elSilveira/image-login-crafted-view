@@ -9,75 +9,77 @@ import { CompanyNotifications } from "@/components/company/admin/CompanyNotifica
 
 export const CompanyDashboardContent = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-2">Dashboard</h1>
         <p className="text-muted-foreground">
-          Bem-vindo ao painel administrativo da sua empresa.
+          Bem-vindo ao painel administrativo da sua empresa
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Agendamentos Hoje</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-medium">Agendamentos Hoje</CardTitle>
+            <Calendar className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold mb-1">12</div>
+            <p className="text-sm text-muted-foreground">
               +8% em relação à semana passada
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-medium">Receita Mensal</CardTitle>
+            <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 4.580,00</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold mb-1">R$ 4.580,00</div>
+            <p className="text-sm text-muted-foreground">
               +12% em relação ao mês anterior
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes Atendidos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-medium">Clientes Atendidos</CardTitle>
+            <Users className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">52</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold mb-1">52</div>
+            <p className="text-sm text-muted-foreground">
               +18% em relação ao mês anterior
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avaliação Média</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-base font-medium">Avaliação Média</CardTitle>
+            <CheckCircle className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4.8/5.0</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold mb-1">4.8/5.0</div>
+            <p className="text-sm text-muted-foreground">
               +0.2 em relação ao mês anterior
             </p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-6">
-        <Card className="col-span-1 md:col-span-4">
+      <div className="grid gap-6 md:grid-cols-7">
+        <Card className="col-span-7 md:col-span-4">
           <CardHeader>
             <CardTitle>Atividade Recente</CardTitle>
           </CardHeader>
-          <CardContent className="h-80">
-            <CompanyDashboardChart />
+          <CardContent>
+            <div className="h-[350px]">
+              <CompanyDashboardChart />
+            </div>
           </CardContent>
         </Card>
-        <Card className="col-span-1 md:col-span-2">
+        <Card className="col-span-7 md:col-span-3">
           <CardHeader>
             <CardTitle>Tarefas Pendentes</CardTitle>
           </CardHeader>
@@ -87,7 +89,7 @@ export const CompanyDashboardContent = () => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Próximos Agendamentos</CardTitle>
