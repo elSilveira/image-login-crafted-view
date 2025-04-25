@@ -20,6 +20,7 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
       rating: 4.9,
       reviews: 124,
       price: 80,
+      specialties: ["Corte Masculino", "Barba"],
     },
     {
       id: "2",
@@ -28,24 +29,25 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
       rating: 4.7,
       reviews: 98,
       price: 75,
+      specialties: ["Coloração", "Corte Feminino"],
     },
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {providers.map((provider) => (
-        <Card key={provider.id}>
+        <Card key={provider.id} className="hover:shadow-md transition-shadow">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12">
+                <Avatar className="h-16 w-16">
                   <AvatarImage src={provider.avatar} alt={provider.name} />
                   <AvatarFallback>{provider.name[0]}</AvatarFallback>
                 </Avatar>
                 <div>
                   <Link
                     to={`/professional/${provider.id}`}
-                    className="font-semibold hover:text-primary"
+                    className="font-semibold hover:text-iazi-primary"
                   >
                     {provider.name}
                   </Link>
@@ -54,9 +56,13 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
                     <span>{provider.rating}</span>
                     <span>({provider.reviews} avaliações)</span>
                   </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {provider.specialties.join(" • ")}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              
+              <div className="flex items-center justify-between mt-2">
                 <div className="text-right">
                   <div className="font-semibold">R$ {provider.price}</div>
                   <div className="text-sm text-muted-foreground">por serviço</div>
