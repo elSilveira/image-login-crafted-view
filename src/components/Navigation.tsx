@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, Star, Award, Building } from "lucide-react";
+import { Bell, LogOut, User, Star, Award, Briefcase } from "lucide-react";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
@@ -57,9 +57,9 @@ export default function Navigation() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/profile/company" className="flex items-center">
-                      <Building className="mr-2 h-4 w-4" />
-                      Perfil Empresa
+                    <Link to="/profile/professional" className="flex items-center">
+                      <Briefcase className="mr-2 h-4 w-4" />
+                      Perfil Profissional
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

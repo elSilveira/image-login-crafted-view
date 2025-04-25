@@ -47,7 +47,7 @@ const App = () => (
               <Route path="/booking/:serviceId" element={<Booking />} />
               <Route path="/booking-history" element={<BookingHistory />} />
               <Route path="/profile" element={<UserProfile />} />
-              <Route path="/profile/company" element={<UserProfile />} />
+              <Route path="/profile/professional" element={<UserProfile />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings/*" element={<Settings />} />
               <Route path="/reviews" element={<Reviews />} />
