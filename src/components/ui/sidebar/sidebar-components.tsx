@@ -86,7 +86,7 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex h-14 items-center border-b px-4 data-[state=closed]:justify-center data-[state=closed]:px-0",
+        "flex h-14 items-center border-b px-4 data-[state=collapsed]:justify-center data-[state=collapsed]:px-0",
         className
       )}
       data-state={state}
@@ -120,7 +120,7 @@ const SidebarFooter = React.forwardRef<
     <div
       ref={ref}
       className={cn(
-        "flex h-14 items-center border-t px-4 data-[state=closed]:justify-center data-[state=closed]:px-0",
+        "flex h-14 items-center border-t px-4 data-[state=collapsed]:justify-center data-[state=collapsed]:px-0",
         className
       )}
       data-state={state}
@@ -167,7 +167,7 @@ const SidebarTrigger = React.forwardRef<
       data-state={state}
       {...props}
     >
-      <ChevronLeft className={cn(state === "closed" && "rotate-180", "size-5")} />
+      <ChevronLeft className={cn(state === "collapsed" && "rotate-180", "size-5")} />
       <span className="sr-only">Toggle Sidebar</span>
     </button>
   )
@@ -198,7 +198,7 @@ const SidebarGroupLabel = React.forwardRef<
     <h3
       ref={ref}
       className={cn(
-        "mb-2 px-4 text-xs font-medium text-muted-foreground data-[state=closed]:sr-only",
+        "mb-2 px-4 text-xs font-medium text-muted-foreground data-[state=collapsed]:sr-only",
         className
       )}
       data-state={state}
