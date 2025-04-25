@@ -27,7 +27,7 @@ const companyMenu = [
   {
     title: "Serviços",
     icon: ClipboardList,
-    path: "/company/my-company/services", // This path will be updated in App.tsx
+    path: "/company/my-company/services",
   },
   {
     title: "Funcionários",
@@ -60,18 +60,18 @@ export const CompanyTopNav = () => {
   const location = useLocation();
   
   return (
-    <nav className="fixed top-14 left-0 right-0 h-[50px] bg-background border-b z-40">
+    <nav className="fixed top-14 left-0 right-0 h-[50px] bg-background border-b z-40 shadow-sm">
       <div className="max-w-screen-2xl mx-auto px-4">
-        <ul className="flex items-center h-[50px] gap-1 overflow-x-auto no-scrollbar">
+        <ul className="flex items-center h-[50px] gap-2 overflow-x-auto no-scrollbar">
           {companyMenu.map((item) => (
             <li key={item.path}>
               <Link
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-accent/50",
                   location.pathname === item.path
                     ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <item.icon className="h-4 w-4" />

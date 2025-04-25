@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -32,6 +31,9 @@ import CompanyCalendar from "./pages/CompanyCalendar";
 import StaffCalendar from "./pages/StaffCalendar";
 import CompanyProfileAdmin from "./pages/CompanyProfileAdmin";
 import CompanyServicesAdmin from "./pages/CompanyServicesAdmin";
+import CompanyReviewsAdmin from "./pages/CompanyReviewsAdmin";
+import CompanyReportsAdmin from "./pages/CompanyReportsAdmin";
+import CompanySettingsAdmin from "./pages/CompanySettingsAdmin";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +60,9 @@ const App = () => (
               <Route path="/company/my-company/services" element={<CompanyServicesAdmin />} />
               <Route path="/company/my-company/staff" element={<CompanyStaff />} />
               <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />
+              <Route path="/company/my-company/reviews" element={<CompanyReviewsAdmin />} />
+              <Route path="/company/my-company/reports" element={<CompanyReportsAdmin />} />
+              <Route path="/company/my-company/settings" element={<CompanySettingsAdmin />} />
               <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
               <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
               <Route path="/service/:id" element={<ServiceDetails />} />
