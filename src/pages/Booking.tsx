@@ -3,32 +3,42 @@ import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, MapPin, AlertCircle } from "lucide-react";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
+import ServiceProviders from "@/components/ServiceProviders";
 import BookingCalendar from "@/components/booking/BookingCalendar";
 import BookingTimeSlots from "@/components/booking/BookingTimeSlots";
 import BookingConfirmation from "@/components/booking/BookingConfirmation";
 import Navigation from "@/components/Navigation";
-import { useNavigate } from "react-router-dom";
 
 const STEPS = [
-  { id: 1, title: "Selecionar Horário" },
-  { id: 2, title: "Confirmar Agendamento" },
+  { id: 1, title: "Selecionar Profissional" },
+  { id: 2, title: "Selecionar Horário" },
+  { id: 3, title: "Confirmar Agendamento" },
 ];
 
 const Booking = () => {
-  const [currentStep, setCurrentStep] = React.useState(1);
+  const { serviceId } = useParams();
+  const location = useLocation();
+  const isCompanyBooking = location.search.includes('company=true');
+  const [currentStep, setCurrentStep] = React.useState(isCompanyBooking ? 1 : 2);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = React.useState<string>();
+  const [selectedProfessional, setSelectedProfessional] = React.useState<string>();
   const navigate = useNavigate();
 
   // Mock data - In a real app, this would come from an API
   const service = {
-    id: "1",
+    id: serviceId || "1",
     name: "Corte de Cabelo Masculino",
     price: 80,
     duration: 45,
   };
 
-  const professional = {
+  const professional = selectedProfessional ? {
+    id: selectedProfessional,
+    name: "João Silva",
+    avatar: "https://source.unsplash.com/random/100x100/?portrait",
+  } : {
     id: "1",
     name: "João Silva",
     avatar: "https://source.unsplash.com/random/100x100/?portrait",
@@ -36,8 +46,12 @@ const Booking = () => {
 
   const progress = (currentStep / STEPS.length) * 100;
 
+  const handleProfessionalSelect = (professionalId: string) => {
+    setSelectedProfessional(professionalId);
+    setCurrentStep(2);
+  };
+
   const handleFinishBooking = (formData: any) => {
-    // In a real app, this would make an API call
     console.log("Booking confirmed:", {
       service,
       professional,
@@ -45,14 +59,22 @@ const Booking = () => {
       time: selectedTime,
       formData
     });
-    
-    // Navigate to booking history after successful booking
     navigate("/booking-history");
   };
 
   const renderStep = () => {
     switch (currentStep) {
       case 1:
+        return isCompanyBooking ? (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Selecione o Profissional</h2>
+            <ServiceProviders 
+              serviceId={Number(serviceId)} 
+              onProviderSelect={handleProfessionalSelect}
+            />
+          </div>
+        ) : null;
+      case 2:
         return (
           <div className="grid md:grid-cols-2 gap-6">
             <div>
@@ -68,20 +90,20 @@ const Booking = () => {
                   date={selectedDate}
                   onTimeSelect={setSelectedTime}
                   selectedTime={selectedTime}
-                  onNext={() => selectedDate && selectedTime && setCurrentStep(2)}
+                  onNext={() => selectedDate && selectedTime && setCurrentStep(3)}
                 />
               )}
             </div>
           </div>
         );
-      case 2:
+      case 3:
         return (
           <BookingConfirmation
             service={service}
             professional={professional}
             date={selectedDate!}
             time={selectedTime!}
-            onBack={() => setCurrentStep(1)}
+            onBack={() => setCurrentStep(2)}
             onSubmit={handleFinishBooking}
           />
         );
@@ -99,7 +121,7 @@ const Booking = () => {
           <div className="mb-8">
             <Progress value={progress} className="mb-2" />
             <div className="flex justify-between text-sm">
-              {STEPS.map((step) => (
+              {STEPS.slice(isCompanyBooking ? 0 : 1).map((step) => (
                 <div
                   key={step.id}
                   className={`${
@@ -123,10 +145,12 @@ const Booking = () => {
                       <Clock className="h-4 w-4" />
                       <span>{service.duration} minutos</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>Com {professional.name}</span>
-                    </div>
+                    {currentStep > 1 && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        <span>Com {professional.name}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="text-right">
