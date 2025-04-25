@@ -27,7 +27,7 @@ const companyMenu = [
   {
     title: "Serviços",
     icon: ClipboardList,
-    path: "/company/my-company/services",
+    path: "/company/my-company/services", // This path will be updated in App.tsx
   },
   {
     title: "Funcionários",

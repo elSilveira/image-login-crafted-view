@@ -31,6 +31,7 @@ import CompanyStaff from "./pages/CompanyStaff";
 import CompanyCalendar from "./pages/CompanyCalendar";
 import StaffCalendar from "./pages/StaffCalendar";
 import CompanyProfileAdmin from "./pages/CompanyProfileAdmin";
+import CompanyServicesAdmin from "./pages/CompanyServicesAdmin";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/company/register" element={<CompanyRegister />} />
               <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />
               <Route path="/company/my-company/profile" element={<CompanyProfileAdmin />} />
+              <Route path="/company/my-company/services" element={<CompanyServicesAdmin />} />
               <Route path="/company/my-company/staff" element={<CompanyStaff />} />
               <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />
               <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
