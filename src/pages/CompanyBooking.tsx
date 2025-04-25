@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ServiceProviders } from "@/components/ServiceProviders";
+import ServiceProviders from "@/components/ServiceProviders";
 import { services } from "@/lib/mock-services";
 
 const CompanyBooking = () => {

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import Search from "./pages/Search";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import CompanyProfile from "./pages/CompanyProfile";
+import CompanyBooking from "./pages/CompanyBooking";
 import ServiceDetails from "./pages/ServiceDetails";
 import Booking from "./pages/Booking";
 import BookingHistory from "./pages/BookingHistory";
