@@ -14,6 +14,8 @@ export type StaffMember = {
   name: string;
   role: string;
   image?: string;
+  email?: string;
+  phone?: string;
 };
 
 export type Resource = {
@@ -36,4 +38,6 @@ export type AppointmentType = {
   status: AppointmentStatus;
   notes?: string;
   resourceId?: string;
+  preparationTime?: number; // in minutes
+  finalizationTime?: number; // in minutes
 };
