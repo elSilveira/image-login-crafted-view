@@ -5,7 +5,20 @@ import { UserPlus } from "lucide-react";
 import { StaffMemberCard } from "./StaffMemberCard";
 import { AddStaffDialog } from "./AddStaffDialog";
 
-const mockStaff = [
+type StaffStatus = "active" | "inactive" | "vacation";
+
+interface StaffMember {
+  id: number;
+  name: string;
+  role: string;
+  status: StaffStatus;
+  image: string;
+  hireDate: string;
+  rating: number;
+  appointmentsCount: number;
+}
+
+const mockStaff: StaffMember[] = [
   {
     id: 1,
     name: "João Silva",
