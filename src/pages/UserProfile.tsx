@@ -9,26 +9,47 @@ import { UserNotifications } from "@/components/profile/UserNotifications";
 import { UserReviews } from "@/components/profile/UserReviews";
 import { UserPrivacy } from "@/components/profile/UserPrivacy";
 import { UserCompanyManagement } from "@/components/profile/UserCompanyManagement";
+import { useLocation } from "react-router-dom";
 
 const UserProfile = () => {
-  return (
-    <div className="min-h-screen bg-white">
-      <Navigation />
-      <div className="container-padding">
-        <h1 className="text-3xl font-bold mb-6 text-iazi-text font-playfair">Meu Perfil</h1>
+  const location = useLocation();
+  const isCompanyProfile = location.pathname === "/profile/company";
+  const defaultTab = isCompanyProfile ? "company" : "personal";
 
-        <Tabs defaultValue="personal" className="space-y-4">
-          <TabsList className="bg-iazi-background-alt border border-iazi-border rounded-lg p-1">
-            <TabsTrigger value="personal">Informações Pessoais</TabsTrigger>
-            <TabsTrigger value="addresses">Endereços</TabsTrigger>
-            <TabsTrigger value="payments">Pagamento</TabsTrigger>
-            <TabsTrigger value="notifications">Notificações</TabsTrigger>
-            <TabsTrigger value="reviews">Avaliações</TabsTrigger>
-            <TabsTrigger value="privacy">Privacidade</TabsTrigger>
-            <TabsTrigger value="company">Empresa</TabsTrigger>
+  return (
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">
+          {isCompanyProfile ? "Perfil Empresa" : "Meu Perfil"}
+        </h1>
+
+        <Tabs defaultValue={defaultTab} className="space-y-4">
+          <TabsList className="bg-muted w-full justify-start overflow-x-auto">
+            <TabsTrigger value="personal" className="min-w-[150px]">
+              Informações Pessoais
+            </TabsTrigger>
+            <TabsTrigger value="addresses" className="min-w-[100px]">
+              Endereços
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="min-w-[100px]">
+              Pagamento
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="min-w-[120px]">
+              Notificações
+            </TabsTrigger>
+            <TabsTrigger value="reviews" className="min-w-[100px]">
+              Avaliações
+            </TabsTrigger>
+            <TabsTrigger value="privacy" className="min-w-[100px]">
+              Privacidade
+            </TabsTrigger>
+            <TabsTrigger value="company" className="min-w-[100px]">
+              Empresa
+            </TabsTrigger>
           </TabsList>
 
-          <div className="grid gap-6">
+          <div className="mt-6">
             <TabsContent value="personal">
               <UserProfileInfo />
             </TabsContent>

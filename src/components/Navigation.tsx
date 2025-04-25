@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, Star, Award } from "lucide-react";
+import { Bell, LogOut, User, Star, Award, Building } from "lucide-react";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
@@ -23,9 +23,6 @@ export default function Navigation() {
         <div className="flex items-center space-x-2 md:space-x-4">
           <Link to="/" className="flex items-center space-x-2">
             <span className="font-bold text-2xl text-[#4664EA]">iAzi</span>
-          </Link>
-          <Link to="/professionals" className="text-sm font-medium transition-colors hover:text-primary">
-            Profissionais
           </Link>
           <Link to="/services" className="text-sm font-medium transition-colors hover:text-primary">
             Serviços
@@ -57,6 +54,12 @@ export default function Navigation() {
                     <Link to="/profile" className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
                       Meu Perfil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile/company" className="flex items-center">
+                      <Building className="mr-2 h-4 w-4" />
+                      Perfil Empresa
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
