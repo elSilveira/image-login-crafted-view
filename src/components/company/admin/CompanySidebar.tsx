@@ -74,43 +74,41 @@ export const CompanySidebar = () => {
   const location = useLocation();
   
   return (
-    <>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="p-2">
-            <h2 className="text-xl font-bold text-center">iAzi Admin</h2>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {companyMenu.map((item) => (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={location.pathname === item.path}
-                      tooltip={item.title}
-                    >
-                      <Link to={item.path}>
-                        <item.icon className={cn("h-4 w-4")} />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <div className="p-2 flex justify-center">
-            <SidebarTrigger />
-          </div>
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
-    </>
+    <Sidebar className="h-screen border-r">
+      <SidebarHeader>
+        <div className="p-2">
+          <h2 className="text-xl font-bold text-center">iAzi Admin</h2>
+        </div>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {companyMenu.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === item.path}
+                    tooltip={item.title}
+                  >
+                    <Link to={item.path}>
+                      <item.icon className={cn("h-4 w-4")} />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      <SidebarFooter>
+        <div className="p-2 flex justify-center">
+          <SidebarTrigger />
+        </div>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 };
