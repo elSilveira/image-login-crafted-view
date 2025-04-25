@@ -52,6 +52,7 @@ const App = () => (
               <Route path="/company/:id/services" element={<CompanyServices />} />
               <Route path="/company/register" element={<CompanyRegister />} />
               <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />
+              <Route path="/company/my-company/profile" element={<CompanyProfileAdmin />} />
               <Route path="/company/my-company/staff" element={<CompanyStaff />} />
               <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />
               <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
