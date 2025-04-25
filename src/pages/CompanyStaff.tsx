@@ -8,7 +8,7 @@ const CompanyStaff = () => {
     <CompanyLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight">Funcionários</h1>
+          <h1 className="text-2xl font-semibold">Funcionários</h1>
         </div>
         <StaffList />
       </div>
