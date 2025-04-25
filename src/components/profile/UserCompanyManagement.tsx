@@ -47,7 +47,7 @@ export const UserCompanyManagement = () => {
                 <CardTitle>Minha Empresa</CardTitle>
                 <div className="flex gap-2">
                   <Button variant="outline" asChild>
-                    <Link to="/company/my-company/booking">
+                    <Link to="/company/my-company/calendar">
                       <Calendar className="mr-2 h-4 w-4" />
                       Ver Agenda
                     </Link>

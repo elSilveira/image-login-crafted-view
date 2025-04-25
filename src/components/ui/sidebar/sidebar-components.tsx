@@ -1,182 +1,252 @@
 
 import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { PanelLeft } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
+import { cva, type VariantProps } from "class-variance-authority"
+
 import { cn } from "@/lib/utils"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useSidebar } from "./sidebar-context"
-import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON, SIDEBAR_WIDTH_MOBILE } from "./sidebar-constants"
+import { SIDEBAR_WIDTH, SIDEBAR_WIDTH_MOBILE, SIDEBAR_WIDTH_ICON } from "./sidebar-constants"
 
-export const Sidebar = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentProps<"div"> & {
-    side?: "left" | "right"
-    variant?: "sidebar" | "floating" | "inset"
-    collapsible?: "offcanvas" | "icon" | "none"
-  }
->(
-  (
-    {
-      side = "left",
-      variant = "sidebar",
-      collapsible = "offcanvas",
-      className,
-      children,
-      ...props
+const sidebarVariants = cva("", {
+  variants: {
+    variant: {
+      default: "left-0",
+      inset: "left-0 top-14 h-[calc(100vh-56px)]",
+      modal: "",
     },
-    ref
-  ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+  },
+  defaultVariants: {
+    variant: "default",
+  },
+})
 
-    if (collapsible === "none") {
-      return (
-        <div
-          className={cn(
-            "flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground",
-            className
-          )}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </div>
-      )
-    }
+interface SidebarProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof sidebarVariants> {
+  collapsible?: boolean | "icon"
+}
 
-    if (isMobile) {
-      return (
-        <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-          <SheetContent
-            data-sidebar="sidebar"
-            data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-            style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              } as React.CSSProperties
-            }
-            side={side}
-          >
-            <div className="flex h-full w-full flex-col">{children}</div>
-          </SheetContent>
-        </Sheet>
-      )
-    }
+const Sidebar = React.forwardRef<HTMLDivElement, SidebarProps>(
+  ({ className, variant, collapsible = false, ...props }, ref) => {
+    const { state, open, isMobile, openMobile, setOpenMobile } = useSidebar()
 
     return (
-      <div
-        ref={ref}
-        className="group peer hidden md:block text-sidebar-foreground"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
-        data-variant={variant}
-        data-side={side}
-      >
-        <div
+      <>
+        <aside
+          ref={ref}
           className={cn(
-            "duration-200 relative h-svh w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
-            "group-data-[collapsible=offcanvas]:w-0",
-            "group-data-[side=right]:rotate-180",
-            variant === "floating" || variant === "inset"
-              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]"
-          )}
-          style={{
-            "--sidebar-width": SIDEBAR_WIDTH,
-            "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-          } as React.CSSProperties}
-        />
-        <div
-          className={cn(
-            "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
-            side === "left"
-              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-              : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-            variant === "floating" || variant === "inset"
-              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]"
-              : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            "fixed inset-y-0 z-30 flex flex-col border-r bg-background transition-all duration-300 data-[state=open]:translate-x-0 sm:data-[state=closed]:translate-x-0",
+            isMobile
+              ? "w-[18rem] shrink-0 -translate-x-full overflow-y-auto data-[state=open]:shadow-lg"
+              : "shrink-0 data-[state=closed]:w-[3rem]",
+            collapsible === "icon" && !isMobile
+              ? "items-center data-[state=closed]:items-center"
+              : "",
+            variant === "inset" && "left-0 top-14 h-[calc(100vh-56px)]",
+            variant === "modal" && "block h-full",
             className
           )}
+          data-state={isMobile ? (openMobile ? "open" : "closed") : state}
+          style={{
+            width: isMobile
+              ? SIDEBAR_WIDTH_MOBILE
+              : open
+              ? SIDEBAR_WIDTH
+              : collapsible === "icon"
+              ? SIDEBAR_WIDTH_ICON
+              : SIDEBAR_WIDTH,
+          }}
           {...props}
-        >
+        />
+
+        {/* Backdrop */}
+        {isMobile && (
           <div
-            data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
-          >
-            {children}
-          </div>
-        </div>
-      </div>
+            className={cn(
+              "fixed inset-0 z-20 bg-black/80 opacity-0 transition-opacity duration-300 data-[state=open]:opacity-100 data-[state=closed]:pointer-events-none",
+              variant === "inset" && "top-14 h-[calc(100vh-56px)]"
+            )}
+            data-state={openMobile ? "open" : "closed"}
+            onClick={() => setOpenMobile(false)}
+          />
+        )}
+      </>
     )
   }
 )
 Sidebar.displayName = "Sidebar"
 
-export const SidebarTrigger = React.forwardRef<
-  React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+const SidebarHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
 
   return (
-    <Button
+    <div
       ref={ref}
-      data-sidebar="trigger"
-      variant="ghost"
-      size="icon"
-      className={cn("h-7 w-7", className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
+      className={cn(
+        "flex h-14 items-center border-b px-4 data-[state=closed]:justify-center data-[state=closed]:px-0",
+        className
+      )}
+      data-state={state}
+      {...props}
+    />
+  )
+})
+SidebarHeader.displayName = "SidebarHeader"
+
+const SidebarContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return (
+    <div
+      ref={ref}
+      className={cn("flex-1 overflow-auto py-2", className)}
+      {...props}
+    />
+  )
+})
+SidebarContent.displayName = "SidebarContent"
+
+const SidebarFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
+
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "flex h-14 items-center border-t px-4 data-[state=closed]:justify-center data-[state=closed]:px-0",
+        className
+      )}
+      data-state={state}
+      {...props}
+    />
+  )
+})
+SidebarFooter.displayName = "SidebarFooter"
+
+const SidebarTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ className, ...props }, ref) => {
+  const { toggleSidebar, state, isMobile, openMobile } = useSidebar()
+
+  if (isMobile) {
+    return (
+      <button
+        ref={ref}
+        type="button"
+        className={cn(
+          "inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+          className
+        )}
+        onClick={toggleSidebar}
+        data-state={openMobile ? "open" : "closed"}
+        {...props}
+      >
+        <ChevronLeft className="size-5" />
+        <span className="sr-only">Toggle Sidebar</span>
+      </button>
+    )
+  }
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      className={cn(
+        "inline-flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+        className
+      )}
+      onClick={toggleSidebar}
+      data-state={state}
       {...props}
     >
-      <PanelLeft />
+      <ChevronLeft className={cn(state === "closed" && "rotate-180", "size-5")} />
       <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+    </button>
   )
 })
 SidebarTrigger.displayName = "SidebarTrigger"
 
-export const SidebarContent = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => (
+const SidebarGroup = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return (
     <div
       ref={ref}
-      data-sidebar="content"
+      className={cn("pb-4", className)}
+      {...props}
+    />
+  )
+})
+SidebarGroup.displayName = "SidebarGroup"
+
+const SidebarGroupLabel = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
+  
+  return (
+    <h3
+      ref={ref}
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
+        "mb-2 px-4 text-xs font-medium text-muted-foreground data-[state=closed]:sr-only",
+        className
+      )}
+      data-state={state}
+      {...props}
+    />
+  )
+})
+SidebarGroupLabel.displayName = "SidebarGroupLabel"
+
+const SidebarGroupContent = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  return <div ref={ref} className={cn("", className)} {...props} />
+})
+SidebarGroupContent.displayName = "SidebarGroupContent"
+
+const SidebarRail = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => {
+  const { state } = useSidebar()
+  
+  if (state === "expanded") {
+    return null
+  }
+  
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        "absolute right-0 z-20 h-full w-px bg-border",
         className
       )}
       {...props}
     />
   )
-)
-SidebarContent.displayName = "SidebarContent"
+})
+SidebarRail.displayName = "SidebarRail"
 
-export const SidebarHeader = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-2", className)}
-      {...props}
-    />
-  )
-)
-SidebarHeader.displayName = "SidebarHeader"
-
-export const SidebarFooter = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
-  ({ className, ...props }, ref) => (
-    <div
-      ref={ref}
-      data-sidebar="footer"
-      className={cn("flex flex-col gap-2 p-2", className)}
-      {...props}
-    />
-  )
-)
-SidebarFooter.displayName = "SidebarFooter"
+export {
+  Sidebar,
+  SidebarContent,
+  SidebarTrigger,
+  SidebarHeader,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupContent,
+  SidebarRail,
+}

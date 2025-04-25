@@ -6,6 +6,7 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
+  SidebarGroupLabel,
 } from "@/components/ui/sidebar";
 import { settingsNavigation } from "./navigation";
 import { SettingsMenuItem } from "./SettingsMenuItem";
@@ -17,6 +18,7 @@ export const SettingsSidebar = () => {
     <Sidebar variant="inset" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {settingsNavigation.map((item) => (

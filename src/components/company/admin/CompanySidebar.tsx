@@ -51,7 +51,7 @@ const companyMenu = [
   {
     title: "Agendamentos",
     icon: Calendar,
-    path: "/company/my-company/bookings",
+    path: "/company/my-company/calendar",
   },
   {
     title: "Avaliações",
