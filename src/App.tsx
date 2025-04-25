@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -22,6 +21,7 @@ import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Reviews from "./pages/Reviews";
+import Gamification from "./pages/Gamification";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +51,7 @@ const App = () => (
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings/*" element={<Settings />} />
               <Route path="/reviews" element={<Reviews />} />
+              <Route path="/gamification" element={<Gamification />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TooltipProvider>
