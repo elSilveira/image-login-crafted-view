@@ -74,7 +74,7 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
             </div>
             
             <Link 
-              to={`/professional/${service.company_id}`} 
+              to={`/company/${service.company_id}/services`} 
               className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
             >
               <span className="font-medium">Empresa:</span> {service.company}

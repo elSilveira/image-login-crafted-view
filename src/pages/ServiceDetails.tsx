@@ -90,6 +90,9 @@ const ServiceDetails = () => {
               <Link to={`/company/${service.company_id}`} className="text-sm hover:underline">
                 {service.company}
               </Link>
+              <Link to={`/company/${service.company_id}/services`} className="text-sm text-iazi-primary hover:underline ml-2">
+                Ver todos os serviços desta empresa
+              </Link>
             </div>
 
             <Tabs defaultValue="providers" className="w-full">

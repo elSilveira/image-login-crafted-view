@@ -15,6 +15,7 @@ import Search from "./pages/Search";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import CompanyProfile from "./pages/CompanyProfile";
 import CompanyBooking from "./pages/CompanyBooking";
+import CompanyServices from "./pages/CompanyServices";
 import ServiceDetails from "./pages/ServiceDetails";
 import Booking from "./pages/Booking";
 import BookingHistory from "./pages/BookingHistory";
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/professional/:id" element={<ProfessionalProfile />} />
               <Route path="/company/:id" element={<CompanyProfile />} />
+              <Route path="/company/:id/services" element={<CompanyServices />} />
               <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
               <Route path="/service/:id" element={<ServiceDetails />} />
               <Route path="/services" element={<Navigate to="/search?type=service" />} />
