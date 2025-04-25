@@ -9,7 +9,10 @@ const StaffCalendar = () => {
   
   return (
     <CompanyLayout>
-      <StaffCalendarContent staffId={staffId || ""} />
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Agenda do Funcionário</h1>
+        <StaffCalendarContent staffId={staffId || ""} />
+      </div>
     </CompanyLayout>
   );
 };

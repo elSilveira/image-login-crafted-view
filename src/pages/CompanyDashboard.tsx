@@ -6,7 +6,10 @@ import { CompanyDashboardContent } from "@/components/company/admin/CompanyDashb
 const CompanyDashboard = () => {
   return (
     <CompanyLayout>
-      <CompanyDashboardContent />
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <CompanyDashboardContent />
+      </div>
     </CompanyLayout>
   );
 };

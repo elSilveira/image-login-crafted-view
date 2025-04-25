@@ -13,10 +13,8 @@ export const CompanyLayout: React.FC<CompanyLayoutProps> = ({ children }) => {
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
         <Navigation />
-        <div className="fixed z-30 h-full mt-14">
-          <CompanySidebar />
-        </div>
-        <div className="flex-1 pl-[4rem] sm:pl-[16rem] mt-14">
+        <CompanySidebar />
+        <div className="flex-1 pl-[16rem] pt-14">
           <main className="p-8">
             <div className="max-w-6xl mx-auto">
               {children}

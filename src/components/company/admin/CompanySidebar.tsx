@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -73,10 +74,10 @@ export const CompanySidebar = () => {
   const location = useLocation();
   
   return (
-    <Sidebar className="h-screen border-r">
+    <Sidebar className="fixed left-0 top-14 h-[calc(100vh-56px)] z-30 border-r">
       <SidebarHeader>
         <div className="p-2">
-          <h2 className="text-xl font-bold text-center">iAzi Admin</h2>
+          <h2 className="text-xl font-bold">iAzi Admin</h2>
         </div>
       </SidebarHeader>
       <SidebarContent>
