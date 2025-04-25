@@ -1,8 +1,8 @@
-
 import React, { useState } from "react";
 import { ServiceCard } from "@/components/services/ServiceCard";
 import { ServicePagination } from "@/components/services/ServicePagination";
 import { services } from "@/lib/mock-services";
+import { mockCompany } from "@/lib/mock-company";
 
 interface CompanyServicesListProps {
   companyId: string | undefined;
@@ -27,8 +27,23 @@ export const CompanyServicesList = ({
   currentPage,
   setCurrentPage,
 }: CompanyServicesListProps) => {
-  // Filter services by company ID
-  const companyServices = services.filter((service) => service.company_id === companyId);
+  // Filter company services based on the mock company
+  const companyServices = mockCompany.services.map(service => ({
+    id: parseInt(service.id),
+    name: service.name,
+    category: service.category,
+    company: mockCompany.name,
+    professional: mockCompany.staff[0].name,
+    image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600",
+    rating: 4.8,
+    reviews: 45,
+    price: service.price,
+    duration: service.duration,
+    availability: "Hoje",
+    company_id: mockCompany.id,
+    professional_id: mockCompany.staff[0].id,
+    description: service.description,
+  }));
   
   // Apply filters
   const filteredServices = companyServices.filter((service) => {
@@ -145,33 +160,17 @@ export const CompanyServicesList = ({
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4">Todos os Serviços ({filteredServices.length})</h2>
+      <h2 className="text-2xl font-semibold mb-4">Serviços Disponíveis ({companyServices.length})</h2>
       <div className="space-y-6">
         {paginatedServices.map((service) => (
           <div key={service.id}>
             <ServiceCard service={service} />
-            
-            {/* Expandable section for professionals - in a real app, this would fetch professionals for each service */}
-            {expandedServiceId === service.id && (
-              <div className="mt-2 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">Profissionais disponíveis:</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center p-3 bg-white rounded-md shadow-sm">
-                    <div className="h-10 w-10 rounded-full bg-gray-200 mr-3"></div>
-                    <div>
-                      <p className="font-medium">{service.professional}</p>
-                      <p className="text-sm text-gray-500">Disponível hoje</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         ))}
       </div>
       <ServicePagination
         currentPage={currentPage}
-        totalPages={totalPages}
+        totalPages={Math.ceil(companyServices.length / 5)}
         setCurrentPage={setCurrentPage}
       />
     </div>
