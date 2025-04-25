@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -21,6 +20,7 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
       reviews: 124,
       price: 80,
       specialties: ["Corte Masculino", "Barba"],
+      companyId: 1,
     },
     {
       id: "2",
@@ -30,6 +30,7 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
       reviews: 98,
       price: 75,
       specialties: ["Coloração", "Corte Feminino"],
+      companyId: 2,
     },
   ];
 
@@ -68,7 +69,7 @@ const ServiceProviders = ({ serviceId }: ServiceProvidersProps) => {
                   <div className="text-sm text-muted-foreground">por serviço</div>
                 </div>
                 <Button asChild>
-                  <Link to={`/booking/${serviceId || 1}?provider=${provider.id}`}>
+                  <Link to={`/company/${provider.companyId}/booking?provider=${provider.id}`}>
                     Agendar
                   </Link>
                 </Button>

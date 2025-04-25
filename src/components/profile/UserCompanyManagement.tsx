@@ -1,10 +1,10 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, UserPlus } from "lucide-react";
+import { Calendar } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Link } from "react-router-dom";
 
 export const UserCompanyManagement = () => {
   const [hasCompany, setHasCompany] = useState(false);
@@ -64,7 +65,15 @@ export const UserCompanyManagement = () => {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Minha Empresa</CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle>Minha Empresa</CardTitle>
+                <Button variant="outline" asChild>
+                  <Link to="/company/my-company/booking">
+                    <Calendar className="mr-2 h-4 w-4" />
+                    Ver Agenda
+                  </Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

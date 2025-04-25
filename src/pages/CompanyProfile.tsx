@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -206,6 +205,15 @@ const CompanyProfile = () => {
               </Button>
             </div>
           </div>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button className="flex-1 bg-[#4664EA] hover:bg-[#3A51C5]" asChild>
+            <Link to={`/company/${id}/booking`}>
+              <Calendar className="mr-2 h-5 w-5" />
+              Agendar Serviço
+            </Link>
+          </Button>
         </div>
         
         {/* Tabs navigation */}
@@ -433,7 +441,8 @@ const CompanyProfile = () => {
             Contato direto
           </Button>
           <Button className="flex-1 bg-[#4664EA] hover:bg-[#3A51C5]" asChild>
-            <Link to={`/booking/service?company=${companyData.id}`}>
+            <Link to={`/company/${id}/booking`}>
+              <Calendar className="mr-2 h-5 w-5" />
               Agendar Serviço
             </Link>
           </Button>
