@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -57,7 +56,7 @@ export default function Navigation() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/profile/professional" className="flex items-center">
+                    <Link to="/profile/professional/settings" className="flex items-center">
                       <Briefcase className="mr-2 h-4 w-4" />
                       Perfil Profissional
                     </Link>

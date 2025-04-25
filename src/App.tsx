@@ -22,6 +22,7 @@ import Notifications from "./pages/Notifications";
 import Settings from "./pages/Settings";
 import Reviews from "./pages/Reviews";
 import Gamification from "./pages/Gamification";
+import ProfessionalProfileSettings from "./pages/ProfessionalProfileSettings";
 
 const queryClient = new QueryClient();
 
@@ -40,14 +41,13 @@ const App = () => (
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/professional/:id" element={<ProfessionalProfile />} />
-              <Route path="/company/:id" element={<CompanyProfile />} />
               <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
               <Route path="/service/:id" element={<ServiceDetails />} />
               <Route path="/services" element={<Navigate to="/search?type=service" />} />
               <Route path="/booking/:serviceId" element={<Booking />} />
               <Route path="/booking-history" element={<BookingHistory />} />
               <Route path="/profile" element={<UserProfile />} />
-              <Route path="/profile/professional" element={<UserProfile />} />
+              <Route path="/profile/professional/settings" element={<ProfessionalProfileSettings />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/settings/*" element={<Settings />} />
               <Route path="/reviews" element={<Reviews />} />
