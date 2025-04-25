@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -36,21 +35,8 @@ import {
 } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { 
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger
-} from "@/components/ui/hover-card";
 import { format } from "date-fns";
 import { pt } from 'date-fns/locale';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
 
 // Mock data for professional
 const professionalData = {
@@ -99,27 +85,27 @@ const professionalData = {
   ]
 };
 
+// Function to render stars based on rating
+const renderStars = (rating: number) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <Star
+        key={i}
+        className={`h-4 w-4 ${
+          i <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+        }`}
+      />
+    );
+  }
+  return stars;
+};
+
 const ProfessionalProfile = () => {
   const { id } = useParams();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState("about");
   
-  // Function to render stars based on rating
-  const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-          }`}
-        />
-      );
-    }
-    return stars;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
@@ -142,7 +128,7 @@ const ProfessionalProfile = () => {
             {/* Profile info */}
             <div className="flex flex-col flex-grow text-center md:text-left">
               <h1 className="text-2xl md:text-3xl font-bold mb-1">{professionalData.name}</h1>
-              <p className="text-[#4664EA] text-lg mb-2">{professionalData.title}</p>
+              <p className="text-iazi-primary text-lg mb-2">{professionalData.title}</p>
               
               {/* Specialties */}
               <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-4">
@@ -165,7 +151,7 @@ const ProfessionalProfile = () => {
             
             {/* Schedule button */}
             <div className="flex items-center">
-              <Button size="lg" className="bg-[#4664EA] hover:bg-[#3A51C5]">
+              <Button size="lg">
                 Agendar Consulta
               </Button>
             </div>
@@ -175,27 +161,27 @@ const ProfessionalProfile = () => {
         {/* Tabs navigation */}
         <Tabs defaultValue="about" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="bg-white w-full h-auto flex-wrap justify-start p-0 md:p-0 shadow-sm rounded-lg">
-            <TabsTrigger value="about" className="data-[state=active]:bg-[#4664EA]/10 data-[state=active]:text-[#4664EA] rounded-none border-b-2 border-transparent data-[state=active]:border-[#4664EA] px-4 py-3 flex items-center gap-2">
+            <TabsTrigger value="about" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2">
               <User className="h-4 w-4" />
               Sobre
             </TabsTrigger>
-            <TabsTrigger value="services" className="data-[state=active]:bg-[#4664EA]/10 data-[state=active]:text-[#4664EA] rounded-none border-b-2 border-transparent data-[state=active]:border-[#4664EA] px-4 py-3 flex items-center gap-2">
+            <TabsTrigger value="services" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Serviços
             </TabsTrigger>
-            <TabsTrigger value="experience" className="data-[state=active]:bg-[#4664EA]/10 data-[state=active]:text-[#4664EA] rounded-none border-b-2 border-transparent data-[state=active]:border-[#4664EA] px-4 py-3 flex items-center gap-2">
+            <TabsTrigger value="experience" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2">
               <Briefcase className="h-4 w-4" />
               Experiência
             </TabsTrigger>
-            <TabsTrigger value="availability" className="data-[state=active]:bg-[#4664EA]/10 data-[state=active]:text-[#4664EA] rounded-none border-b-2 border-transparent data-[state=active]:border-[#4664EA] px-4 py-3 flex items-center gap-2">
+            <TabsTrigger value="availability" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2">
               <CalendarIcon className="h-4 w-4" />
               Disponibilidade
             </TabsTrigger>
-            <TabsTrigger value="reviews" className="data-[state=active]:bg-[#4664EA]/10 data-[state=active]:text-[#4664EA] rounded-none border-b-2 border-transparent data-[state=active]:border-[#4664EA] px-4 py-3 flex items-center gap-2">
+            <TabsTrigger value="reviews" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2">
               <Star className="h-4 w-4" />
               Avaliações
             </TabsTrigger>
-            <TabsTrigger value="portfolio" className="data-[state=active]:bg-[#4664EA]/10 data-[state=active]:text-[#4664EA] rounded-none border-b-2 border-transparent data-[state=active]:border-[#4664EA] px-4 py-3 flex items-center gap-2">
+            <TabsTrigger value="portfolio" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2">
               <Image className="h-4 w-4" />
               Portfólio
             </TabsTrigger>
@@ -209,15 +195,15 @@ const ProfessionalProfile = () => {
             <h3 className="text-lg font-semibold mb-3">Informações de Contato</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-[#4664EA]" />
+                <MapPin className="h-5 w-5 text-iazi-primary" />
                 <span className="text-gray-700">{professionalData.address}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="h-5 w-5 text-[#4664EA]" />
+                <Phone className="h-5 w-5 text-iazi-primary" />
                 <span className="text-gray-700">{professionalData.phone}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-[#4664EA]" />
+                <Mail className="h-5 w-5 text-iazi-primary" />
                 <span className="text-gray-700">{professionalData.email}</span>
               </div>
             </div>
@@ -235,12 +221,12 @@ const ProfessionalProfile = () => {
             <h2 className="text-xl font-semibold mb-6">Serviços Oferecidos</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {professionalData.services.map((service) => (
-                <Card key={service.id} className="overflow-hidden border-l-4 border-l-[#4664EA]">
+                <Card key={service.id} className="overflow-hidden border-l-4 border-l-iazi-primary">
                   <CardContent className="p-0">
                     <div className="p-5">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="font-semibold text-lg">{service.name}</h3>
-                        <span className="text-lg font-semibold text-[#4664EA]">{service.price}</span>
+                        <span className="text-lg font-semibold text-iazi-primary">{service.price}</span>
                       </div>
                       
                       <div className="flex items-center text-gray-500 text-sm mb-3">
@@ -378,7 +364,7 @@ const ProfessionalProfile = () => {
             <Phone className="mr-2 h-5 w-5" />
             Contato direto
           </Button>
-          <Button className="flex-1 bg-[#4664EA] hover:bg-[#3A51C5]">
+          <Button className="flex-1">
             Agendar Consulta
           </Button>
         </div>
@@ -386,7 +372,7 @@ const ProfessionalProfile = () => {
         {/* Similar professionals */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex items-center mb-6">
-            <Users className="h-5 w-5 mr-2 text-[#4664EA]" />
+            <Users className="h-5 w-5 mr-2 text-iazi-primary" />
             <h2 className="text-xl font-semibold">Profissionais similares</h2>
           </div>
           
@@ -400,7 +386,7 @@ const ProfessionalProfile = () => {
                   </Avatar>
                   <div>
                     <h3 className="font-medium">{pro.name}</h3>
-                    <p className="text-sm text-[#4664EA]">{pro.specialty}</p>
+                    <p className="text-sm text-iazi-primary">{pro.specialty}</p>
                   </div>
                 </CardContent>
               </Card>
