@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -92,8 +91,8 @@ export const CompanySidebar = () => {
                     isActive={location.pathname === item.path}
                     tooltip={item.title}
                   >
-                    <Link to={item.path}>
-                      <item.icon className={cn("h-4 w-4")} />
+                    <Link to={item.path} className="flex items-center gap-2">
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
