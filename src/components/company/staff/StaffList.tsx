@@ -55,7 +55,14 @@ export const StaffList = () => {
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {mockStaff.map((staff) => (
-          <StaffMemberCard key={staff.id} staff={staff} />
+          <StaffMemberCard
+            key={staff.id}
+            id={staff.id.toString()}
+            name={staff.name}
+            role={staff.role}
+            email={`${staff.name.toLowerCase().replace(' ', '.')}@example.com`}
+            image={staff.image}
+          />
         ))}
       </div>
 
