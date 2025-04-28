@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,10 +14,10 @@ import NotFound from "./pages/NotFound";
 import Search from "./pages/Search";
 import ProfessionalProfile from "./pages/ProfessionalProfile";
 import CompanyProfile from "./pages/CompanyProfile";
-import CompanyBooking from "./pages/CompanyBooking";
 import CompanyServices from "./pages/CompanyServices";
 import ServiceDetails from "./pages/ServiceDetails";
 import Booking from "./pages/Booking";
+import BookingReschedule from "./pages/BookingReschedule";
 import BookingHistory from "./pages/BookingHistory";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
@@ -64,10 +65,11 @@ const App = () => (
               <Route path="/company/my-company/reports" element={<CompanyReportsAdmin />} />
               <Route path="/company/my-company/settings" element={<CompanySettingsAdmin />} />
               <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
-              <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
+              <Route path="/booking/company/:companyId" element={<Navigate to="/booking/1?company=true" replace />} />
               <Route path="/service/:id" element={<ServiceDetails />} />
               <Route path="/services" element={<Navigate to="/search?type=service" />} />
               <Route path="/booking/:serviceId" element={<Booking />} />
+              <Route path="/booking/:bookingId/reschedule" element={<BookingReschedule />} />
               <Route path="/booking-history" element={<BookingHistory />} />
               <Route path="/profile" element={<UserProfile />} />
               <Route path="/profile/professional/settings" element={<ProfessionalProfileSettings />} />

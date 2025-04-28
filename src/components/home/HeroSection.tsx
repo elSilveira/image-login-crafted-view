@@ -30,7 +30,7 @@ export const HeroSection = () => {
         </Card>
       </Link>
 
-      <Link to="/booking/new" className="w-full">
+      <Link to="/booking/1" className="w-full">
         <Card className="bg-white/70 backdrop-blur hover:shadow-lg transition-all border-iazi-border h-full cursor-pointer">
           <CardContent className="p-4 text-center">
             <Clock className="mx-auto h-6 w-6 text-iazi-primary mb-2" />
