@@ -21,6 +21,7 @@ interface ServiceCardProps {
     company_id: string;
     professional_id: string;
   };
+  isHighlighted?: boolean;
 }
 
 const renderStars = (rating: number) => {
@@ -38,9 +39,11 @@ const renderStars = (rating: number) => {
   return stars;
 };
 
-export const ServiceCard = ({ service }: ServiceCardProps) => {
+export const ServiceCard = ({ service, isHighlighted = false }: ServiceCardProps) => {
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow duration-300">
+    <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+      isHighlighted ? "ring-2 ring-[#4664EA]" : ""
+    }`}>
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
           <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">

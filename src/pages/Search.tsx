@@ -1,23 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Star, Filter, ChevronDown, MoreHorizontal, User, Briefcase } from "lucide-react";
-import { popularCategories } from "@/components/SearchDropdown";
+import { ServiceCard } from "@/components/services/ServiceCard";
+import { CompanyCard } from "@/components/search/CompanyCard";
+import { SearchCategories } from "@/components/search/SearchCategories";
+import { SearchTabs } from "@/components/search/SearchTabs";
+import { ServicePagination } from "@/components/services/ServicePagination";
+import { EmptyResults } from "@/components/search/EmptyResults";
+import { TabsContent } from "@/components/ui/tabs";
 import { professionals } from "./Professionals";
 import { services } from "@/lib/mock-services";
 
@@ -120,21 +112,6 @@ const Search = () => {
     viewType === "all" ? Math.max(0, endIdx - totalServices) : endIdx
   );
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <Star
-          key={i}
-          className={`h-4 w-4 ${
-            i <= rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-          }`}
-        />
-      );
-    }
-    return stars;
-  };
-
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     updateFilters({ category: category });
@@ -150,164 +127,6 @@ const Search = () => {
   const handleSortChange = (value: string) => {
     setSortBy(value);
     setCurrentPage(1);
-  };
-
-  const renderServiceCard = (service: any) => {
-    const serviceId = service.id.toString();
-    return (
-      <Card key={serviceId} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-        highlightId && serviceId === highlightId ? "ring-2 ring-[#4664EA]" : ""
-      }`}>
-        <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-              <div className="h-24 w-24 mb-3 rounded-md overflow-hidden">
-                <img 
-                  src={service.image} 
-                  alt={service.name} 
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="flex items-center gap-1 mb-1">
-                {renderStars(service.rating)}
-              </div>
-              <div className="text-sm text-center">
-                <span className="font-semibold">{service.rating}</span>
-                <span className="text-gray-500"> ({service.reviews})</span>
-              </div>
-            </div>
-            
-            <div className="md:w-3/4 p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
-                  <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
-                </div>
-                <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Serviço</Badge>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 mb-3">
-                <Badge variant="outline" className="bg-gray-50">
-                  {service.duration}
-                </Badge>
-                <Badge variant="outline" className="bg-gray-50">
-                  {service.price}
-                </Badge>
-              </div>
-              
-              <Link 
-                to={`/professional/${service.company_id}`}
-                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
-              >
-                <span className="font-medium">Empresa:</span> {service.company}
-              </Link>
-              
-              <Link
-                to={`/professional/${service.professional_id}`}
-                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
-              >
-                <span className="font-medium">Profissional:</span> {service.professional}
-              </Link>
-              
-              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Disponível: {service.availability}</span>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link to={`/service/${service.id}`}>
-                    Ver detalhes
-                  </Link>
-                </Button>
-                <Button className="flex-1" asChild>
-                  <Link to={`/booking/${service.id}`}>Agendar</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
-
-  const renderCompanyCard = (company: any) => {
-    const companyId = company.id.toString();
-    return (
-      <Card key={companyId} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 border-l-4 border-l-[#4664EA] ${
-        highlightId && companyId === highlightId ? "ring-2 ring-[#4664EA]" : ""
-      }`}>
-        <CardContent className="p-0">
-          <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-[#f8f9ff]">
-              <Avatar className="h-24 w-24 mb-3 border-2 border-[#eef1ff] shadow-sm">
-                <AvatarImage src={company.image} alt={company.name} />
-                <AvatarFallback className="bg-[#4664EA] text-white">
-                  <Briefcase className="h-8 w-8" />
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex items-center gap-1 mb-1">
-                {renderStars(company.rating)}
-              </div>
-              <div className="text-sm text-center">
-                <span className="font-semibold">{company.rating}</span>
-                <span className="text-gray-500"> ({company.reviews})</span>
-              </div>
-            </div>
-            
-            <div className="md:w-3/4 p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{company.name}</h3>
-                  <p className="text-[#4664EA] text-sm font-inter mb-2">{company.specialty}</p>
-                </div>
-                <Badge className="bg-[#eef1ff] text-[#4664EA] hover:bg-[#e5eaff]">Empresa</Badge>
-              </div>
-              
-              <div className="flex flex-wrap gap-2 mb-3">
-                {company.services && company.services.slice(0, 3).map((service: string, i: number) => (
-                  <Badge key={i} variant="outline" className="bg-gray-50">
-                    {service}
-                  </Badge>
-                ))}
-              </div>
-              
-              <p className="text-sm text-gray-600 font-inter mb-3">
-                <span className="font-medium">Profissionais:</span>{" "}
-                {company.professionals && company.professionals.map((prof: string, index: number) => (
-                  <Link
-                    key={index}
-                    to={`/professional/${company.professional_ids && company.professional_ids[index] ? company.professional_ids[index] : index}`}
-                    className="hover:text-iazi-primary"
-                  >
-                    {prof}{index < company.professionals.length - 1 ? ", " : ""}
-                  </Link>
-                ))}
-              </p>
-              
-              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Disponível: {company.availability}</span>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link to={`/professional/${company.id}`}>
-                    Ver detalhes
-                  </Link>
-                </Button>
-                <Button className="flex-1 bg-[#4664EA] hover:bg-[#3a52c7]" asChild>
-                  <Link to={`/booking/1?company=true`}>
-                    <User className="h-4 w-4 mr-1" />
-                    Selecionar Profissional
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
   };
 
   return (
@@ -330,68 +149,33 @@ const Search = () => {
               'Explore empresas e serviços disponíveis'}
           </p>
 
-          <div className="mb-6">
-            <h2 className="font-medium mb-3">Categorias populares</h2>
-            <div className="flex flex-wrap gap-2">
-              <Badge 
-                variant={!selectedCategory ? "default" : "outline"} 
-                className="px-3 py-1.5 cursor-pointer"
-                onClick={() => handleCategoryChange("")}
-              >
-                Todas
-              </Badge>
-              {allCategories.map((category, index) => (
-                <Badge 
-                  key={index}
-                  variant={selectedCategory === category ? "default" : "outline"} 
-                  className="px-3 py-1.5 cursor-pointer"
-                  onClick={() => handleCategoryChange(category)}
-                >
-                  {category}
-                </Badge>
-              ))}
-            </div>
-          </div>
+          <SearchCategories 
+            selectedCategory={selectedCategory}
+            allCategories={allCategories}
+            onCategoryChange={handleCategoryChange}
+          />
 
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <Tabs defaultValue={viewType} value={viewType} onValueChange={handleTabChange} className="w-full">
-              <TabsList>
-                <TabsTrigger value="all">
-                  Todos ({filteredServices.length + filteredCompanies.length})
-                </TabsTrigger>
-                <TabsTrigger value="service">
-                  Serviços ({filteredServices.length})
-                </TabsTrigger>
-                <TabsTrigger value="company">
-                  Empresas ({filteredCompanies.length})
-                </TabsTrigger>
-              </TabsList>
-
-              <div className="flex justify-between items-center mt-6 mb-4">
-                <div className="mt-4 sm:mt-0">
-                  <Select value={sortBy} onValueChange={handleSortChange}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue placeholder="Ordenar por" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="rating">Melhor avaliação</SelectItem>
-                      {viewType !== "company" && (
-                        <>
-                          <SelectItem value="price-asc">Menor preço</SelectItem>
-                          <SelectItem value="price-desc">Maior preço</SelectItem>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
+            <SearchTabs
+              viewType={viewType}
+              onTabChange={handleTabChange}
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              serviceCount={filteredServices.length}
+              companyCount={filteredCompanies.length}
+            >
               <TabsContent value="all">
                 {paginatedServices.length > 0 && (
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">Serviços</h2>
                     <div className="grid grid-cols-1 gap-4">
-                      {paginatedServices.map(service => renderServiceCard(service))}
+                      {paginatedServices.map(service => (
+                        <ServiceCard 
+                          key={service.id}
+                          service={service}
+                          isHighlighted={highlightId === service.id.toString()}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
@@ -400,7 +184,13 @@ const Search = () => {
                   <div>
                     <h2 className="text-xl font-semibold mb-4">Empresas</h2>
                     <div className="grid grid-cols-1 gap-4">
-                      {paginatedCompanies.map(company => renderCompanyCard(company))}
+                      {paginatedCompanies.map(company => (
+                        <CompanyCard 
+                          key={company.id}
+                          company={company}
+                          isHighlighted={highlightId === company.id.toString()}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
@@ -408,74 +198,40 @@ const Search = () => {
 
               <TabsContent value="service">
                 <div className="grid grid-cols-1 gap-4">
-                  {sortedServices.slice(startIdx, endIdx).map(service => renderServiceCard(service))}
+                  {sortedServices.slice(startIdx, endIdx).map(service => (
+                    <ServiceCard 
+                      key={service.id}
+                      service={service}
+                      isHighlighted={highlightId === service.id.toString()}
+                    />
+                  ))}
                 </div>
               </TabsContent>
               
               <TabsContent value="company">
                 <div className="grid grid-cols-1 gap-4">
-                  {sortedCompanies.slice(startIdx, endIdx).map(company => renderCompanyCard(company))}
+                  {sortedCompanies.slice(startIdx, endIdx).map(company => (
+                    <CompanyCard 
+                      key={company.id}
+                      company={company}
+                      isHighlighted={highlightId === company.id.toString()}
+                    />
+                  ))}
                 </div>
               </TabsContent>
-            </Tabs>
+            </SearchTabs>
           </div>
 
           {totalPages > 1 && (
-            <Pagination className="mt-8">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage > 1) setCurrentPage(currentPage - 1);
-                    }}
-                    className={currentPage <= 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                
-                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink 
-                      href="#" 
-                      isActive={currentPage === i + 1}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCurrentPage(i + 1);
-                      }}
-                    >
-                      {i + 1}
-                    </PaginationLink>
-                  </PaginationItem>
-                ))}
-                
-                {totalPages > 5 && (
-                  <PaginationItem>
-                    <MoreHorizontal className="h-4 w-4 mx-2" />
-                  </PaginationItem>
-                )}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    href="#" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                    }}
-                    className={currentPage >= totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+            <ServicePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              setCurrentPage={setCurrentPage}
+            />
           )}
 
           {filteredServices.length === 0 && filteredCompanies.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-xl text-gray-500">Nenhum resultado encontrado</p>
-              <p className="text-gray-400 mt-2">
-                Tente ajustar sua pesquisa ou filtros para encontrar o que procura
-              </p>
-            </div>
+            <EmptyResults />
           )}
         </div>
       </main>
