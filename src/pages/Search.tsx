@@ -297,7 +297,7 @@ const Search = () => {
                   </Link>
                 </Button>
                 <Button className="flex-1 bg-[#4664EA] hover:bg-[#3a52c7]" asChild>
-                  <Link to={`/booking/1?company=${company.id}`}>
+                  <Link to={`/booking/1?company=true`}>
                     <User className="h-4 w-4 mr-1" />
                     Selecionar Profissional
                   </Link>
