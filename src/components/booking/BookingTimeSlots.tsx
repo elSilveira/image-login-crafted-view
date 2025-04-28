@@ -2,6 +2,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useLocation } from "react-router-dom";
 
 interface BookingTimeSlotsProps {
   date: Date;
@@ -16,6 +17,10 @@ const BookingTimeSlots = ({
   onTimeSelect,
   onNext,
 }: BookingTimeSlotsProps) => {
+  // Check if we're on the reschedule page
+  const location = useLocation();
+  const isRescheduling = location.pathname.includes("/reschedule");
+
   // Mock data - In a real app, these would come from an API
   const timeSlots = [
     "09:00",
@@ -54,7 +59,7 @@ const BookingTimeSlots = ({
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={!selectedTime}>
-          Próximo
+          {isRescheduling ? "Confirmar Reagendamento" : "Próximo"}
         </Button>
       </div>
     </div>
