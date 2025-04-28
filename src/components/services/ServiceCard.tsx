@@ -61,8 +61,13 @@ export const ServiceCard = ({ service }: ServiceCardProps) => {
           </div>
           
           <div className="md:w-3/4 p-6">
-            <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
-            <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
+                <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
+              </div>
+              <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Serviço</Badge>
+            </div>
             
             <div className="flex flex-wrap gap-2 mb-3">
               <Badge variant="outline" className="bg-gray-50">

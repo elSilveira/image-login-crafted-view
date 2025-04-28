@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -17,7 +16,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Star, Filter, ChevronDown, MoreHorizontal } from "lucide-react";
+import { Calendar, Star, Filter, ChevronDown, MoreHorizontal, User, Briefcase } from "lucide-react";
 import { popularCategories } from "@/components/SearchDropdown";
 import { professionals } from "./Professionals";
 import { services } from "@/lib/mock-services";
@@ -179,8 +178,13 @@ const Search = () => {
             </div>
             
             <div className="md:w-3/4 p-6">
-              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
-              <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{service.name}</h3>
+                  <p className="text-[#4664EA] text-sm font-inter mb-2">{service.category}</p>
+                </div>
+                <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Serviço</Badge>
+              </div>
               
               <div className="flex flex-wrap gap-2 mb-3">
                 <Badge variant="outline" className="bg-gray-50">
@@ -230,15 +234,17 @@ const Search = () => {
   const renderCompanyCard = (company: any) => {
     const companyId = company.id.toString();
     return (
-      <Card key={companyId} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+      <Card key={companyId} className={`overflow-hidden hover:shadow-md transition-shadow duration-300 border-l-4 border-l-[#4664EA] ${
         highlightId && companyId === highlightId ? "ring-2 ring-[#4664EA]" : ""
       }`}>
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
-            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-              <Avatar className="h-24 w-24 mb-3">
+            <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-[#f8f9ff]">
+              <Avatar className="h-24 w-24 mb-3 border-2 border-[#eef1ff] shadow-sm">
                 <AvatarImage src={company.image} alt={company.name} />
-                <AvatarFallback>{company.name.substring(0, 2)}</AvatarFallback>
+                <AvatarFallback className="bg-[#4664EA] text-white">
+                  <Briefcase className="h-8 w-8" />
+                </AvatarFallback>
               </Avatar>
               <div className="flex items-center gap-1 mb-1">
                 {renderStars(company.rating)}
@@ -250,8 +256,13 @@ const Search = () => {
             </div>
             
             <div className="md:w-3/4 p-6">
-              <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{company.name}</h3>
-              <p className="text-[#4664EA] text-sm font-inter mb-2">{company.specialty}</p>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{company.name}</h3>
+                  <p className="text-[#4664EA] text-sm font-inter mb-2">{company.specialty}</p>
+                </div>
+                <Badge className="bg-[#eef1ff] text-[#4664EA] hover:bg-[#e5eaff]">Empresa</Badge>
+              </div>
               
               <div className="flex flex-wrap gap-2 mb-3">
                 {company.services && company.services.slice(0, 3).map((service: string, i: number) => (
@@ -285,8 +296,11 @@ const Search = () => {
                     Ver detalhes
                   </Link>
                 </Button>
-                <Button className="flex-1" asChild>
-                  <Link to={`/booking/company/${company.id}`}>Agendar</Link>
+                <Button className="flex-1 bg-[#4664EA] hover:bg-[#3a52c7]" asChild>
+                  <Link to={`/booking/1?company=${company.id}`}>
+                    <User className="h-4 w-4 mr-1" />
+                    Selecionar Profissional
+                  </Link>
                 </Button>
               </div>
             </div>
