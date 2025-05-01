@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Edit, Loader2 } from "lucide-react";
+import { Edit, Loader2, AlertCircle } from "lucide-react"; // Import AlertCircle
 import { toast } from "sonner"; // Assuming sonner is used for notifications
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
 
 // Define the schema for form validation using Zod
 const profileSchema = z.object({
@@ -28,7 +29,7 @@ export const UserProfileInfo = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   // Fetch user profile data
-  const { data: user, isLoading, isError, error } = useQuery({
+  const { data: user, isLoading, isError, error } = useQuery<any, Error>({
     queryKey: ["userProfile"],
     queryFn: fetchUserProfile,
     // staleTime: 5 * 60 * 1000, // Optional: Cache data for 5 minutes
@@ -50,7 +51,7 @@ export const UserProfileInfo = () => {
       reset({
         name: user.name || "",
         email: user.email || "",
-        avatar: user.avatar || "",
+        avatar: user.avatar || "", // Ensure correct field name from API
       });
       setIsEditing(false); // Reset editing state when data reloads
     }
@@ -85,10 +86,18 @@ export const UserProfileInfo = () => {
   };
 
   const handleCancel = () => {
-    reset(); // Reset form to original values
+    // Reset form to original values from the query data
+    if (user) {
+      reset({
+        name: user.name || "",
+        email: user.email || "",
+        avatar: user.avatar || "",
+      });
+    }
     setIsEditing(false);
   };
 
+  // --- Loading State --- 
   if (isLoading) {
     return (
       <Card>
@@ -102,14 +111,24 @@ export const UserProfileInfo = () => {
     );
   }
 
+  // --- Error State --- 
   if (isError) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Informações Pessoais</CardTitle>
         </CardHeader>
-        <CardContent className="text-destructive">
-          Erro ao carregar informações do perfil: {error.message}
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
+            <AlertDescription>
+              Não foi possível carregar as informações do perfil. Tente novamente mais tarde.
+              {error?.message && <p className="text-xs mt-2">Detalhes: {error.message}</p>}
+            </AlertDescription>
+            {/* Optional: Add a retry button */}
+            {/* <Button variant="destructive" size="sm" onClick={() => queryClient.refetchQueries({ queryKey: ['userProfile'] })} className="mt-4">Tentar Novamente</Button> */}
+          </Alert>
         </CardContent>
       </Card>
     );
@@ -119,6 +138,9 @@ export const UserProfileInfo = () => {
   const getAvatarFallback = (name?: string) => {
     return name ? name.split(" ").map(n => n[0]).join("").toUpperCase() : "U";
   };
+
+  // Get current form values for previewing avatar while editing
+  const currentFormValues = methods.watch();
 
   return (
     <Card>
@@ -131,7 +153,7 @@ export const UserProfileInfo = () => {
             <div className="relative">
               <Avatar className="h-24 w-24">
                 {/* Use avatar from form state if editing, otherwise from query data */}
-                <AvatarImage src={isEditing ? (reset().avatar || user?.avatar) : user?.avatar} alt={user?.name} />
+                <AvatarImage src={isEditing ? currentFormValues.avatar : user?.avatar} alt={user?.name} />
                 <AvatarFallback>{getAvatarFallback(user?.name)}</AvatarFallback>
               </Avatar>
               {isEditing && (

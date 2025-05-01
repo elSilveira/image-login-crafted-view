@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Added useQueryClient
 import { fetchAppointments } from "@/lib/api";
 import { CalendarDays, Clock, Loader2, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
 
 // Define interface for Appointment data (adjust based on actual API response)
 interface Appointment {
@@ -24,6 +25,8 @@ interface Appointment {
 }
 
 const AppointmentSection = () => {
+  const queryClient = useQueryClient(); // Initialize queryClient
+
   // Fetch appointments using React Query
   // Assuming the API filters appointments for the logged-in user
   const { data: appointments, isLoading, isError, error } = useQuery<Appointment[], Error>({
@@ -69,11 +72,16 @@ const AppointmentSection = () => {
           </div>
         )}
         {isError && (
-          <div className="flex items-center justify-center h-24 bg-destructive/10 border border-destructive rounded-md p-4">
-            <AlertCircle className="h-5 w-5 text-destructive mr-2" />
-            <span className="text-destructive text-sm">Erro ao carregar agendamentos.</span>
-            {/* <span className="text-destructive text-xs">{error.message}</span> */} 
-          </div>
+          <Alert variant="destructive" className="my-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
+            <AlertDescription>
+              Não foi possível carregar os próximos agendamentos.
+              {error?.message && <p className="text-xs mt-2">Detalhes: {error.message}</p>}
+            </AlertDescription>
+            {/* Optional: Add a retry button */}
+            {/* <Button variant="destructive" size="sm" onClick={() => queryClient.refetchQueries({ queryKey: ["userAppointments"] })} className="mt-4">Tentar Novamente</Button> */}
+          </Alert>
         )}
         {!isLoading && !isError && (
           <div className="space-y-3">

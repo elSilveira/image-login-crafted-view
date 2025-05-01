@@ -1,8 +1,8 @@
 "use client"; // Add this directive for client-side hooks
 
 import React, { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Calendar, CheckCircle, DollarSign, Users, Loader2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Added useQueryClient
+import { Calendar, CheckCircle, DollarSign, Users, Loader2, AlertCircle } from "lucide-react"; // Added AlertCircle
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyDashboardChart } from "@/components/company/admin/CompanyDashboardChart";
 import { CompanyTasksList } from "@/components/company/admin/CompanyTasksList";
@@ -10,8 +10,11 @@ import { CompanyUpcomingAppointments } from "@/components/company/admin/CompanyU
 import { CompanyNotifications } from "@/components/company/admin/CompanyNotifications";
 import { fetchCompanyDetails, fetchCompanyServices, fetchCompanyAppointments } from "@/lib/api"; // Import API functions
 import { useAuth } from "@/contexts/AuthContext"; // Assuming auth context provides company ID
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
+import { Button } from "@/components/ui/button"; // Import Button for potential retry
 
 export const CompanyDashboardContent = () => {
+  const queryClient = useQueryClient(); // Initialize queryClient
   const { user } = useAuth(); // Assuming useAuth provides user info including companyId
   // TODO: Determine the correct way to get the company ID. 
   // It might be directly on the user object, or require another fetch.
@@ -19,21 +22,21 @@ export const CompanyDashboardContent = () => {
   const companyId = user?.companyId; // Placeholder: Adjust based on actual auth context structure
 
   // Fetch Company Details
-  const { data: companyDetails, isLoading: isLoadingDetails, isError: isErrorDetails, error: errorDetails } = useQuery({
+  const { data: companyDetails, isLoading: isLoadingDetails, isError: isErrorDetails, error: errorDetails } = useQuery<any, Error>({
     queryKey: ["companyDetails", companyId],
     queryFn: () => fetchCompanyDetails(companyId!),
     enabled: !!companyId,
   });
 
   // Fetch Company Services
-  const { data: services, isLoading: isLoadingServices, isError: isErrorServices, error: errorServices } = useQuery({
+  const { data: services, isLoading: isLoadingServices, isError: isErrorServices, error: errorServices } = useQuery<any[], Error>({
     queryKey: ["companyServices", companyId],
     queryFn: () => fetchCompanyServices(companyId!),
     enabled: !!companyId,
   });
 
   // Fetch Company Appointments
-  const { data: appointments, isLoading: isLoadingAppointments, isError: isErrorAppointments, error: errorAppointments } = useQuery({
+  const { data: appointments, isLoading: isLoadingAppointments, isError: isErrorAppointments, error: errorAppointments } = useQuery<any[], Error>({
     queryKey: ["companyAppointments", companyId],
     queryFn: () => fetchCompanyAppointments(companyId!),
     enabled: !!companyId,
@@ -58,10 +61,20 @@ export const CompanyDashboardContent = () => {
   const isError = isErrorDetails || isErrorServices || isErrorAppointments;
   const errorMessages = [errorDetails, errorServices, errorAppointments].filter(Boolean).map((e: any) => e.message).join("; ");
 
+  // --- No Company ID State --- 
   if (!companyId) {
-    return <div className="text-center text-muted-foreground">ID da empresa não encontrado. Verifique se você está logado corretamente.</div>;
+    return (
+      <Alert variant="warning">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Acesso Negado</AlertTitle>
+        <AlertDescription>
+          ID da empresa não encontrado. Verifique se você está logado corretamente.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
+  // --- Loading State --- 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-96">
@@ -70,11 +83,30 @@ export const CompanyDashboardContent = () => {
     );
   }
 
+  // --- Error State --- 
   if (isError) {
     return (
-      <div className="text-destructive p-4 border border-destructive rounded-md">
-        Erro ao carregar dados do dashboard: {errorMessages}
-      </div>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Erro ao Carregar Dashboard</AlertTitle>
+        <AlertDescription>
+          Não foi possível carregar todos os dados do dashboard. Tente novamente mais tarde.
+          {errorMessages && <p className="text-xs mt-2">Detalhes: {errorMessages}</p>}
+        </AlertDescription>
+        {/* Optional: Add a retry button to refetch all queries */}
+        {/* <Button 
+          variant="destructive" 
+          size="sm" 
+          onClick={() => {
+            queryClient.refetchQueries({ queryKey: ["companyDetails", companyId] });
+            queryClient.refetchQueries({ queryKey: ["companyServices", companyId] });
+            queryClient.refetchQueries({ queryKey: ["companyAppointments", companyId] });
+          }} 
+          className="mt-4"
+        >
+          Tentar Novamente
+        </Button> */}
+      </Alert>
     );
   }
 
@@ -106,7 +138,7 @@ export const CompanyDashboardContent = () => {
             <DollarSign className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold mb-1">R$ {monthlyRevenue.toFixed(2).replace('.', ',')}</div>
+            <div className="text-2xl font-bold mb-1">R$ {monthlyRevenue.toFixed(2).replace(".", ",")}</div>
             {/* TODO: Calculate percentage change based on historical data */}
             {/* <p className="text-sm text-muted-foreground">+12% em relação ao mês anterior</p> */}
           </CardContent>

@@ -14,9 +14,10 @@ import { EducationSection } from "./professional/EducationSection";
 import { ServicesSection } from "./professional/ServicesSection";
 import { AvailabilitySection } from "./professional/AvailabilitySection";
 import { PortfolioSection } from "./professional/PortfolioSection";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react"; // Import AlertCircle
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext"; // Assuming auth context provides professional ID
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
 
 // Define a basic schema - this should be expanded based on all sub-component fields
 const professionalProfileSchema = z.object({
@@ -37,7 +38,7 @@ export const UserProfessionalInfo = () => {
   const professionalId = user?.professionalId; // Placeholder: Adjust based on actual auth context structure
 
   // Fetch professional profile data
-  const { data: professionalData, isLoading, isError, error } = useQuery({
+  const { data: professionalData, isLoading, isError, error } = useQuery<any, Error>({
     queryKey: ["professionalProfile", professionalId],
     queryFn: () => fetchProfessionalDetails(professionalId!),
     enabled: !!professionalId, // Only run query if professionalId exists
@@ -85,10 +86,20 @@ export const UserProfessionalInfo = () => {
     mutation.mutate(formData);
   };
 
+  // --- No Professional ID State --- 
   if (!professionalId) {
-    return <div className="text-center text-muted-foreground">ID do profissional não encontrado. Faça login como profissional.</div>;
+    return (
+      <Alert variant="warning">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Acesso Negado</AlertTitle>
+        <AlertDescription>
+          ID do profissional não encontrado. Faça login como profissional para acessar esta página.
+        </AlertDescription>
+      </Alert>
+    );
   }
 
+  // --- Loading State --- 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -97,11 +108,19 @@ export const UserProfessionalInfo = () => {
     );
   }
 
+  // --- Error State --- 
   if (isError) {
     return (
-      <div className="text-destructive">
-        Erro ao carregar perfil profissional: {error.message}
-      </div>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Erro</AlertTitle>
+        <AlertDescription>
+          Não foi possível carregar o perfil profissional. Tente novamente mais tarde.
+          {error?.message && <p className="text-xs mt-2">Detalhes: {error.message}</p>}
+        </AlertDescription>
+        {/* Optional: Add a retry button */}
+        {/* <Button variant="destructive" size="sm" onClick={() => queryClient.refetchQueries({ queryKey: ["professionalProfile", professionalId] })} className="mt-4">Tentar Novamente</Button> */}
+      </Alert>
     );
   }
 
