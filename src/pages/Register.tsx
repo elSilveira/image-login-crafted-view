@@ -2,22 +2,21 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Mail, User, Lock, Loader2 } from "lucide-react"; // Import Loader2
+import { Mail, User, Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth to potentially update context after registration
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
 
-// Define the backend API base URL (ensure consistency with AuthContext and api.ts)
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 const Register = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Add loading state
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { login } = useAuth(); // Get login function to potentially auto-login or just update state
+  const { updateAuthState } = useAuth(); // Get updateAuthState function from context
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,32 +34,22 @@ const Register = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        // Throw an error with the message from the backend, or a default one
         throw new Error(data.message || "Erro ao criar conta");
       }
 
-      // Assuming backend returns user, accessToken, refreshToken on successful registration
       const { user: registeredUser, accessToken, refreshToken } = data;
 
-      // Store tokens and user data in localStorage (similar to login in AuthContext)
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("user", JSON.stringify(registeredUser));
-
-      // Optionally, update AuthContext state immediately
-      // This requires modifying AuthContext to expose setters or a dedicated register function
-      // For now, we rely on page reload or manual login, but storing tokens is done.
-      // Alternatively, call login function if backend allows immediate login after register
-      // await login(email, password); // If login function handles state update
+      // Update AuthContext state and localStorage using the function from context
+      updateAuthState(registeredUser, accessToken, refreshToken);
 
       toast({
         title: "Conta criada com sucesso!",
         description: `Bem-vindo(a), ${registeredUser.name}! Você será redirecionado.`,
       });
 
-      // Navigate to home or login page after a short delay
+      // Navigate to home page after a short delay
       setTimeout(() => {
-        navigate("/"); // Redirect to home page after successful registration
+        navigate("/");
       }, 1500);
 
     } catch (error: any) {
@@ -117,12 +106,12 @@ const Register = () => {
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="password"
-                  placeholder="Senha (mínimo 8 caracteres)" // Add hint for password length
+                  placeholder="Senha (mínimo 8 caracteres)"
                   className="pl-10 h-12 text-base focus:border-iazi-primary"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={8} // Add minLength validation
+                  minLength={8}
                   disabled={isLoading}
                 />
               </div>
@@ -147,7 +136,7 @@ const Register = () => {
               <p className="text-sm text-muted-foreground font-inter">
                 Já tem uma conta?{" "}
                 <Link 
-                  to="/login" // Correct link to login page
+                  to="/login"
                   className="text-iazi-primary hover:underline"
                 >
                   Faça login

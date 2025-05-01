@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 // Define the backend API base URL
-const API_URL = "http://localhost:3001/api"; // Assuming backend runs on port 3001
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 type User = {
   id: string;
@@ -14,8 +14,9 @@ type User = {
 
 interface AuthContextProps {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>; // Make login async
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateAuthState: (user: User, accessToken: string, refreshToken: string) => void; // New function to update state
   isAuthenticated: boolean;
   isLoading: boolean;
   accessToken: string | null;
@@ -36,11 +37,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Keep true initially for token check
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check for stored tokens and user data on initial load
   useEffect(() => {
     const storedAccessToken = localStorage.getItem("accessToken");
     const storedRefreshToken = localStorage.getItem("refreshToken");
@@ -49,11 +49,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedAccessToken && storedRefreshToken && storedUser) {
       setAccessToken(storedAccessToken);
       setRefreshToken(storedRefreshToken);
-      setUser(JSON.parse(storedUser));
-      // TODO: Optionally validate the token with the backend here
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse stored user:", e);
+        // Clear invalid stored data if parsing fails
+        localStorage.removeItem("user");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+      }
     }
     setIsLoading(false);
   }, []);
+
+  // Function to update auth state (used by login and potentially register)
+  const updateAuthState = (loggedInUser: User, newAccessToken: string, newRefreshToken: string) => {
+    localStorage.setItem("accessToken", newAccessToken);
+    localStorage.setItem("refreshToken", newRefreshToken);
+    localStorage.setItem("user", JSON.stringify(loggedInUser));
+    setAccessToken(newAccessToken);
+    setRefreshToken(newRefreshToken);
+    setUser(loggedInUser);
+  };
 
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
@@ -69,29 +86,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await response.json();
 
       if (!response.ok) {
-        // Throw an error with the message from the backend, or a default one
         throw new Error(data.message || "Erro ao fazer login");
       }
 
-      // Assuming the backend returns accessToken, refreshToken, and user object on successful login
       const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: loggedInUser } = data;
-
-      // Store tokens and user data
-      localStorage.setItem("accessToken", newAccessToken);
-      localStorage.setItem("refreshToken", newRefreshToken);
-      localStorage.setItem("user", JSON.stringify(loggedInUser));
-
-      // Update state
-      setAccessToken(newAccessToken);
-      setRefreshToken(newRefreshToken);
-      setUser(loggedInUser);
+      
+      // Update state and localStorage using the helper function
+      updateAuthState(loggedInUser, newAccessToken, newRefreshToken);
 
       toast({
         title: "Login realizado com sucesso",
         description: `Bem-vindo, ${loggedInUser.name}!`,
       });
 
-      navigate("/"); // Navigate to home or dashboard after login
+      navigate("/");
 
     } catch (error: any) {
       console.error("Login failed:", error);
@@ -106,16 +114,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    // Clear state
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
-
-    // Clear storage
     localStorage.removeItem("user");
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-
     toast({
       title: "Logout realizado",
       description: "Você foi desconectado com sucesso",
@@ -123,18 +127,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigate("/login");
   };
 
-  // TODO: Implement refresh token logic
-  // This would typically involve an interceptor for API calls
-  // that checks for 401 errors, attempts to refresh the token,
-  // and retries the original request.
-
   return (
     <AuthContext.Provider
       value={{
         user,
         login,
         logout,
-        isAuthenticated: !!accessToken, // Base authentication status on token presence
+        updateAuthState, // Expose the new function
+        isAuthenticated: !!accessToken,
         isLoading,
         accessToken,
         refreshToken,
