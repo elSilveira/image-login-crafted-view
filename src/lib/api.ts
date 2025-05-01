@@ -205,3 +205,61 @@ export const fetchCompanyAppointments = async (companyId: string) => {
   return data;
 };
 
+
+
+
+// --- API Functions for Search/Exploration (Phase 3) ---
+
+// Function to fetch services with filters
+export const fetchServices = async (params: Record<string, any> = {}) => {
+  // Convert params object to query string
+  const queryString = new URLSearchParams(params).toString();
+  const { data } = await apiClient.get(`/services?${queryString}`);
+  return data; // Assuming backend returns an array of services
+};
+
+// Function to fetch companies with filters
+export const fetchCompanies = async (params: Record<string, any> = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const { data } = await apiClient.get(`/companies?${queryString}`);
+  return data; // Assuming backend returns an array of companies
+};
+
+// Function to fetch professionals with filters
+export const fetchProfessionals = async (params: Record<string, any> = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const { data } = await apiClient.get(`/professionals?${queryString}`);
+  return data; // Assuming backend returns an array of professionals
+};
+
+
+
+
+// --- API Functions for Booking (Phase 3) ---
+
+// Function to fetch available time slots for a specific date and service/professional
+export const fetchAvailability = async (params: {
+  date: string; // YYYY-MM-DD format
+  serviceId?: string;
+  professionalId?: string;
+  companyId?: string;
+}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const { data } = await apiClient.get(`/appointments/availability?${queryString}`);
+  // Assuming backend returns an object like { availableSlots: ["09:00", "10:00", ...], disabledDates?: ["YYYY-MM-DD", ...] }
+  return data;
+};
+
+// Function to create a new appointment
+export const createAppointment = async (appointmentData: {
+  serviceId: string;
+  professionalId?: string;
+  companyId?: string;
+  userId: string; // Assuming userId is known or obtained from auth context
+  startTime: string; // ISO 8601 format (e.g., "2024-07-25T09:00:00.000Z")
+  // Add other necessary fields like endTime, notes, etc.
+}) => {
+  const { data } = await apiClient.post("/appointments", appointmentData);
+  return data;
+};
+
