@@ -171,3 +171,37 @@ export const fetchAppointments = async () => {
 
 export default apiClient;
 
+
+
+
+// Function to update professional profile
+export const updateProfessionalProfile = async (professionalId: string, professionalData: any) => {
+  const { data } = await apiClient.put(`/professionals/${professionalId}`, professionalData);
+  return data;
+};
+
+
+
+
+// Function to register a new company
+export const registerCompany = async (companyData: any) => {
+  const { data } = await apiClient.post("/companies", companyData);
+  return data;
+};
+
+
+
+
+// Function to fetch services by company ID
+export const fetchCompanyServices = async (companyId: string) => {
+  const { data } = await apiClient.get(`/services?companyId=${companyId}`);
+  return data;
+};
+
+// Function to fetch appointments by company ID
+export const fetchCompanyAppointments = async (companyId: string) => {
+  // Assuming the backend supports filtering appointments by companyId
+  const { data } = await apiClient.get(`/appointments?companyId=${companyId}`);
+  return data;
+};
+

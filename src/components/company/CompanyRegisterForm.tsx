@@ -1,6 +1,8 @@
+"use client"; // Add this directive for client-side hooks
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query"; // Import useMutation
 import { Card } from "@/components/ui/card";
 import { StepBasicInfo } from "./registration/StepBasicInfo";
 import { StepLocationContact } from "./registration/StepLocationContact";
@@ -8,8 +10,10 @@ import { StepServices } from "./registration/StepServices";
 import { StepSettings } from "./registration/StepSettings";
 import { RegistrationProgress } from "./registration/RegistrationProgress";
 import { useToast } from "@/components/ui/use-toast";
+import { registerCompany } from "@/lib/api"; // Import the API function
+import { Loader2 } from "lucide-react"; // Import Loader icon
 
-// Define the company data structure
+// Define the company data structure (Keep existing interface)
 export interface CompanyFormData {
   // Basic Info
   logo: string;
@@ -69,7 +73,7 @@ export interface CompanyFormData {
   termsAccepted: boolean;
 }
 
-// Initialize with default values
+// Initialize with default values (Keep existing initial data)
 const initialCompanyData: CompanyFormData = {
   logo: "",
   coverImage: "",
@@ -128,6 +132,27 @@ export const CompanyRegisterForm = () => {
   const [formData, setFormData] = useState<CompanyFormData>(initialCompanyData);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Mutation for registering company
+  const mutation = useMutation({
+    mutationFn: registerCompany,
+    onSuccess: (data) => {
+      toast({
+        title: "Registro finalizado",
+        description: data.message || "Sua empresa foi cadastrada com sucesso!",
+      });
+      // Redirect to company dashboard or profile after successful registration
+      // Assuming a route like /company/my-company/dashboard exists
+      navigate("/company/my-company/dashboard"); 
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro no Registro",
+        description: error.response?.data?.message || "Não foi possível cadastrar a empresa. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
   
   // Handle next step
   const handleNextStep = () => {
@@ -155,16 +180,17 @@ export const CompanyRegisterForm = () => {
   
   // Handle form submission
   const handleSubmit = () => {
-    // Here would be API call to save company data
-    console.log("Company registration data:", formData);
-    
-    toast({
-      title: "Registro finalizado",
-      description: "Sua empresa foi cadastrada com sucesso!",
-    });
-    
-    // Redirect to company profile page after successful registration
-    navigate("/profile");
+    // TODO: Add validation before submitting
+    if (!formData.termsAccepted) {
+      toast({
+        title: "Termos não aceitos",
+        description: "Você precisa aceitar os termos e condições para continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // Call the mutation function with the form data
+    mutation.mutate(formData);
   };
   
   // Render current step
@@ -194,8 +220,9 @@ export const CompanyRegisterForm = () => {
         return <StepSettings 
           formData={formData} 
           updateFormData={updateFormData} 
-          onSubmit={handleSubmit} 
+          onSubmit={handleSubmit} // Pass the updated handleSubmit
           onPrev={handlePrevStep} 
+          isSubmitting={mutation.isPending} // Pass loading state to the final step
         />;
       default:
         return null;
@@ -211,9 +238,16 @@ export const CompanyRegisterForm = () => {
       
       <RegistrationProgress currentStep={currentStep} />
       
-      <Card className="p-6 shadow-lg">
+      <Card className="p-6 shadow-lg relative"> {/* Add relative positioning for potential overlay */} 
+        {/* Optional: Add loading overlay */} 
+        {mutation.isPending && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex justify-center items-center z-10">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        )}
         {renderStep()}
       </Card>
     </div>
   );
 };
+
