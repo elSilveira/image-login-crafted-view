@@ -1,7 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+
+// Define the backend API base URL
+const API_URL = "http://localhost:3001/api"; // Assuming backend runs on port 3001
 
 type User = {
   id: string;
@@ -12,10 +14,12 @@ type User = {
 
 interface AuthContextProps {
   user: User | null;
-  login: (email: string, password: string) => void;
+  login: (email: string, password: string) => Promise<void>; // Make login async
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  accessToken: string | null;
+  refreshToken: string | null;
 }
 
 const AuthContext = createContext<AuthContextProps | null>(null);
@@ -30,58 +34,88 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Keep true initially for token check
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check if user is stored in localStorage on initial load
+  // Check for stored tokens and user data on initial load
   useEffect(() => {
+    const storedAccessToken = localStorage.getItem("accessToken");
+    const storedRefreshToken = localStorage.getItem("refreshToken");
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+
+    if (storedAccessToken && storedRefreshToken && storedUser) {
+      setAccessToken(storedAccessToken);
+      setRefreshToken(storedRefreshToken);
       setUser(JSON.parse(storedUser));
+      // TODO: Optionally validate the token with the backend here
     }
     setIsLoading(false);
   }, []);
 
-  const login = (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
-    
-    // Mock API call with setTimeout
-    setTimeout(() => {
-      // Mock validation
-      if (email && password.length >= 6) {
-        // Mock user data
-        const mockUser: User = {
-          id: "user-123",
-          name: "Usuário Teste",
-          email: email,
-          avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-        };
-        
-        // Store user in state and localStorage
-        setUser(mockUser);
-        localStorage.setItem("user", JSON.stringify(mockUser));
-        
-        toast({
-          title: "Login realizado com sucesso",
-          description: `Bem-vindo, ${mockUser.name}!`,
-        });
-        
-        navigate("/");
-      } else {
-        toast({
-          title: "Erro de login",
-          description: "Email ou senha inválidos",
-          variant: "destructive",
-        });
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Throw an error with the message from the backend, or a default one
+        throw new Error(data.message || "Erro ao fazer login");
       }
+
+      // Assuming the backend returns accessToken, refreshToken, and user object on successful login
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: loggedInUser } = data;
+
+      // Store tokens and user data
+      localStorage.setItem("accessToken", newAccessToken);
+      localStorage.setItem("refreshToken", newRefreshToken);
+      localStorage.setItem("user", JSON.stringify(loggedInUser));
+
+      // Update state
+      setAccessToken(newAccessToken);
+      setRefreshToken(newRefreshToken);
+      setUser(loggedInUser);
+
+      toast({
+        title: "Login realizado com sucesso",
+        description: `Bem-vindo, ${loggedInUser.name}!`,
+      });
+
+      navigate("/"); // Navigate to home or dashboard after login
+
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      toast({
+        title: "Erro de login",
+        description: error.message || "Ocorreu um erro inesperado.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   const logout = () => {
+    // Clear state
     setUser(null);
+    setAccessToken(null);
+    setRefreshToken(null);
+
+    // Clear storage
     localStorage.removeItem("user");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+
     toast({
       title: "Logout realizado",
       description: "Você foi desconectado com sucesso",
@@ -89,17 +123,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     navigate("/login");
   };
 
+  // TODO: Implement refresh token logic
+  // This would typically involve an interceptor for API calls
+  // that checks for 401 errors, attempts to refresh the token,
+  // and retries the original request.
+
   return (
     <AuthContext.Provider
       value={{
         user,
         login,
         logout,
-        isAuthenticated: !!user,
+        isAuthenticated: !!accessToken, // Base authentication status on token presence
         isLoading,
+        accessToken,
+        refreshToken,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
+
