@@ -5,7 +5,7 @@ interface JwtPayload {
   userId: string;
   // Adicione outras propriedades do payload se houver
 }
-console.log(import.meta.env.VITE_API_URL)
+
 // Cria uma instância do Axios com a URL base da API
 const apiClient = axios.create({
   baseURL: (import.meta.env.VITE_API_URL || "http://localhost:3001/") + "api", // Use variável de ambiente ou fallback
