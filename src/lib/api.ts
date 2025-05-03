@@ -45,7 +45,7 @@ apiClient.interceptors.response.use(
       localStorage.removeItem("user");
       // Forçar recarregamento ou usar navigate fora do contexto React
       if (window.location.pathname !== "/login") {
-         window.location.href = "/login";
+        //  window.location.href = "/login";
       }
     }
     return Promise.reject(error);
