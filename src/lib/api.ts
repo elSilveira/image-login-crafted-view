@@ -108,14 +108,14 @@ export const createAppointment = async (appointmentData: any) => {
 }
 
 // --- Categories API Functions ---
-export const fetchCategories = async () => {
-  const response = await apiClient.get("/categories"); // Ajuste a rota conforme necessário 
+export const fetchCategories = async (params: any = {}) => {
+  const response = await apiClient.get("/categories", { params }); // Pass params to API call
   return response.data; // Retorna os dados das categorias
 }
 
 // --- Companies API Functions ---
-export const fetchCompanies = async () => {
-  const response = await apiClient.get("/companies"); // Ajuste a rota conforme necessário
+export const fetchCompanies = async (params: any = {}) => {
+  const response = await apiClient.get("/companies", { params }); // Pass params to API call
   return response.data; // Retorna os dados das empresas
 }
 
@@ -140,8 +140,8 @@ export const fetchCompanyServices = async (companyId:string) => {
 }
 
 // --- Services API Functions ---
-export const fetchServices = async () => {
-  const response = await apiClient.get("/services"); // Ajuste a rota conforme necessário
+export const fetchServices = async (params: any = {}) => {
+  const response = await apiClient.get("/services", { params }); // Pass params to API call
   return response.data; // Retorna os dados dos serviços
 }
 
