@@ -2,7 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuth } from '@/contexts/AuthContext'; // Assuming AuthContext provides token management
 
 // Determine the base URL for the API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
