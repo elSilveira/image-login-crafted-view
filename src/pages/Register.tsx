@@ -6,8 +6,7 @@ import { Mail, User, Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
-
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3002/api";
+import apiClient from "../lib/api"; // Import the configured Axios client
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -23,21 +22,15 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, email, password }),
-      });
+      // Use apiClient (Axios) instead of fetch
+      const response = await apiClient.post("/auth/register", { name, email, password });
 
-      const data = await response.json();
+      // Axios wraps the response data in `data` property
+      const { user: registeredUser, accessToken, refreshToken } = response.data;
 
-      if (!response.ok) {
-        throw new Error(data.message || "Erro ao criar conta");
+      if (!registeredUser || !accessToken) {
+        throw new Error("Resposta de registro inválida do servidor.");
       }
-
-      const { user: registeredUser, accessToken, refreshToken } = data;
 
       // Update AuthContext state and localStorage using the function from context
       updateAuthState(registeredUser, accessToken, refreshToken);
@@ -54,9 +47,11 @@ const Register = () => {
 
     } catch (error: any) {
       console.error("Registration failed:", error);
+      // Handle Axios error structure (error.response.data)
+      const errorMessage = error.response?.data?.message || error.message || "Ocorreu um erro inesperado.";
       toast({
         title: "Erro ao criar conta",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

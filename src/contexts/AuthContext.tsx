@@ -1,22 +1,21 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-
-// Define the backend API base URL
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3002/api";
+import apiClient from "../lib/api"; // Import the configured Axios client
 
 type User = {
   id: string;
   name: string;
   email: string;
   avatar?: string;
+  // Add other relevant user fields from backend if needed (e.g., role)
 };
 
 interface AuthContextProps {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  updateAuthState: (user: User, accessToken: string, refreshToken: string) => void; // New function to update state
+  updateAuthState: (user: User, accessToken: string, refreshToken?: string) => void; // refreshToken is optional based on backend response
   isAuthenticated: boolean;
   isLoading: boolean;
   accessToken: string | null;
@@ -33,6 +32,11 @@ export const useAuth = () => {
   return context;
 };
 
+// Consistent key for storing the access token
+const ACCESS_TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
+const USER_KEY = "user";
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
@@ -42,55 +46,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedAccessToken = localStorage.getItem("accessToken");
-    const storedRefreshToken = localStorage.getItem("refreshToken");
-    const storedUser = localStorage.getItem("user");
+    const storedAccessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const storedUser = localStorage.getItem(USER_KEY);
 
-    if (storedAccessToken && storedRefreshToken && storedUser) {
+    if (storedAccessToken && storedUser) { // Check for access token primarily
       setAccessToken(storedAccessToken);
-      setRefreshToken(storedRefreshToken);
+      if (storedRefreshToken) {
+        setRefreshToken(storedRefreshToken);
+      }
       try {
         setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error("Failed to parse stored user:", e);
         // Clear invalid stored data if parsing fails
-        localStorage.removeItem("user");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        localStorage.removeItem(USER_KEY);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
       }
     }
     setIsLoading(false);
   }, []);
 
   // Function to update auth state (used by login and potentially register)
-  const updateAuthState = (loggedInUser: User, newAccessToken: string, newRefreshToken: string) => {
-    localStorage.setItem("accessToken", newAccessToken);
-    localStorage.setItem("refreshToken", newRefreshToken);
-    localStorage.setItem("user", JSON.stringify(loggedInUser));
+  const updateAuthState = (loggedInUser: User, newAccessToken: string, newRefreshToken?: string) => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(loggedInUser));
     setAccessToken(newAccessToken);
-    setRefreshToken(newRefreshToken);
     setUser(loggedInUser);
+    if (newRefreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+      setRefreshToken(newRefreshToken);
+    }
   };
 
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      // Use apiClient (Axios) instead of fetch
+      const response = await apiClient.post("/auth/login", { email, password });
 
-      const data = await response.json();
+      // Axios wraps the response data in `data` property
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: loggedInUser } = response.data;
 
-      if (!response.ok) {
-        throw new Error(data.message || "Erro ao fazer login");
+      if (!newAccessToken || !loggedInUser) {
+        throw new Error("Resposta de login inválida do servidor.");
       }
 
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: loggedInUser } = data;
-      
       // Update state and localStorage using the helper function
       updateAuthState(loggedInUser, newAccessToken, newRefreshToken);
 
@@ -99,13 +101,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `Bem-vindo, ${loggedInUser.name}!`,
       });
 
-      navigate("/");
+      navigate("/"); // Navigate to home or dashboard after login
 
     } catch (error: any) {
       console.error("Login failed:", error);
+      // Handle Axios error structure (error.response.data)
+      const errorMessage = error.response?.data?.message || error.message || "Ocorreu um erro inesperado.";
       toast({
         title: "Erro de login",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -117,9 +121,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    // Optionally: Call a backend logout endpoint if it exists
+    // apiClient.post("/auth/logout").catch(err => console.error("Backend logout failed:", err));
     toast({
       title: "Logout realizado",
       description: "Você foi desconectado com sucesso",
@@ -133,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         login,
         logout,
-        updateAuthState, // Expose the new function
+        updateAuthState,
         isAuthenticated: !!accessToken,
         isLoading,
         accessToken,
