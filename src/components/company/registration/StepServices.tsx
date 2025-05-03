@@ -11,8 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CompanyFormData } from "../CompanyRegisterForm";
-import { Plus, Image, Clock, Edit, Trash } from "lucide-react";
+import { CompanyFormData, ServiceData } from "../CompanyRegisterForm"; // Assuming ServiceData uses image_url
+import { Plus, Image as ImageIcon, Clock, Edit, Trash } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,7 @@ interface StepServicesProps {
   onPrev: () => void;
 }
 
-// Mock service categories
+// Mock service categories (Keep as is)
 const serviceCategories = [
   "Tratamentos Capilares",
   "Cortes de Cabelo",
@@ -45,6 +45,11 @@ const serviceCategories = [
   "Outro",
 ];
 
+// Define the structure for the service being edited/added
+interface CurrentServiceState extends Omit<ServiceData, "id"> {
+  id?: string; // ID is optional during creation
+}
+
 export const StepServices: React.FC<StepServicesProps> = ({
   formData,
   updateFormData,
@@ -52,15 +57,8 @@ export const StepServices: React.FC<StepServicesProps> = ({
   onPrev,
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentService, setCurrentService] = useState<{
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-    price: number;
-    duration: number;
-    image: string;
-  } | null>(null);
+  // Use the updated ServiceData structure (with image_url)
+  const [currentService, setCurrentService] = useState<CurrentServiceState | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
 
   // Handle adding or updating a service
@@ -68,16 +66,18 @@ export const StepServices: React.FC<StepServicesProps> = ({
     if (!currentService) return;
 
     const updatedServices = [...formData.services];
+    const serviceToSave: ServiceData = {
+      ...currentService,
+      id: currentService.id || Date.now().toString(), // Ensure ID exists
+      image_url: currentService.image_url || "", // Use image_url
+    };
     
     if (editIndex !== null) {
       // Update existing service
-      updatedServices[editIndex] = currentService;
+      updatedServices[editIndex] = serviceToSave;
     } else {
       // Add new service
-      updatedServices.push({
-        ...currentService,
-        id: Date.now().toString(), // Generate a unique ID
-      });
+      updatedServices.push(serviceToSave);
     }
     
     updateFormData({ services: updatedServices });
@@ -85,7 +85,7 @@ export const StepServices: React.FC<StepServicesProps> = ({
     setIsDialogOpen(false);
   };
 
-  // Handle removing a service
+  // Handle removing a service (remains the same)
   const handleRemoveService = (index: number) => {
     const updatedServices = formData.services.filter((_, idx) => idx !== index);
     updateFormData({ services: updatedServices });
@@ -93,7 +93,7 @@ export const StepServices: React.FC<StepServicesProps> = ({
 
   // Handle editing a service
   const handleEditService = (index: number) => {
-    setCurrentService({ ...formData.services[index] });
+    setCurrentService({ ...formData.services[index] }); // Load existing service data
     setEditIndex(index);
     setIsDialogOpen(true);
   };
@@ -101,37 +101,24 @@ export const StepServices: React.FC<StepServicesProps> = ({
   // Reset the service form
   const resetServiceForm = () => {
     setCurrentService({
-      id: "",
+      // id is generated on save
       name: "",
       description: "",
       category: "",
       price: 0,
       duration: 30,
-      image: "",
+      image_url: "", // Reset image_url
     });
     setEditIndex(null);
   };
 
-  // Handle dialog close
+  // Handle dialog close (remains the same)
   const handleDialogOpenChange = (open: boolean) => {
     setIsDialogOpen(open);
     if (!open) resetServiceForm();
   };
 
-  // Handle image upload
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && currentService) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setCurrentService({ ...currentService, image: result });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Format price for display
+  // Format price for display (remains the same)
   const formatPrice = (price: number) => {
     return price.toLocaleString("pt-BR", {
       style: "currency",
@@ -139,13 +126,11 @@ export const StepServices: React.FC<StepServicesProps> = ({
     });
   };
 
-  // Format duration for display
+  // Format duration for display (remains the same)
   const formatDuration = (minutes: number) => {
     if (minutes < 60) return `${minutes} min`;
-    
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
-    
     if (remainingMinutes === 0) return `${hours}h`;
     return `${hours}h${remainingMinutes}min`;
   };
@@ -173,7 +158,7 @@ export const StepServices: React.FC<StepServicesProps> = ({
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 pt-4">
-                {/* Service Name */}
+                {/* Service Name (remains the same) */}
                 <div>
                   <Label htmlFor="service-name">Nome do Serviço</Label>
                   <Input
@@ -189,7 +174,7 @@ export const StepServices: React.FC<StepServicesProps> = ({
                   />
                 </div>
 
-                {/* Service Category */}
+                {/* Service Category (remains the same) */}
                 <div>
                   <Label htmlFor="service-category">Categoria</Label>
                   <Select
@@ -213,7 +198,7 @@ export const StepServices: React.FC<StepServicesProps> = ({
                   </Select>
                 </div>
 
-                {/* Price and Duration */}
+                {/* Price and Duration (remains the same) */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="service-price">Preço (R$)</Label>
@@ -251,7 +236,7 @@ export const StepServices: React.FC<StepServicesProps> = ({
                   </div>
                 </div>
 
-                {/* Service Description */}
+                {/* Service Description (remains the same) */}
                 <div>
                   <Label htmlFor="service-description">Descrição</Label>
                   <Textarea
@@ -267,46 +252,34 @@ export const StepServices: React.FC<StepServicesProps> = ({
                   />
                 </div>
 
-                {/* Service Image */}
-                <div>
-                  <Label htmlFor="service-image">Imagem Ilustrativa</Label>
-                  <div className="mt-2">
-                    {currentService?.image ? (
-                      <div className="relative w-full h-36">
-                        <img
-                          src={currentService.image}
-                          alt="Service preview"
-                          className="w-full h-full object-cover rounded-md"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="absolute bottom-2 right-2"
-                          onClick={() =>
-                            setCurrentService(prev => 
-                              prev ? { ...prev, image: "" } : null
-                            )
-                          }
-                        >
-                          Remover
-                        </Button>
-                      </div>
+                {/* Service Image URL Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="service_image_url">URL da Imagem Ilustrativa</Label>
+                  <Input
+                    id="service_image_url"
+                    type="url"
+                    value={currentService?.image_url || ""} // Use image_url
+                    onChange={(e) =>
+                      setCurrentService(prev => 
+                        prev ? { ...prev, image_url: e.target.value } : null // Update image_url
+                      )
+                    }
+                    placeholder="https://exemplo.com/servico.jpg"
+                    className="mt-1"
+                  />
+                  <div className="mt-2 h-36 w-full bg-muted rounded-lg overflow-hidden relative border">
+                    {currentService?.image_url ? (
+                      <img 
+                        src={currentService.image_url} 
+                        alt="Prévia do Serviço" 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
+                      />
                     ) : (
-                      <label
-                        htmlFor="service-image-upload"
-                        className="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
-                      >
-                        <Image className="w-8 h-8 text-gray-400" />
-                        <span className="mt-2 text-sm text-gray-500">Upload de imagem</span>
-                        <input
-                          id="service-image-upload"
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={handleImageUpload}
-                        />
-                      </label>
+                      <div className="flex items-center justify-center h-full">
+                        <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -328,13 +301,13 @@ export const StepServices: React.FC<StepServicesProps> = ({
             <p className="text-gray-400 mb-6">
               Adicione serviços para que os clientes possam agendar com sua empresa
             </p>
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
               <DialogTrigger asChild>
                 <Button onClick={() => resetServiceForm()}>
                   <Plus className="mr-2 h-4 w-4" /> Adicionar Serviço
                 </Button>
               </DialogTrigger>
-              {/* Dialog content is the same as above */}
+              {/* Dialog content is defined above */}
             </Dialog>
           </div>
         ) : (
@@ -345,15 +318,15 @@ export const StepServices: React.FC<StepServicesProps> = ({
                 className="border rounded-md p-4 flex justify-between items-center"
               >
                 <div className="flex items-center space-x-4">
-                  {service.image ? (
+                  {service.image_url ? (
                     <img
-                      src={service.image}
+                      src={service.image_url} // Use image_url
                       alt={service.name}
                       className="w-16 h-16 object-cover rounded-md"
                     />
                   ) : (
                     <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center">
-                      <Image className="w-6 h-6 text-gray-400" />
+                      <ImageIcon className="w-6 h-6 text-gray-400" />
                     </div>
                   )}
                   <div>
@@ -403,3 +376,4 @@ export const StepServices: React.FC<StepServicesProps> = ({
     </div>
   );
 };
+

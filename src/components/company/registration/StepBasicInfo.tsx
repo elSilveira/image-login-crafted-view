@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,10 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CompanyFormData } from "../CompanyRegisterForm";
-import { Upload, Image } from "lucide-react";
+import { CompanyFormData } from "../CompanyRegisterForm"; // Assuming this will be updated
+import { Image as ImageIcon } from "lucide-react";
 
-// Mock categories
+// Mock categories (Keep as is)
 const categories = [
   "Estética e Beleza",
   "Saúde",
@@ -28,7 +28,7 @@ const categories = [
   "Outro",
 ];
 
-// Mock subcategories
+// Mock subcategories (Keep as is)
 const subCategoriesMap: Record<string, string[]> = {
   "Estética e Beleza": [
     "Cabeleireiros",
@@ -57,7 +57,7 @@ const subCategoriesMap: Record<string, string[]> = {
 };
 
 interface StepBasicInfoProps {
-  formData: CompanyFormData;
+  formData: CompanyFormData; // This interface needs logo_url, cover_image_url
   updateFormData: (data: Partial<CompanyFormData>) => void;
   onNext: () => void;
 }
@@ -67,42 +67,13 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
   updateFormData,
   onNext,
 }) => {
-  const [logoPreview, setLogoPreview] = useState<string | null>(formData.logo || null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(formData.coverImage || null);
+  // State for subcategories remains the same
   const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>(formData.subCategories);
   const [availableSubCategories, setAvailableSubCategories] = useState<string[]>(
     formData.mainCategory ? subCategoriesMap[formData.mainCategory] || [] : []
   );
 
-  // Handle logo upload
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setLogoPreview(result);
-        updateFormData({ logo: result });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle cover image upload
-  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const result = event.target?.result as string;
-        setCoverPreview(result);
-        updateFormData({ coverImage: result });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Handle category change
+  // Handle category change (remains the same)
   const handleCategoryChange = (value: string) => {
     updateFormData({ 
       mainCategory: value,
@@ -112,7 +83,7 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
     setAvailableSubCategories(subCategoriesMap[value] || []);
   };
 
-  // Handle subcategory selection
+  // Handle subcategory selection (remains the same)
   const handleSubCategoryToggle = (subCategory: string) => {
     const updatedSelection = selectedSubCategories.includes(subCategory)
       ? selectedSubCategories.filter(item => item !== subCategory)
@@ -122,7 +93,7 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
     updateFormData({ subCategories: updatedSelection });
   };
 
-  // Form validation
+  // Form validation (remains the same, assuming URL fields are optional or handled)
   const isFormValid = () => {
     return (
       formData.name.trim() !== "" &&
@@ -132,111 +103,87 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
     );
   };
 
-  // Handle next step
+  // Handle next step (remains the same)
   const handleNext = () => {
     if (isFormValid()) {
       onNext();
     }
   };
 
+  // Get image URLs from formData for preview
+  const logoUrl = formData.logo_url;
+  const coverImageUrl = formData.cover_image_url;
+
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-semibold mb-6">1. Informações Básicas</h2>
 
       <div className="space-y-6">
-        {/* Logo Upload */}
-        <div>
-          <Label htmlFor="logo-upload">Logo da Empresa</Label>
-          <div className="mt-2 flex items-center">
-            {logoPreview ? (
-              <div className="relative w-32 h-32">
-                <img
-                  src={logoPreview}
-                  alt="Logo preview"
-                  className="w-full h-full object-contain rounded-md"
+        {/* Logo URL Input */}
+        <div className="space-y-2">
+          <Label htmlFor="logo_url">URL do Logo da Empresa</Label>
+          <Input
+            id="logo_url"
+            type="url"
+            value={formData.logo_url || ""} // Use logo_url
+            onChange={(e) => updateFormData({ logo_url: e.target.value })} // Update logo_url
+            placeholder="https://exemplo.com/logo.png"
+            className="mt-1"
+          />
+          <div className="mt-2 flex justify-center">
+            <div className="h-32 w-32 bg-muted rounded-md overflow-hidden relative border">
+              {logoUrl ? (
+                <img 
+                  src={logoUrl} 
+                  alt="Prévia do Logo" 
+                  className="w-full h-full object-contain" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="absolute bottom-2 right-2"
-                  onClick={() => {
-                    setLogoPreview(null);
-                    updateFormData({ logo: "" });
-                  }}
-                >
-                  Remover
-                </Button>
-              </div>
-            ) : (
-              <label
-                htmlFor="logo-upload"
-                className="flex flex-col items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
-              >
-                <Upload className="w-10 h-10 text-gray-400" />
-                <span className="mt-2 text-sm text-gray-500">Upload</span>
-                <input
-                  id="logo-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleLogoUpload}
-                />
-              </label>
-            )}
-            <p className="ml-4 text-sm text-gray-500">
-              Faça upload do logo da sua empresa. Recomendado: formato quadrado, tamanho mínimo 200x200px.
-            </p>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+            </div>
           </div>
+           <p className="text-sm text-gray-500">
+              Insira a URL do logo da sua empresa. Recomendado: formato quadrado.
+            </p>
         </div>
 
-        {/* Cover Image Upload */}
-        <div>
-          <Label htmlFor="cover-upload">Imagem de Capa</Label>
-          <div className="mt-2">
-            {coverPreview ? (
-              <div className="relative w-full h-48">
-                <img
-                  src={coverPreview}
-                  alt="Cover preview"
-                  className="w-full h-full object-cover rounded-md"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="absolute bottom-2 right-2"
-                  onClick={() => {
-                    setCoverPreview(null);
-                    updateFormData({ coverImage: "" });
-                  }}
-                >
-                  Remover
-                </Button>
-              </div>
+        {/* Cover Image URL Input */}
+        <div className="space-y-2">
+          <Label htmlFor="cover_image_url">URL da Imagem de Capa</Label>
+          <Input
+            id="cover_image_url"
+            type="url"
+            value={formData.cover_image_url || ""} // Use cover_image_url
+            onChange={(e) => updateFormData({ cover_image_url: e.target.value })} // Update cover_image_url
+            placeholder="https://exemplo.com/capa.jpg"
+            className="mt-1"
+          />
+          <div className="mt-2 h-48 w-full bg-muted rounded-lg overflow-hidden relative border">
+            {coverImageUrl ? (
+              <img 
+                src={coverImageUrl} 
+                alt="Prévia da Capa" 
+                className="w-full h-full object-cover" 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
+              />
             ) : (
-              <label
-                htmlFor="cover-upload"
-                className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-md cursor-pointer hover:bg-gray-50"
-              >
-                <Image className="w-10 h-10 text-gray-400" />
-                <span className="mt-2 text-sm text-gray-500">Upload de imagem de capa</span>
-                <input
-                  id="cover-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleCoverUpload}
-                />
-              </label>
+              <div className="flex items-center justify-center h-full">
+                <ImageIcon className="h-10 w-10 text-muted-foreground" />
+              </div>
             )}
-            <p className="mt-2 text-sm text-gray-500">
-              Faça upload de uma imagem de capa para sua empresa. Recomendado: formato retangular, tamanho mínimo 1200x400px.
-            </p>
           </div>
+           <p className="text-sm text-gray-500">
+              Insira a URL da imagem de capa. Recomendado: formato retangular.
+            </p>
         </div>
 
-        {/* Company Name */}
+        {/* Company Name (remains the same) */}
         <div>
           <Label htmlFor="company-name">Nome da Empresa</Label>
           <Input
@@ -249,7 +196,7 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
           />
         </div>
 
-        {/* CNPJ */}
+        {/* CNPJ (remains the same) */}
         <div>
           <Label htmlFor="cnpj">CNPJ</Label>
           <Input
@@ -265,7 +212,7 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
           </p>
         </div>
 
-        {/* Main Category */}
+        {/* Main Category (remains the same) */}
         <div>
           <Label htmlFor="category">Categoria Principal</Label>
           <Select
@@ -285,7 +232,7 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
           </Select>
         </div>
 
-        {/* Subcategories */}
+        {/* Subcategories (remains the same) */}
         {availableSubCategories.length > 0 && (
           <div>
             <Label>Subcategorias</Label>
@@ -310,7 +257,7 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
           </div>
         )}
 
-        {/* Description */}
+        {/* Description (remains the same) */}
         <div>
           <Label htmlFor="description">Descrição da Empresa</Label>
           <Textarea
@@ -323,7 +270,7 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
           />
         </div>
 
-        {/* Founding Year */}
+        {/* Founding Year (remains the same) */}
         <div>
           <Label htmlFor="founding-year">Ano de Fundação</Label>
           <Input
@@ -351,3 +298,4 @@ export const StepBasicInfo: React.FC<StepBasicInfoProps> = ({
     </div>
   );
 };
+

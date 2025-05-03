@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query"; // Import useMutation
+import { useMutation } from "@tanstack/react-query"; 
 import { Card } from "@/components/ui/card";
 import { StepBasicInfo } from "./registration/StepBasicInfo";
 import { StepLocationContact } from "./registration/StepLocationContact";
@@ -10,14 +10,25 @@ import { StepServices } from "./registration/StepServices";
 import { StepSettings } from "./registration/StepSettings";
 import { RegistrationProgress } from "./registration/RegistrationProgress";
 import { useToast } from "@/components/ui/use-toast";
-import { registerCompany } from "@/lib/api"; // Import the API function
-import { Loader2 } from "lucide-react"; // Import Loader icon
+import { registerCompany } from "@/lib/api"; 
+import { Loader2 } from "lucide-react"; 
 
-// Define the company data structure (Keep existing interface)
+// Define the service data structure with image_url
+export interface ServiceData {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  duration: number; // in minutes
+  image_url: string; // Changed from image to image_url
+}
+
+// Define the company data structure with image URLs
 export interface CompanyFormData {
   // Basic Info
-  logo: string;
-  coverImage: string;
+  logo_url: string; // Changed from logo
+  cover_image_url: string; // Changed from coverImage
   name: string;
   cnpj: string;
   mainCategory: string;
@@ -52,16 +63,8 @@ export interface CompanyFormData {
     [key: string]: { open: string; close: string; isOpen: boolean };
   };
   
-  // Services
-  services: Array<{
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-    price: number;
-    duration: number; // in minutes
-    image: string;
-  }>;
+  // Services (using the updated ServiceData interface)
+  services: Array<ServiceData>;
   
   // Settings and Terms
   bookingSettings: {
@@ -73,10 +76,10 @@ export interface CompanyFormData {
   termsAccepted: boolean;
 }
 
-// Initialize with default values (Keep existing initial data)
+// Initialize with default values using URL fields
 const initialCompanyData: CompanyFormData = {
-  logo: "",
-  coverImage: "",
+  logo_url: "", // Changed from logo
+  cover_image_url: "", // Changed from coverImage
   name: "",
   cnpj: "",
   mainCategory: "",
@@ -133,7 +136,7 @@ export const CompanyRegisterForm = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Mutation for registering company
+  // Mutation for registering company (remains the same, assuming API accepts URLs)
   const mutation = useMutation({
     mutationFn: registerCompany,
     onSuccess: (data) => {
@@ -141,8 +144,6 @@ export const CompanyRegisterForm = () => {
         title: "Registro finalizado",
         description: data.message || "Sua empresa foi cadastrada com sucesso!",
       });
-      // Redirect to company dashboard or profile after successful registration
-      // Assuming a route like /company/my-company/dashboard exists
       navigate("/company/my-company/dashboard"); 
     },
     onError: (error: any) => {
@@ -154,7 +155,7 @@ export const CompanyRegisterForm = () => {
     },
   });
   
-  // Handle next step
+  // Handle next step (remains the same)
   const handleNextStep = () => {
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
@@ -162,7 +163,7 @@ export const CompanyRegisterForm = () => {
     }
   };
   
-  // Handle previous step
+  // Handle previous step (remains the same)
   const handlePrevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
@@ -170,7 +171,7 @@ export const CompanyRegisterForm = () => {
     }
   };
   
-  // Update form data
+  // Update form data (remains the same)
   const updateFormData = (stepData: Partial<CompanyFormData>) => {
     setFormData(prev => ({
       ...prev,
@@ -178,9 +179,8 @@ export const CompanyRegisterForm = () => {
     }));
   };
   
-  // Handle form submission
+  // Handle form submission (remains the same)
   const handleSubmit = () => {
-    // TODO: Add validation before submitting
     if (!formData.termsAccepted) {
       toast({
         title: "Termos não aceitos",
@@ -189,11 +189,19 @@ export const CompanyRegisterForm = () => {
       });
       return;
     }
-    // Call the mutation function with the form data
-    mutation.mutate(formData);
+    // Ensure empty URLs are handled if needed by backend (e.g., send null or omit)
+    const payload = { ...formData };
+    if (payload.logo_url === "") payload.logo_url = undefined as any; // Or null
+    if (payload.cover_image_url === "") payload.cover_image_url = undefined as any; // Or null
+    payload.services = payload.services.map(service => ({
+      ...service,
+      image_url: service.image_url === "" ? undefined as any : service.image_url // Or null
+    }));
+
+    mutation.mutate(payload);
   };
   
-  // Render current step
+  // Render current step (remains the same, subcomponents were updated)
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -220,9 +228,9 @@ export const CompanyRegisterForm = () => {
         return <StepSettings 
           formData={formData} 
           updateFormData={updateFormData} 
-          onSubmit={handleSubmit} // Pass the updated handleSubmit
+          onSubmit={handleSubmit} 
           onPrev={handlePrevStep} 
-          isSubmitting={mutation.isPending} // Pass loading state to the final step
+          isSubmitting={mutation.isPending} 
         />;
       default:
         return null;
@@ -238,8 +246,7 @@ export const CompanyRegisterForm = () => {
       
       <RegistrationProgress currentStep={currentStep} />
       
-      <Card className="p-6 shadow-lg relative"> {/* Add relative positioning for potential overlay */} 
-        {/* Optional: Add loading overlay */} 
+      <Card className="p-6 shadow-lg relative"> 
         {mutation.isPending && (
           <div className="absolute inset-0 bg-white bg-opacity-75 flex justify-center items-center z-10">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
