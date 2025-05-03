@@ -96,44 +96,10 @@ export const deleteUserAddress = async (addressId: string) => {
   return response.data; // Geralmente retorna 204 No Content, mas pode ter corpo vazio
 };
 
+// --- Appointments API Functions ---
 export const fetchAppointments = async () => {
   const response = await apiClient.get("/appointments"); // Ajuste a rota conforme necessário
   return response.data; // Retorna os dados das consultas
-}
-
-export const fetchCategories = async () => {
-  const response = await apiClient.get("/categories"); // Ajuste a rota conforme necessário 
-  return response.data; // Retorna os dados das categorias
-}
-
-export const fetchCompanies = async () => {
-  const response = await apiClient.get("/companies"); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados das empresas
-}
-
-export const fetchServices = async () => {
-  const response = await apiClient.get("/services"); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados dos serviços
-}
-
-export const fetchProfessionalDetails = async (professionalId:string) => {
-  const response = await apiClient.get(`/professonals/${professionalId}`); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados dos profissionais
-}
-
-export const fetchCompanyDetails = async (companyId:string) => {
-  const response = await apiClient.get(`/companies/${companyId}`); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados da empresa
-}
-
-export const fetchServiceDetails = async (serviceId:string) => {
-  const response = await apiClient.get(`/services/${serviceId}`); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados do serviço
-}
-
-export const fetchAvailability = async (professionalId:string, date:string) => {
-  const response = await apiClient.get(`/professionals/${professionalId}/availability`, { params: { date } }); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados de disponibilidade
 }
 
 export const createAppointment = async (appointmentData: any) => {
@@ -141,9 +107,21 @@ export const createAppointment = async (appointmentData: any) => {
   return response.data; // Retorna os dados do agendamento criado
 }
 
-export const updateProfessionalProfile = async (professionalId:string, data: any) => {
-  const response = await apiClient.put(`/professionals/${professionalId}`, data); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados do perfil atualizado
+// --- Categories API Functions ---
+export const fetchCategories = async () => {
+  const response = await apiClient.get("/categories"); // Ajuste a rota conforme necessário 
+  return response.data; // Retorna os dados das categorias
+}
+
+// --- Companies API Functions ---
+export const fetchCompanies = async () => {
+  const response = await apiClient.get("/companies"); // Ajuste a rota conforme necessário
+  return response.data; // Retorna os dados das empresas
+}
+
+export const fetchCompanyDetails = async (companyId:string) => {
+  const response = await apiClient.get(`/companies/${companyId}`); // Ajuste a rota conforme necessário
+  return response.data; // Retorna os dados da empresa
 }
 
 export const registerCompany = async (companyData: any) => {
@@ -161,7 +139,41 @@ export const fetchCompanyServices = async (companyId:string) => {
   return response.data; // Retorna os dados dos serviços da empresa
 }
 
-// Adicione outras funções de API conforme necessário (empresas, serviços, etc.)
+// --- Services API Functions ---
+export const fetchServices = async () => {
+  const response = await apiClient.get("/services"); // Ajuste a rota conforme necessário
+  return response.data; // Retorna os dados dos serviços
+}
+
+export const fetchServiceDetails = async (serviceId:string) => {
+  const response = await apiClient.get(`/services/${serviceId}`); // Ajuste a rota conforme necessário
+  return response.data; // Retorna os dados do serviço
+}
+
+// --- Professionals API Functions ---
+export const fetchProfessionalDetails = async (professionalId:string) => {
+  // *** CORRECTION: Endpoint was likely misspelled as /professonals ***
+  const response = await apiClient.get(`/professionals/${professionalId}`); 
+  return response.data; // Retorna os dados dos profissionais
+}
+
+// *** ADDED: Function to create a professional profile ***
+export const createProfessionalProfile = async (data: any) => {
+  const response = await apiClient.post(`/professionals`, data); 
+  return response.data; // Retorna os dados do perfil criado
+}
+
+export const updateProfessionalProfile = async (professionalId:string, data: any) => {
+  const response = await apiClient.put(`/professionals/${professionalId}`, data); 
+  return response.data; // Retorna os dados do perfil atualizado
+}
+
+export const fetchAvailability = async (professionalId:string, date:string) => {
+  const response = await apiClient.get(`/professionals/${professionalId}/availability`, { params: { date } }); // Ajuste a rota conforme necessário
+  return response.data; // Retorna os dados de disponibilidade
+}
+
+// Adicione outras funções de API conforme necessário
 
 export default apiClient;
 

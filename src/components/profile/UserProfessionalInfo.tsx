@@ -1,11 +1,12 @@
-"use client"; // Add this directive for client-side hooks
 
-import React, { useState, useEffect } from "react";
+"use client"; 
+
+import React, { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm, FormProvider } from "react-hook-form"; // Import FormProvider
+import { useForm, FormProvider } from "react-hook-form"; 
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { fetchProfessionalDetails, updateProfessionalProfile } from "@/lib/api"; // Import API functions
+import { fetchProfessionalDetails, updateProfessionalProfile, createProfessionalProfile } from "@/lib/api"; // Import API functions
 import { Button } from "@/components/ui/button";
 import { ProfileImages } from "./professional/ProfileImages";
 import { ProfessionalInfo } from "./professional/ProfessionalInfo";
@@ -14,17 +15,18 @@ import { EducationSection } from "./professional/EducationSection";
 import { ServicesSection } from "./professional/ServicesSection";
 import { AvailabilitySection } from "./professional/AvailabilitySection";
 import { PortfolioSection } from "./professional/PortfolioSection";
-import { Loader2, AlertCircle } from "lucide-react"; // Import AlertCircle
+import { Loader2, AlertCircle } from "lucide-react"; 
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext"; // Assuming auth context provides professional ID
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
+import { useAuth } from "@/contexts/AuthContext"; 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; 
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
-// Define a basic schema - this should be expanded based on all sub-component fields
+// Define a basic schema - EXPAND THIS BASED ON ALL SUB-COMPONENT FIELDS
 const professionalProfileSchema = z.object({
   // Placeholder: Add fields from subcomponents like ProfessionalInfo, Experience, etc.
   // Example:
-  // bio: z.string().optional(),
-  // hourly_rate: z.number().optional(),
+  bio: z.string().optional(),
+  hourly_rate: z.number().nonnegative().optional(),
   // Add fields from ExperienceSection, EducationSection, etc.
   // cover_image_url: z.string().url().optional().or(z.literal("")),
   // avatar_url: z.string().url().optional().or(z.literal("")),
@@ -32,17 +34,21 @@ const professionalProfileSchema = z.object({
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
 
-export const UserProfessionalInfo = () => {
-  const queryClient = useQueryClient();
-  const { user } = useAuth(); // Assuming useAuth provides user info including professionalId
-  const professionalId = user?.professionalId; // Placeholder: Adjust based on actual auth context structure
+interface UserProfessionalInfoProps {
+  professionalId?: string; // Make ID optional
+}
 
-  // Fetch professional profile data
+export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ professionalId }) => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { user, updateAuthState, accessToken } = useAuth(); // Get updateAuthState if needed after creation
+  const isEditing = !!professionalId;
+
+  // Fetch professional profile data ONLY if editing
   const { data: professionalData, isLoading, isError, error } = useQuery<any, Error>({
     queryKey: ["professionalProfile", professionalId],
     queryFn: () => fetchProfessionalDetails(professionalId!),
-    enabled: !!professionalId, // Only run query if professionalId exists
-    // staleTime: 5 * 60 * 1000, // Optional cache time
+    enabled: isEditing, // Only run query if professionalId exists
   });
 
   // Setup react-hook-form
@@ -51,56 +57,59 @@ export const UserProfessionalInfo = () => {
     defaultValues: {},
   });
 
-  // Update form default values when data loads
+  // Update form default values when data loads (for editing)
   useEffect(() => {
-    if (professionalData) {
-      // Reset form with fetched data - map fields accordingly
+    if (isEditing && professionalData) {
       methods.reset({
         // Map fields from professionalData to form fields
-        // Example:
-        // bio: professionalData.bio || "",
-        // hourly_rate: professionalData.hourly_rate,
-        // cover_image_url: professionalData.cover_image_url || "",
-        // avatar_url: professionalData.avatar_url || "",
+        bio: professionalData.bio || "",
+        hourly_rate: professionalData.hourly_rate,
         // ... map other fields
       });
     }
-  }, [professionalData, methods.reset]);
+  }, [isEditing, professionalData, methods.reset]);
 
-  // Mutation for updating professional profile
+  // Mutation for creating or updating professional profile
   const mutation = useMutation({
-    mutationFn: (data: ProfessionalProfileFormData) => updateProfessionalProfile(professionalId!, data),
+    mutationFn: (data: ProfessionalProfileFormData) => {
+      if (isEditing) {
+        return updateProfessionalProfile(professionalId!, data);
+      } else {
+        // Add userId if required by the backend for creation
+        // const dataWithUserId = { ...data, userId: user?.id };
+        return createProfessionalProfile(data);
+      }
+    },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["professionalProfile", professionalId] });
-      toast.success(data.message || "Perfil profissional atualizado com sucesso!");
-      // Potentially reset form or exit editing mode if applicable
+      if (isEditing) {
+        queryClient.invalidateQueries({ queryKey: ["professionalProfile", professionalId] });
+        toast.success(data.message || "Perfil profissional atualizado com sucesso!");
+      } else {
+        // Handle success after creation
+        toast.success(data.message || "Perfil profissional criado com sucesso!");
+        // Option 1: Invalidate user query to refetch status (if /users/me returns professionalId)
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] }); // Assuming "userProfile" is the key for fetchUserProfile
+        // Option 2: Manually update auth state if API returns updated user/token
+        // if (data.user && data.accessToken) { 
+        //   updateAuthState(data.user, data.accessToken);
+        // }
+        // Option 3: Redirect to profile view or dashboard
+        // navigate(`/professionals/${data.id}`); // Assuming API returns the new ID
+        navigate("/"); // Redirect to home for now
+      }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Erro ao atualizar perfil profissional.");
+      toast.error(error.response?.data?.message || `Erro ao ${isEditing ? "atualizar" : "criar"} perfil profissional.`);
     },
   });
 
   const onSubmit = (formData: ProfessionalProfileFormData) => {
-    // TODO: Compare formData with initial data (professionalData) to send only changed fields
-    // For now, sending all data
+    // TODO: Compare formData with initial data (professionalData) to send only changed fields for PUT
     mutation.mutate(formData);
   };
 
-  // --- No Professional ID State --- 
-  if (!professionalId) {
-    return (
-      <Alert variant="warning">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Acesso Negado</AlertTitle>
-        <AlertDescription>
-          ID do profissional não encontrado. Faça login como profissional para acessar esta página.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // --- Loading State --- 
-  if (isLoading) {
+  // --- Loading State (only applies when editing) --- 
+  if (isEditing && isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -108,51 +117,49 @@ export const UserProfessionalInfo = () => {
     );
   }
 
-  // --- Error State --- 
-  if (isError) {
+  // --- Error State (only applies when editing) --- 
+  if (isEditing && isError) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Erro</AlertTitle>
         <AlertDescription>
-          Não foi possível carregar o perfil profissional. Tente novamente mais tarde.
+          Não foi possível carregar o perfil profissional para edição. Tente novamente mais tarde.
           {error?.message && <p className="text-xs mt-2">Detalhes: {error.message}</p>}
         </AlertDescription>
-        {/* Optional: Add a retry button */}
-        {/* <Button variant="destructive" size="sm" onClick={() => queryClient.refetchQueries({ queryKey: ["professionalProfile", professionalId] })} className="mt-4">Tentar Novamente</Button> */}
       </Alert>
     );
   }
 
   // TODO: Get cover/avatar from form state/fetched data
-  const coverImage = professionalData?.cover_image_url || null;
-  const avatarImage = professionalData?.avatar_url || null;
+  const coverImage = isEditing ? professionalData?.cover_image_url : null;
+  const avatarImage = isEditing ? professionalData?.avatar_url : null;
 
   return (
-    // Wrap components with FormProvider to pass form methods down
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Pass fetched data and form methods to subcomponents as needed */}
+        {/* Pass fetched data (if editing) and form methods to subcomponents */}
         <ProfileImages
-          coverImage={coverImage} // TODO: Potentially manage via form state
-          avatarImage={avatarImage} // TODO: Potentially manage via form state
-          onCoverImageChange={(url) => methods.setValue("cover_image_url" as any, url)} // Example: Update form state
-          onAvatarImageChange={(url) => methods.setValue("avatar_url" as any, url)} // Example: Update form state
+          coverImage={coverImage} 
+          avatarImage={avatarImage} 
+          onCoverImageChange={(url) => methods.setValue("cover_image_url" as any, url)} 
+          onAvatarImageChange={(url) => methods.setValue("avatar_url" as any, url)} 
         />
-        <ProfessionalInfo professionalData={professionalData} />
-        <ExperienceSection professionalData={professionalData} />
-        <EducationSection professionalData={professionalData} />
-        <ServicesSection professionalData={professionalData} />
-        <AvailabilitySection professionalData={professionalData} />
-        <PortfolioSection professionalData={professionalData} />
+        {/* Pass professionalData only if editing, otherwise pass null/undefined */}
+        <ProfessionalInfo professionalData={isEditing ? professionalData : null} />
+        <ExperienceSection professionalData={isEditing ? professionalData : null} />
+        <EducationSection professionalData={isEditing ? professionalData : null} />
+        <ServicesSection professionalData={isEditing ? professionalData : null} />
+        <AvailabilitySection professionalData={isEditing ? professionalData : null} />
+        <PortfolioSection professionalData={isEditing ? professionalData : null} />
 
         <div className="flex justify-end gap-4">
           <Button variant="outline" type="button" onClick={() => methods.reset()} disabled={mutation.isPending}>
             Cancelar
           </Button>
-          <Button type="submit" disabled={mutation.isPending || !methods.formState.isDirty}>
+          <Button type="submit" disabled={mutation.isPending || (!isEditing && !methods.formState.isDirty) || (isEditing && !methods.formState.isDirty)}>
             {mutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Salvar Alterações
+            {isEditing ? "Salvar Alterações" : "Criar Perfil"}
           </Button>
         </div>
       </form>
