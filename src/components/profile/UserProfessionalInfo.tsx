@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { fetchProfessionalDetails, updateProfessionalProfile, createProfessionalProfile } from "@/lib/api"; 
 import { Button } from "@/components/ui/button";
-import { ProfileImages } from "./professional/ProfileImages"; // Refactored component
+import { ProfileImages } from "./professional/ProfileImages"; 
 import { ProfessionalInfo } from "./professional/ProfessionalInfo";
 import { ExperienceSection } from "./professional/ExperienceSection";
 import { EducationSection } from "./professional/EducationSection";
@@ -21,13 +21,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; 
 import { useNavigate } from "react-router-dom"; 
 
-// Define schema including image URLs - EXPAND WITH OTHER FIELDS
+// Define schema matching backend expectations (name, role, image, bio, phone)
 const professionalProfileSchema = z.object({
+  name: z.string().min(1, { message: "O nome é obrigatório." }), // Added name
+  role: z.string().min(1, { message: "O cargo é obrigatório." }), // Added role
+  image: z.string().url({ message: "URL da foto de perfil inválida." }).optional().or(z.literal("")), // Changed from avatar_url to image
   bio: z.string().optional(),
-  hourly_rate: z.number().nonnegative().optional(),
-  cover_image_url: z.string().url({ message: "URL da imagem de capa inválida." }).optional().or(z.literal("")), // Added
-  avatar_url: z.string().url({ message: "URL da foto de perfil inválida." }).optional().or(z.literal("")),      // Added
-  // Add fields from ExperienceSection, EducationSection, etc.
+  phone: z.string().optional(), // Added phone
+  // cover_image_url removed as it's not in Professional model
+  // hourly_rate removed as it's not in Professional model/validator
+  // Add fields from ExperienceSection, EducationSection, etc. if they are part of the main payload
 });
 
 type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
@@ -51,13 +54,13 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
 
   // Setup react-hook-form
   const methods = useForm<ProfessionalProfileFormData>({
-    resolver: zodResolver(professionalProfileSchema), // Enable resolver with updated schema
+    resolver: zodResolver(professionalProfileSchema), 
     defaultValues: {
+      name: user?.name || "", // Pre-fill name from authenticated user
+      role: "Profissional", // Default role
+      image: "",
       bio: "",
-      hourly_rate: undefined,
-      cover_image_url: "",
-      avatar_url: "",
-      // Initialize other fields
+      phone: user?.phone || "", // Pre-fill phone from authenticated user if available
     },
   });
 
@@ -65,26 +68,30 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
   useEffect(() => {
     if (isEditing && professionalData) {
       methods.reset({
+        name: professionalData.name || user?.name || "",
+        role: professionalData.role || "Profissional",
+        image: professionalData.image || "", // Use image field
         bio: professionalData.bio || "",
-        hourly_rate: professionalData.hourly_rate,
-        cover_image_url: professionalData.cover_image_url || "", // Reset cover image URL
-        avatar_url: professionalData.avatar_url || "",          // Reset avatar URL
-        // ... map other fields
+        phone: professionalData.phone || user?.phone || "", // Use phone field
+        // ... map other fields like experience, education if needed
       });
     }
-  }, [isEditing, professionalData, methods.reset]);
+  }, [isEditing, professionalData, user, methods.reset]);
 
   // Mutation for creating or updating professional profile
   const mutation = useMutation({
     mutationFn: (data: ProfessionalProfileFormData) => {
-      // Ensure empty strings are sent as null or omitted if backend expects that
+      // Ensure empty strings for optional URL fields are sent as null or omitted
       const payload = { ...data };
-      if (payload.cover_image_url === "") payload.cover_image_url = undefined;
-      if (payload.avatar_url === "") payload.avatar_url = undefined;
+      if (payload.image === "") payload.image = undefined;
+      if (payload.bio === "") payload.bio = undefined;
+      if (payload.phone === "") payload.phone = undefined;
       
       if (isEditing) {
         return updateProfessionalProfile(professionalId!, payload);
       } else {
+        // For creation, ensure name and role are sent
+        // Backend will use defaults if not provided, but good practice to send from form
         return createProfessionalProfile(payload);
       }
     },
@@ -95,15 +102,32 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
       } else {
         toast.success(data.message || "Perfil profissional criado com sucesso!");
         queryClient.invalidateQueries({ queryKey: ["userProfile"] }); 
-        navigate("/"); 
+        // Redirect or update UI after creation
+        // Maybe navigate to the newly created profile settings page?
+        // Or just refresh the current page state if it shows the form
+        // For now, just invalidate user profile to potentially update role/status
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || `Erro ao ${isEditing ? "atualizar" : "criar"} perfil profissional.`);
+      // Log the detailed error for debugging
+      console.error("Error submitting professional profile:", error.response?.data || error.message);
+      
+      // Display specific validation errors if available
+      if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
+        error.response.data.errors.forEach((err: any) => {
+          if (err.path && err.msg) {
+            methods.setError(err.path as keyof ProfessionalProfileFormData, { type: "manual", message: err.msg });
+          }
+        });
+        toast.error("Erro de validação. Verifique os campos marcados.");
+      } else {
+        toast.error(error.response?.data?.message || `Erro ao ${isEditing ? "atualizar" : "criar"} perfil profissional.`);
+      }
     },
   });
 
   const onSubmit = (formData: ProfessionalProfileFormData) => {
+    console.log("Submitting payload:", formData); // Log payload before sending
     mutation.mutate(formData);
   };
 
@@ -133,11 +157,11 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-        {/* ProfileImages now uses useFormContext, no props needed */}
+        {/* ProfileImages needs to be adapted to use 'image' field from context */}
         <ProfileImages /> 
         
         {/* Pass professionalData only if editing, otherwise pass null/undefined */}
-        {/* Ensure subcomponents are adapted for react-hook-form */}
+        {/* Ensure subcomponents are adapted for react-hook-form and use correct field names */}
         <ProfessionalInfo professionalData={isEditing ? professionalData : null} />
         <ExperienceSection professionalData={isEditing ? professionalData : null} />
         <EducationSection professionalData={isEditing ? professionalData : null} />
