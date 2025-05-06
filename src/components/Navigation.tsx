@@ -58,13 +58,23 @@ export default function Navigation() {
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="flex items-center">
                       <User className="mr-2 h-4 w-4" />
-                      Meu Perfil
+                      Meu Perfil (Usuário)
                     </Link>
                   </DropdownMenuItem>
+                  {/* Conditionally render View Professional Profile link */}
+                  {user.professionalProfileId && (
+                    <DropdownMenuItem asChild>
+                      <Link to={`/professional/${user.professionalProfileId}`} className="flex items-center">
+                        {/* Using Briefcase icon for consistency with settings link */}
+                        <Briefcase className="mr-2 h-4 w-4" /> 
+                        Ver Meu Perfil Profissional
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/profile/professional/settings" className="flex items-center">
                       <Briefcase className="mr-2 h-4 w-4" />
-                      Perfil Profissional
+                      Editar Perfil Profissional
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

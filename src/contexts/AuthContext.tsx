@@ -8,6 +8,7 @@ type User = {
   name: string;
   email: string;
   avatar?: string;
+  professionalProfileId?: string | null; // Added professional profile ID
   // Add other relevant user fields from backend if needed (e.g., role)
 };
 

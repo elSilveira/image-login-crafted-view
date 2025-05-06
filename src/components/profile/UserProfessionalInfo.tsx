@@ -162,8 +162,13 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
       } else {
         toast.success(data.message || "Perfil profissional criado com sucesso!");
         queryClient.invalidateQueries({ queryKey: ["userProfile"] }); 
-        // Consider redirecting to the edit page after creation
-        // navigate(`/settings/professional`); // Or similar
+        // Redirect to the newly created profile page
+        if (data.professional?.id) {
+          navigate(`/professional/${data.professional.id}`);
+        } else {
+          // Fallback or alternative navigation if ID is not directly available
+          navigate(`/settings/professional`); // Or navigate to a general success page
+        }
       }
     },
     onError: (error: any) => {
