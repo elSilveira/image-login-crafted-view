@@ -11,35 +11,15 @@ import { SearchTabs } from "@/components/search/SearchTabs";
 import { ServicePagination } from "@/components/services/ServicePagination";
 import { EmptyResults } from "@/components/search/EmptyResults";
 import { TabsContent } from "@/components/ui/tabs";
-import { fetchServices, fetchCompanies, fetchProfessionals, fetchCategories } from "@/lib/api"; // Import API functions
+import { fetchServices, fetchCompanies, fetchCategories } from "@/lib/api"; // Import API functions
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // For error state
 import { AlertCircle } from "lucide-react";
 
-// Define interfaces for API data (adjust based on actual API response)
-interface Service {
-  id: string;
-  name: string;
-  category: string;
-  company: { id: string; name: string }; // Assuming company is an object
-  professional?: { id: string; name: string }; // Optional professional
-  rating: number;
-  price: string; // Or number, adjust as needed
-  // Add other relevant fields
-}
-
-interface Company {
-  id: string;
-  name: string;
-  specialty: string; // Or category
-  services: string[]; // Or Service[]
-  professionals: string[]; // Or Professional[]
-  rating: number;
-  // Add other relevant fields
-}
-
-// Assuming Professional has a similar structure if needed for search results
-// interface Professional { ... }
+// Interfaces
+interface Service { id: string; name: string; category: string; company: { id: string; name: string }; rating: number; price: string; }
+interface Company { id: string; name: string; specialty: string; rating: number; }
+interface Category { id: number; name: string; icon: string; createdAt: string; updatedAt: string; }
 
 const ITEMS_PER_PAGE = 4;
 
@@ -57,6 +37,7 @@ const Search = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFilter);
 
   useEffect(() => {
+    console.log("[Search Final Effect] Updating state from URL params:", { typeFilter, categoryFilter, pageParam });
     setViewType(typeFilter);
     setSelectedCategory(categoryFilter);
     setCurrentPage(parseInt(pageParam, 10) || 1);
@@ -65,69 +46,66 @@ const Search = () => {
   const updateFilters = (params: Record<string, string>) => {
     const newSearchParams = new URLSearchParams(searchParams);
     Object.entries(params).forEach(([key, value]) => {
-      if (value) {
-        newSearchParams.set(key, value);
-      } else {
-        newSearchParams.delete(key);
-      }
+      if (value) { newSearchParams.set(key, value); } else { newSearchParams.delete(key); }
     });
-    // Reset page to 1 when filters change, except when changing page itself
-    if (!params.page) {
-        newSearchParams.set("page", "1");
-    }
+    if (!params.page) { newSearchParams.set("page", "1"); }
+    console.log("[Search Final UpdateFilters] Setting new params:", newSearchParams.toString());
     setSearchParams(newSearchParams);
   };
 
   // --- Fetching Data with React Query ---
-  const queryParams = {
-    q: searchTerm,
-    category: selectedCategory,
-    sort: sortBy,
-    page: currentPage,
-    limit: ITEMS_PER_PAGE,
-  };
+  const queryParams = { q: searchTerm, category: selectedCategory, sort: sortBy, page: currentPage, limit: ITEMS_PER_PAGE };
+  console.log("[Search Final QueryParams]:", queryParams);
 
   // Fetch Categories
-  const { data: categoriesData, isLoading: isLoadingCategories, isError: isErrorCategories } = useQuery<string[], Error>({
+  const { data: categoriesData, isLoading: isLoadingCategories, isError: isErrorCategories, error: errorCategories } = useQuery<Category[], Error>({
     queryKey: ["categories"],
     queryFn: fetchCategories,
-    staleTime: Infinity, // Categories don't change often
+    staleTime: Infinity,
   });
-  const allCategories = categoriesData || [];
+  const categoryNames = (categoriesData || []).map(cat => cat.name);
+  console.log("[Search Final Categories Query]:", { isLoadingCategories, isErrorCategories, errorCategories: errorCategories?.message, dataLength: categoriesData?.length });
 
   // Fetch Services
-  const { data: servicesData, isLoading: isLoadingServices, isError: isErrorServices, error: errorServices } = useQuery<Service[], Error>({
+  const { data: servicesApiResponse, isLoading: isLoadingServices, isError: isErrorServices, error: errorServices } = useQuery<{ data: Service[], pagination: any }, Error>({
     queryKey: ["services", queryParams],
     queryFn: () => fetchServices(queryParams),
     enabled: viewType === "all" || viewType === "service",
   });
+  const services = servicesApiResponse?.data || [];
+  const servicesPagination = servicesApiResponse?.pagination;
+  console.log("[Search Final Services Query]:", { isLoadingServices, isErrorServices, errorServices: errorServices?.message, dataLength: services.length });
 
-  // Fetch Companies (or Professionals, adjust based on backend structure)
-  // Assuming fetchCompanies returns company data
-  const { data: companiesData, isLoading: isLoadingCompanies, isError: isErrorCompanies, error: errorCompanies } = useQuery<Company[], Error>({
+  // Fetch Companies
+  const { data: companiesApiResponse, isLoading: isLoadingCompanies, isError: isErrorCompanies, error: errorCompanies } = useQuery<{ data: Company[], pagination: any }, Error>({
     queryKey: ["companies", queryParams],
     queryFn: () => fetchCompanies(queryParams),
     enabled: viewType === "all" || viewType === "company",
   });
+  const companies = companiesApiResponse?.data || [];
+  const companiesPagination = companiesApiResponse?.pagination;
+  console.log("[Search Final Companies Query]:", { isLoadingCompanies, isErrorCompanies, errorCompanies: errorCompanies?.message, dataLength: companies.length });
 
   // Combine loading and error states
-  const isLoading = isLoadingCategories || isLoadingServices || isLoadingCompanies;
-  const isError = isErrorCategories || isErrorServices || isErrorCompanies;
-  const errorMessages = [errorServices, errorCompanies].filter(Boolean).map((e: any) => e.message).join("; ");
+  const isAnyLoading = isLoadingCategories || (isLoadingServices && (viewType === 'all' || viewType === 'service')) || (isLoadingCompanies && (viewType === 'all' || viewType === 'company'));
+  const isAnyError = isErrorCategories || (isErrorServices && (viewType === 'all' || viewType === 'service')) || (isErrorCompanies && (viewType === 'all' || viewType === 'company'));
+  const combinedErrorMessages = [
+      isErrorCategories ? `Categories: ${errorCategories?.message}` : null,
+      isErrorServices ? `Services: ${errorServices?.message}` : null,
+      isErrorCompanies ? `Companies: ${errorCompanies?.message}` : null
+  ].filter(Boolean).join("; ");
+  console.log("[Search Final Combined State]:", { isAnyLoading, isAnyError, combinedErrorMessages });
 
   // --- Data Processing (use fetched data) ---
-  const services = servicesData || [];
-  const companies = companiesData || [];
-
-  // TODO: Backend should ideally handle total counts and pagination info
-  // For now, assuming the fetched data is the paginated result
-  // We need total counts from the backend to calculate totalPages correctly.
-  // Placeholder for total counts - replace with actual data from API response
-  const totalServices = services.length; // This is WRONG, needs total count from API
-  const totalCompanies = companies.length; // This is WRONG, needs total count from API
-  const totalItems = viewType === "all" ? totalServices + totalCompanies : // Approximation
+  const totalServices = servicesPagination?.totalItems ?? 0;
+  const totalCompanies = companiesPagination?.totalItems ?? 0;
+  const totalItems = viewType === "all" ? totalServices + totalCompanies :
                      viewType === "service" ? totalServices : totalCompanies;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1; // Approximation
+  const totalPagesServices = servicesPagination?.totalPages ?? Math.ceil(totalServices / ITEMS_PER_PAGE);
+  const totalPagesCompanies = companiesPagination?.totalPages ?? Math.ceil(totalCompanies / ITEMS_PER_PAGE);
+  const totalPages = viewType === "all" ? Math.max(totalPagesServices, totalPagesCompanies) :
+                     viewType === "service" ? totalPagesServices : totalPagesCompanies;
+  console.log("[Search Final Pagination Info]:", { totalServices, totalCompanies, totalItems, totalPages });
 
   const handleCategoryChange = (category: string) => {
     updateFilters({ category: category, page: "1" });
@@ -139,7 +117,7 @@ const Search = () => {
 
   const handleSortChange = (value: string) => {
     setSortBy(value);
-    updateFilters({ sort: value, page: "1" }); // Assuming backend supports 'sort' param
+    updateFilters({ sort: value, page: "1" });
   };
 
   const handlePageChange = (page: number) => {
@@ -164,13 +142,39 @@ const Search = () => {
     ))
   );
 
+  // Function to render content or empty state for a specific type
+  const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company') => {
+    console.log(`[Search Final renderTypedContent - ${type}]:`, { isLoading, isError, dataLength: data.length });
+    if (isLoading) {
+      return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
+    }
+    if (isError) {
+        return null; // Global error alert will be shown
+    }
+    if (data.length === 0) {
+      return <EmptyResults />; 
+    }
+    return (
+      <div className={`grid grid-cols-1 gap-4`}>
+        {type === 'service' && data.map(item => (
+          <ServiceCard key={item.id} service={item as any} isHighlighted={highlightId === item.id.toString()} />
+        ))}
+        {type === 'company' && data.map(item => (
+          <CompanyCard key={item.id} company={item as any} isHighlighted={highlightId === item.id.toString()} />
+        ))}
+      </div>
+    );
+  };
+
+  console.log("[Search Final] Rendering complete component...");
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-4xl mx-auto">
-          {/* Header */} 
+          {/* Header */}
           {searchTerm ? (
             <h1 className="text-3xl font-bold mb-2">Resultados para "{searchTerm}"</h1>
           ) : categoryFilter ? (
@@ -179,125 +183,94 @@ const Search = () => {
             <h1 className="text-3xl font-bold mb-2">Explorar</h1>
           )}
           <p className="text-gray-600 mb-8">
-            {isLoading ? <Skeleton className="h-4 w-48" /> : 
-             isError ? "Erro ao buscar resultados." : 
+            {isAnyLoading ? <Skeleton className="h-4 w-48" /> : 
+             isAnyError ? "Erro ao buscar resultados." : 
              searchTerm || categoryFilter ? 
-              `Encontramos ${totalItems} resultados` : // Use approximate totalItems
+              `Encontramos ${totalItems} resultados` : 
               'Explore empresas e serviços disponíveis'}
           </p>
 
-          {/* Categories */} 
+          {/* Categories */}
           {isLoadingCategories ? <Skeleton className="h-8 w-full mb-6" /> : 
-           !isErrorCategories && allCategories.length > 0 && (
+           isErrorCategories ? 
+            <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro ao Carregar Categorias</AlertTitle>
+                <AlertDescription>
+                    Não foi possível buscar as categorias. Tente novamente mais tarde.
+                    {errorCategories && <p className="text-xs mt-2">Detalhes: {errorCategories.message}</p>}
+                </AlertDescription>
+            </Alert> : 
+           categoryNames.length > 0 ? (
             <SearchCategories 
               selectedCategory={selectedCategory}
-              allCategories={allCategories}
+              allCategories={categoryNames} 
               onCategoryChange={handleCategoryChange}
             />
+          ) : (
+            <p className="text-gray-500 mb-6">Nenhuma categoria encontrada.</p>
           )}
 
-          {/* Tabs and Results */} 
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <SearchTabs
-              viewType={viewType}
-              onTabChange={handleTabChange}
-              sortBy={sortBy}
-              onSortChange={handleSortChange}
-              // Pass counts based on fetched data length (approximation)
-              serviceCount={services.length} 
-              companyCount={companies.length}
-            >
-              {/* Error Display */} 
-              {isError && (
-                <Alert variant="destructive" className="my-4">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Erro ao Carregar Resultados</AlertTitle>
-                  <AlertDescription>
-                    Não foi possível buscar os resultados. Tente novamente mais tarde.
-                    {errorMessages && <p className="text-xs mt-2">Detalhes: {errorMessages}</p>}
-                  </AlertDescription>
-                </Alert>
-              )}
+          {/* Global Error Display (if not category error) */}
+          {isAnyError && !isErrorCategories && (
+            <Alert variant="destructive" className="my-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro ao Carregar Resultados</AlertTitle>
+              <AlertDescription>
+                Não foi possível buscar os resultados. Tente novamente mais tarde.
+                {combinedErrorMessages && <p className="text-xs mt-2">Detalhes: {combinedErrorMessages}</p>}
+              </AlertDescription>
+            </Alert>
+          )}
 
-              {/* Content Tabs */} 
-              <TabsContent value="all">
-                {isLoading ? renderLoadingSkeletons(ITEMS_PER_PAGE / 2, 'service') : 
-                 !isErrorServices && services.length > 0 && (
+          {/* Tabs and Results - Only render if categories loaded successfully */}
+          {!isErrorCategories && (
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+              <SearchTabs
+                viewType={viewType}
+                onTabChange={handleTabChange}
+                sortBy={sortBy}
+                onSortChange={handleSortChange}
+                serviceCount={totalServices} 
+                companyCount={totalCompanies}
+              >
+                {/* Content Tabs */}
+                <TabsContent value="all">
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">Serviços</h2>
-                    <div className="grid grid-cols-1 gap-4">
-                      {services.map(service => (
-                        <ServiceCard 
-                          key={service.id}
-                          service={service as any} // Cast needed if interface mismatch
-                          isHighlighted={highlightId === service.id.toString()}
-                        />
-                      ))}
-                    </div>
+                    {renderTypedContent(isLoadingServices, isErrorServices, services, 'service')}
                   </div>
-                )}
-                {isLoading ? renderLoadingSkeletons(ITEMS_PER_PAGE / 2, 'company') : 
-                 !isErrorCompanies && companies.length > 0 && (
                   <div>
                     <h2 className="text-xl font-semibold mb-4">Empresas</h2>
-                    <div className="grid grid-cols-1 gap-4">
-                      {companies.map(company => (
-                        <CompanyCard 
-                          key={company.id}
-                          company={company as any} // Cast needed if interface mismatch
-                          isHighlighted={highlightId === company.id.toString()}
-                        />
-                      ))}
-                    </div>
+                    {renderTypedContent(isLoadingCompanies, isErrorCompanies, companies, 'company')}
                   </div>
-                )}
-              </TabsContent>
+                  {/* Combined Empty State for 'all' tab */}
+                  {!isAnyLoading && !isAnyError && services.length === 0 && companies.length === 0 && <EmptyResults />}
+                </TabsContent>
 
-              <TabsContent value="service">
-                {isLoading ? renderLoadingSkeletons(ITEMS_PER_PAGE, 'service') : 
-                 !isErrorServices && services.length > 0 && (
-                  <div className="grid grid-cols-1 gap-4">
-                    {services.map(service => (
-                      <ServiceCard 
-                        key={service.id}
-                        service={service as any} // Cast needed if interface mismatch
-                        isHighlighted={highlightId === service.id.toString()}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="company">
-                {isLoading ? renderLoadingSkeletons(ITEMS_PER_PAGE, 'company') : 
-                 !isErrorCompanies && companies.length > 0 && (
-                  <div className="grid grid-cols-1 gap-4">
-                    {companies.map(company => (
-                      <CompanyCard 
-                        key={company.id}
-                        company={company as any} // Cast needed if interface mismatch
-                        isHighlighted={highlightId === company.id.toString()}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </SearchTabs>
-          </div>
+                <TabsContent value="service">
+                  {renderTypedContent(isLoadingServices, isErrorServices, services, 'service')}
+                </TabsContent>
+                
+                <TabsContent value="company">
+                  {renderTypedContent(isLoadingCompanies, isErrorCompanies, companies, 'company')}
+                </TabsContent>
+              </SearchTabs>
+            </div>
+          )}
 
-          {/* Pagination */} 
-          {!isLoading && !isError && totalPages > 1 && (
+          {/* Pagination */}
+          {!isAnyLoading && !isAnyError && totalPages > 0 && (
             <ServicePagination
               currentPage={currentPage}
-              totalPages={totalPages} // Use approximate totalPages
+              totalPages={totalPages}
               setCurrentPage={handlePageChange}
             />
           )}
 
-          {/* Empty Results */} 
-          {!isLoading && !isError && services.length === 0 && companies.length === 0 && (
-            <EmptyResults />
-          )}
+          {/* Final Check: If nothing rendered (e.g., category error blocked tabs), show generic empty/error */} 
+          {isErrorCategories && <EmptyResults />} 
+          
         </div>
       </main>
     </div>
