@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 // Define a interface para o payload do token JWT (ajuste conforme necessário)
 interface JwtPayload {
@@ -6,19 +6,23 @@ interface JwtPayload {
   // Adicione outras propriedades do payload se houver
 }
 
+// Consistent keys for storing tokens and user data
+const ACCESS_TOKEN_KEY = "accessToken";
+const REFRESH_TOKEN_KEY = "refreshToken";
+const USER_KEY = "user";
+
 // Cria uma instância do Axios com a URL base da API
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3001/api", // Use variável de ambiente ou fallback
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3002/api", // CORRIGIDO: Fallback para porta 3002
 });
 
-console.log("API URL:", import.meta.env.VITE_API_URL);
+console.log("API URL Base:", apiClient.defaults.baseURL);
 
-// Interceptor para adicionar o token JWT ao cabeçalho Authorization
+// --- Request Interceptor ---
+// Adiciona o token JWT ao cabeçalho Authorization
 apiClient.interceptors.request.use(
   (config) => {
-    // Tenta obter o token do localStorage (ou de onde ele for armazenado pelo AuthContext)
-    const token = localStorage.getItem("accessToken"); // Ajuste a chave conforme necessário
-
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,148 +33,233 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Opcional: Interceptor para lidar com respostas (ex: refresh token, erros globais)
+// --- Response Interceptor ---
+// Lida com refresh token e erros globais
+
+let isRefreshing = false;
+let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: any) => void; }[] = [];
+
+const processQueue = (error: AxiosError | null, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
 apiClient.interceptors.response.use(
   (response) => {
-    // Qualquer código de status que esteja dentro do intervalo de 2xx faz com que esta função seja acionada
+    // Retorna a resposta se for bem-sucedida (status 2xx)
     return response;
   },
-  (error) => {
-    // Qualquer código de status que caia fora do intervalo de 2xx faz com que esta função seja acionada
-    if (error.response && error.response.status === 401) {
-      // Exemplo: Lidar com token expirado ou inválido
-      // Poderia redirecionar para login ou tentar refresh token
-      console.error("Erro 401: Não autorizado ou token inválido/expirado.");
-      // Limpar token inválido e redirecionar para login
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      // Forçar recarregamento ou usar navigate fora do contexto React
-      if (window.location.pathname !== "/login") {
-        //  window.location.href = "/login";
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+
+    // Verifica se o erro é 401 e se não é uma tentativa de refresh que falhou
+    if (error.response?.status === 401 && originalRequest.url !== "/auth/refresh" && !originalRequest._retry) {
+      
+      if (isRefreshing) {
+        // Se já estiver atualizando o token, adiciona a requisição à fila
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers["Authorization"] = "Bearer " + token;
+          return apiClient(originalRequest);
+        }).catch(err => {
+          return Promise.reject(err); // Rejeita se o refresh falhar
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+      if (!refreshToken) {
+        console.error("Refresh token não encontrado, fazendo logout.");
+        isRefreshing = false;
+        // Limpar tudo e redirecionar (ou chamar função de logout do AuthContext)
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        if (window.location.pathname !== "/login") {
+           window.location.href = "/login"; // Força redirecionamento
+        }
+        return Promise.reject(error);
+      }
+
+      try {
+        console.log("Tentando atualizar token com:", refreshToken);
+        const refreshResponse = await axios.post(`${apiClient.defaults.baseURL}/auth/refresh`, { refreshToken });
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = refreshResponse.data;
+
+        console.log("Token atualizado com sucesso.");
+        localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
+        // Atualiza o refresh token se um novo for retornado
+        if (newRefreshToken) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+        }
+
+        // Atualiza o header da requisição original
+        apiClient.defaults.headers.common["Authorization"] = `Bearer ${newAccessToken}`;
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+
+        // Processa a fila de requisições pendentes com o novo token
+        processQueue(null, newAccessToken);
+
+        // Tenta novamente a requisição original
+        return apiClient(originalRequest);
+
+      } catch (refreshError: any) {
+        console.error("Falha ao atualizar token:", refreshError?.response?.data || refreshError);
+        processQueue(refreshError, null); // Rejeita a fila com o erro de refresh
+        // Limpar tudo e redirecionar
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+         if (window.location.pathname !== "/login") {
+           window.location.href = "/login"; // Força redirecionamento
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
+
+    // Para outros erros, apenas rejeita a promessa
+    // Opcional: Extrair mensagem de erro mais amigável
+    const errorMessage = (error.response?.data as any)?.message || error.message || "Ocorreu um erro inesperado.";
+    console.error("Erro na API:", errorMessage, error.response?.status, originalRequest.url);
+    // Poderia adicionar o errorMessage ao objeto de erro para uso posterior
+    error.message = errorMessage;
+
     return Promise.reject(error);
   }
 );
 
-// --- User Profile API Functions ---
+// --- Funções de API existentes (mantidas como estavam) ---
 
-// Função para buscar o perfil do usuário autenticado
+// --- User Profile API Functions ---
 export const fetchUserProfile = async () => {
   const response = await apiClient.get("/users/me");
-  return response.data; // Retorna os dados do usuário
+  return response.data;
 };
-
-// Função para atualizar o perfil do usuário autenticado
-// data: Objeto contendo apenas os campos a serem atualizados
 export const updateUserProfile = async (data: any) => {
   const response = await apiClient.put("/users/me", data);
-  return response.data; // Retorna a resposta (pode incluir mensagem de sucesso)
+  return response.data;
 };
 
-
 // --- User Addresses API Functions ---
-
-// Função para buscar os endereços do usuário autenticado
 export const fetchUserAddresses = async () => {
   const response = await apiClient.get("/users/me/addresses");
   return response.data;
 };
-
-// Função para criar um novo endereço para o usuário autenticado
 export const createUserAddress = async (addressData: any) => {
   const response = await apiClient.post("/users/me/addresses", addressData);
   return response.data;
 };
-
-// Função para atualizar um endereço específico do usuário
 export const updateUserAddress = async (addressId: string, addressData: any) => {
   const response = await apiClient.put(`/users/me/addresses/${addressId}`, addressData);
   return response.data;
 };
-
-// Função para deletar um endereço específico do usuário
 export const deleteUserAddress = async (addressId: string) => {
   const response = await apiClient.delete(`/users/me/addresses/${addressId}`);
-  return response.data; // Geralmente retorna 204 No Content, mas pode ter corpo vazio
+  return response.data;
 };
 
 // --- Appointments API Functions ---
-export const fetchAppointments = async () => {
-  const response = await apiClient.get("/appointments"); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados das consultas
+export const fetchAppointments = async (params: any = {}) => { // Added params
+  const response = await apiClient.get("/appointments", { params });
+  return response.data;
 }
-
 export const createAppointment = async (appointmentData: any) => {
-  const response = await apiClient.post("/appointments", appointmentData); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados do agendamento criado
+  const response = await apiClient.post("/appointments", appointmentData);
+  return response.data;
+}
+// Added function to update appointment status
+export const updateAppointmentStatus = async (appointmentId: string, status: string) => {
+    const response = await apiClient.patch(`/appointments/${appointmentId}/status`, { status });
+    return response.data;
 }
 
 // --- Categories API Functions ---
 export const fetchCategories = async (params: any = {}) => {
-  const response = await apiClient.get("/categories", { params }); // Pass params to API call
-  return response.data; // Retorna os dados das categorias
+  const response = await apiClient.get("/categories", { params });
+  return response.data;
 }
 
 // --- Companies API Functions ---
 export const fetchCompanies = async (params: any = {}) => {
-  const response = await apiClient.get("/companies", { params }); // Pass params to API call
-  return response.data; // Retorna os dados das empresas
+  const response = await apiClient.get("/companies", { params });
+  return response.data;
 }
-
 export const fetchCompanyDetails = async (companyId:string) => {
-  const response = await apiClient.get(`/companies/${companyId}`); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados da empresa
+  const response = await apiClient.get(`/companies/${companyId}?include=address`); // Include address
+  return response.data;
 }
-
 export const registerCompany = async (companyData: any) => {
-  const response = await apiClient.post("/companies", companyData); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados da empresa criada
+  const response = await apiClient.post("/companies", companyData);
+  return response.data;
 }
-
-export const fetchCompanyAppointments = async (companyId:string) => {
-  const response = await apiClient.get(`/companies/${companyId}/appointments`); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados dos agendamentos da empresa
+// Added function to update company details
+export const updateCompanyDetails = async (companyId: string, companyData: any) => {
+    const response = await apiClient.put(`/companies/${companyId}`, companyData);
+    return response.data;
 }
-
-export const fetchCompanyServices = async (companyId:string) => {
-  const response = await apiClient.get(`/companies/${companyId}/services`); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados dos serviços da empresa
+export const fetchCompanyAppointments = async (companyId:string, params: any = {}) => { // Added params
+  const response = await apiClient.get(`/companies/${companyId}/appointments`, { params });
+  return response.data;
+}
+export const fetchCompanyServices = async (companyId:string, params: any = {}) => { // Added params
+  const response = await apiClient.get(`/companies/${companyId}/services`, { params });
+  return response.data;
 }
 
 // --- Services API Functions ---
 export const fetchServices = async (params: any = {}) => {
-  const response = await apiClient.get("/services", { params }); // Pass params to API call
-  return response.data; // Retorna os dados dos serviços
+  const response = await apiClient.get("/services", { params });
+  return response.data;
 }
-
 export const fetchServiceDetails = async (serviceId:string) => {
-  const response = await apiClient.get(`/services/${serviceId}`); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados do serviço
+  const response = await apiClient.get(`/services/${serviceId}`);
+  return response.data;
 }
 
 // --- Professionals API Functions ---
+export const fetchProfessionals = async (params: any = {}) => { // Added function
+    const response = await apiClient.get("/professionals", { params });
+    return response.data;
+}
 export const fetchProfessionalDetails = async (professionalId:string) => {
-  // *** CORRECTION: Endpoint was likely misspelled as /professonals ***
-  const response = await apiClient.get(`/professionals/${professionalId}`); 
-  return response.data; // Retorna os dados dos profissionais
+  const response = await apiClient.get(`/professionals/${professionalId}`);
+  return response.data;
 }
-
-// *** ADDED: Function to create a professional profile ***
 export const createProfessionalProfile = async (data: any) => {
-  const response = await apiClient.post(`/professionals`, data); 
-  return response.data; // Retorna os dados do perfil criado
+  const response = await apiClient.post(`/professionals`, data);
+  return response.data;
 }
-
 export const updateProfessionalProfile = async (professionalId:string, data: any) => {
-  const response = await apiClient.put(`/professionals/${professionalId}`, data); 
-  return response.data; // Retorna os dados do perfil atualizado
+  const response = await apiClient.put(`/professionals/${professionalId}`, data);
+  return response.data;
+}
+export const fetchAvailability = async (professionalId:string, date:string) => {
+  const response = await apiClient.get(`/professionals/${professionalId}/availability`, { params: { date } });
+  return response.data;
 }
 
-export const fetchAvailability = async (professionalId:string, date:string) => {
-  const response = await apiClient.get(`/professionals/${professionalId}/availability`, { params: { date } }); // Ajuste a rota conforme necessário
-  return response.data; // Retorna os dados de disponibilidade
+// --- Notifications API Function (Example) ---
+export const fetchNotifications = async (params: any = {}) => {
+    const response = await apiClient.get("/notifications", { params }); // Assuming endpoint exists
+    return response.data;
+}
+
+// --- Promotions API Function (Example) ---
+export const fetchPromotions = async (params: any = {}) => {
+    const response = await apiClient.get("/promotions", { params }); // Assuming endpoint exists
+    return response.data;
 }
 
 // Adicione outras funções de API conforme necessário

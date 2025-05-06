@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import apiClient from "../lib/api"; // Import the configured Axios client
@@ -14,8 +14,8 @@ type User = {
 interface AuthContextProps {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-  updateAuthState: (user: User, accessToken: string, refreshToken?: string) => void; // refreshToken is optional based on backend response
+  logout: (callBackend?: boolean) => Promise<void>; // Added optional param
+  updateAuthState: (user: User, accessToken: string, refreshToken?: string) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
   accessToken: string | null;
@@ -32,7 +32,7 @@ export const useAuth = () => {
   return context;
 };
 
-// Consistent key for storing the access token
+// Consistent keys
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 const USER_KEY = "user";
@@ -45,12 +45,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Load initial state from localStorage
   useEffect(() => {
     const storedAccessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
     const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     const storedUser = localStorage.getItem(USER_KEY);
 
-    if (storedAccessToken && storedUser) { // Check for access token primarily
+    if (storedAccessToken && storedUser) {
       setAccessToken(storedAccessToken);
       if (storedRefreshToken) {
         setRefreshToken(storedRefreshToken);
@@ -59,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error("Failed to parse stored user:", e);
-        // Clear invalid stored data if parsing fails
+        // Clear invalid stored data
         localStorage.removeItem(USER_KEY);
         localStorage.removeItem(ACCESS_TOKEN_KEY);
         localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -69,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Function to update auth state (used by login and potentially register)
-  const updateAuthState = (loggedInUser: User, newAccessToken: string, newRefreshToken?: string) => {
+  const updateAuthState = useCallback((loggedInUser: User, newAccessToken: string, newRefreshToken?: string) => {
     localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
     localStorage.setItem(USER_KEY, JSON.stringify(loggedInUser));
     setAccessToken(newAccessToken);
@@ -77,23 +78,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (newRefreshToken) {
       localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
       setRefreshToken(newRefreshToken);
+    } else {
+      // If no new refresh token is provided (e.g., during refresh), don't clear the existing one
+      // localStorage.removeItem(REFRESH_TOKEN_KEY); // Avoid removing if not explicitly provided
+      // setRefreshToken(null);
     }
-  };
+  }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = useCallback(async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
-      // Use apiClient (Axios) instead of fetch
       const response = await apiClient.post("/auth/login", { email, password });
-
-      // Axios wraps the response data in `data` property
       const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: loggedInUser } = response.data;
 
       if (!newAccessToken || !loggedInUser) {
         throw new Error("Resposta de login inválida do servidor.");
       }
 
-      // Update state and localStorage using the helper function
       updateAuthState(loggedInUser, newAccessToken, newRefreshToken);
 
       toast({
@@ -101,12 +102,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: `Bem-vindo, ${loggedInUser.name}!`,
       });
 
-      navigate("/"); // Navigate to home or dashboard after login
+      navigate("/");
 
     } catch (error: any) {
       console.error("Login failed:", error);
-      // Handle Axios error structure (error.response.data)
-      const errorMessage = error.response?.data?.message || error.message || "Ocorreu um erro inesperado.";
+      const errorMessage = error.message || "Ocorreu um erro inesperado."; // Use error message processed by interceptor
       toast({
         title: "Erro de login",
         description: errorMessage,
@@ -115,23 +115,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [navigate, toast, updateAuthState]);
 
-  const logout = () => {
+  // Updated logout function
+  const logout = useCallback(async (callBackend = true) => {
+    console.log("Iniciando logout...");
+    const currentRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+
+    // Clear local state and storage immediately
     setUser(null);
     setAccessToken(null);
     setRefreshToken(null);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
-    // Optionally: Call a backend logout endpoint if it exists
-    // apiClient.post("/auth/logout").catch(err => console.error("Backend logout failed:", err));
+
+    // Clear Axios default header (important if instance is reused)
+    delete apiClient.defaults.headers.common["Authorization"];
+
+    // Optionally: Call backend logout endpoint to invalidate refresh token
+    if (callBackend && currentRefreshToken) {
+      try {
+        console.log("Chamando backend /auth/logout");
+        // Assuming backend expects refreshToken in the body
+        await apiClient.post("/auth/logout", { refreshToken: currentRefreshToken });
+        console.log("Backend logout bem-sucedido.");
+      } catch (err: any) {
+        // Log error but proceed with client-side logout anyway
+        console.error("Falha ao chamar backend /auth/logout:", err.response?.data || err.message);
+      }
+    }
+
     toast({
       title: "Logout realizado",
       description: "Você foi desconectado com sucesso",
     });
     navigate("/login");
-  };
+  }, [navigate, toast]);
+
+  // Add listener for storage changes to handle logout from other tabs/windows or interceptor redirect
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === ACCESS_TOKEN_KEY && !event.newValue) {
+        // If access token is removed from another context, trigger logout locally
+        console.log("Access token removido do storage, efetuando logout local.");
+        // Avoid calling backend again if it was likely triggered by interceptor
+        logout(false); 
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [logout]);
+
 
   return (
     <AuthContext.Provider
