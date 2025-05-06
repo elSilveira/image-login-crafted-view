@@ -17,8 +17,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // 
 import { AlertCircle } from "lucide-react";
 
 // Interfaces
-interface Service { id: string; name: string; category: string; company: { id: string; name: string }; rating: number; price: string; }
-interface Company { id: string; name: string; specialty: string; rating: number; }
+interface Service { id: string; name: string; category: string; company: { id: string; name: string }; rating: number; price: string; /* Add other fields ServiceCard expects */ image?: string; reviews?: number; duration?: string; availability?: string; company_id?: string; professional_id?: string; professional?: string; }
+interface Company { id: string; name: string; specialty: string; rating: number; /* Add other fields CompanyCard expects */ services?: string[]; professionals?: string[]; professional_ids?: number[]; image?: string; reviews?: number; availability?: string; address?: any; /* address can be an object */ }
 interface Category { id: number; name: string; icon: string; createdAt: string; updatedAt: string; }
 
 const ITEMS_PER_PAGE = 4;
@@ -58,13 +58,23 @@ const Search = () => {
   console.log("[Search Final QueryParams]:", queryParams);
 
   // Fetch Categories
-  const { data: categoriesData, isLoading: isLoadingCategories, isError: isErrorCategories, error: errorCategories } = useQuery<Category[], Error>({
+  const { data: categoriesApiResponse, isLoading: isLoadingCategories, isError: isErrorCategories, error: errorCategories } = useQuery<{ data: Category[], pagination?: any } | Category[], Error>({
     queryKey: ["categories"],
     queryFn: fetchCategories,
     staleTime: Infinity,
   });
-  const categoryNames = (categoriesData || []).map(cat => cat.name);
-  console.log("[Search Final Categories Query]:", { isLoadingCategories, isErrorCategories, errorCategories: errorCategories?.message, dataLength: categoriesData?.length });
+  const actualCategoriesArray = Array.isArray(categoriesApiResponse) 
+    ? categoriesApiResponse 
+    : categoriesApiResponse?.data || [];
+  const categoryNames = actualCategoriesArray.map(cat => {
+    if (typeof cat === 'object' && cat !== null && typeof cat.name === 'string') {
+      return cat.name;
+    }
+    console.warn('[Search.tsx] Unexpected category item format or missing name:', cat);
+    return null; // Return null for invalid items
+  }).filter(name => name !== null) as string[]; // Filter out nulls and assert as string[]
+  console.log("[Search Final Categories Query]:", { isLoadingCategories, isErrorCategories, errorCategories: errorCategories?.message, dataLength: actualCategoriesArray.length });
+
 
   // Fetch Services
   const { data: servicesApiResponse, isLoading: isLoadingServices, isError: isErrorServices, error: errorServices } = useQuery<{ data: Service[], pagination: any }, Error>({
@@ -157,10 +167,10 @@ const Search = () => {
     return (
       <div className={`grid grid-cols-1 gap-4`}>
         {type === 'service' && data.map(item => (
-          <ServiceCard key={item.id} service={item as any} isHighlighted={highlightId === item.id.toString()} />
+          <ServiceCard key={item.id} service={item as Service} isHighlighted={highlightId === item.id.toString()} />
         ))}
         {type === 'company' && data.map(item => (
-          <CompanyCard key={item.id} company={item as any} isHighlighted={highlightId === item.id.toString()} />
+          <CompanyCard key={item.id} company={item as Company} isHighlighted={highlightId === item.id.toString()} />
         ))}
       </div>
     );
@@ -244,8 +254,7 @@ const Search = () => {
                     <h2 className="text-xl font-semibold mb-4">Empresas</h2>
                     {renderTypedContent(isLoadingCompanies, isErrorCompanies, companies, 'company')}
                   </div>
-                  {/* Combined Empty State for 'all' tab */}
-                  {!isAnyLoading && !isAnyError && services.length === 0 && companies.length === 0 && <EmptyResults />}
+                  {/* Combined Empty State for 'all' tab */}                  {!isAnyLoading && !isAnyError && services.length === 0 && companies.length === 0 && <EmptyResults />}
                 </TabsContent>
 
                 <TabsContent value="service">
