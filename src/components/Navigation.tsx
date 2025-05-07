@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard } from "lucide-react";
+import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings } from "lucide-react"; // Adicionado Settings
 
 export default function Navigation() {
   const { user, logout } = useAuth();
@@ -65,7 +65,6 @@ export default function Navigation() {
                   {user.professionalProfileId && (
                     <DropdownMenuItem asChild>
                       <Link to={`/professional/${user.professionalProfileId}`} className="flex items-center">
-                        {/* Using Briefcase icon for consistency with settings link */}
                         <Briefcase className="mr-2 h-4 w-4" /> 
                         Ver Meu Perfil Profissional
                       </Link>
@@ -75,6 +74,13 @@ export default function Navigation() {
                     <Link to="/profile/professional/settings" className="flex items-center">
                       <Briefcase className="mr-2 h-4 w-4" />
                       Editar Perfil Profissional
+                    </Link>
+                  </DropdownMenuItem>
+                  {/* Adicionado item de Configurações */}
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      Configurações
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -124,3 +130,4 @@ export default function Navigation() {
     </header>
   );
 }
+
