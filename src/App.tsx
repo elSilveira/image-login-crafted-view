@@ -1,89 +1,109 @@
-
-import React from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React, { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import NotFound from "./pages/NotFound";
-import Search from "./pages/Search";
-import ProfessionalProfile from "./pages/ProfessionalProfile";
-import CompanyProfile from "./pages/CompanyProfile";
-import CompanyServices from "./pages/CompanyServices";
-import ServiceDetails from "./pages/ServiceDetails";
-import Booking from "./pages/Booking";
-import BookingReschedule from "./pages/BookingReschedule";
-import BookingHistory from "./pages/BookingHistory";
-import UserProfile from "./pages/UserProfile";
-import Notifications from "./pages/Notifications";
-import Settings from "./pages/Settings";
-import Reviews from "./pages/Reviews";
-import Gamification from "./pages/Gamification";
-import ProfessionalProfileSettings from "./pages/ProfessionalProfileSettings";
-import CompanyRegister from "./pages/CompanyRegister";
-import CompanyDashboard from "./pages/CompanyDashboard";
-import CompanyStaff from "./pages/CompanyStaff";
-import CompanyCalendar from "./pages/CompanyCalendar";
-import StaffCalendar from "./pages/StaffCalendar";
-import CompanyProfileAdmin from "./pages/CompanyProfileAdmin";
-import CompanyServicesAdmin from "./pages/CompanyServicesAdmin";
-import CompanyReviewsAdmin from "./pages/CompanyReviewsAdmin";
-import CompanyReportsAdmin from "./pages/CompanyReportsAdmin";
-import CompanySettingsAdmin from "./pages/CompanySettingsAdmin";
+import { Toaster } from "@/components/ui/toaster";
 
-const queryClient = new QueryClient();
+// Routes
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Services = lazy(() => import("./pages/Services"));
+const ServiceDetails = lazy(() => import("./pages/ServiceDetails"));
+const ProfessionalProfile = lazy(() => import("./pages/ProfessionalProfile"));
+const ProfessionalProfileSettings = lazy(() => import("./pages/ProfessionalProfileSettings"));
+const BookingHistory = lazy(() => import("./pages/BookingHistory"));
+const Booking = lazy(() => import("./pages/Booking"));
+const BookingReschedule = lazy(() => import("./pages/BookingReschedule"));
+const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
+const CompanyRegister = lazy(() => import("./pages/CompanyRegister"));
+const Search = lazy(() => import("./pages/Search"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Reviews = lazy(() => import("./pages/Reviews"));
+const Gamification = lazy(() => import("./pages/Gamification"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Professionals = lazy(() => import("./pages/Professionals"));
+const CompanyBooking = lazy(() => import("./pages/CompanyBooking"));
 
-const App = () => (
-  <React.StrictMode>
+// Company Admin Routes
+const CompanyDashboard = lazy(() => import("./pages/CompanyDashboard"));
+const CompanyServicesAdmin = lazy(() => import("./pages/CompanyServicesAdmin"));
+const CompanyProfileAdmin = lazy(() => import("./pages/CompanyProfileAdmin"));
+const CompanySettingsAdmin = lazy(() => import("./pages/CompanySettingsAdmin"));
+const CompanyReviewsAdmin = lazy(() => import("./pages/CompanyReviewsAdmin"));
+const CompanyReportsAdmin = lazy(() => import("./pages/CompanyReportsAdmin"));
+const CompanyStaff = lazy(() => import("./pages/CompanyStaff"));
+const CompanyCalendar = lazy(() => import("./pages/CompanyCalendar"));
+const StaffCalendar = lazy(() => import("./pages/StaffCalendar"));
+const CompanyServices = lazy(() => import("./pages/CompanyServices"));
+
+// Add the new publication page
+const NewPublication = lazy(() => import("./pages/NewPublication"));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1, // Retry failed queries once
+    },
+  },
+});
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <Router>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
+          <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center">Carregando...</div>}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/search" element={<Search />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/professional/:id" element={<ProfessionalProfile />} />
-              <Route path="/company/:id" element={<CompanyProfile />} />
-              <Route path="/company/:id/services" element={<CompanyServices />} />
-              <Route path="/company/register" element={<CompanyRegister />} />
-              <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />
-              <Route path="/company/my-company/profile" element={<CompanyProfileAdmin />} />
-              <Route path="/company/my-company/services" element={<CompanyServicesAdmin />} />
-              <Route path="/company/my-company/staff" element={<CompanyStaff />} />
-              <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />
-              <Route path="/company/my-company/reviews" element={<CompanyReviewsAdmin />} />
-              <Route path="/company/my-company/reports" element={<CompanyReportsAdmin />} />
-              <Route path="/company/my-company/settings" element={<CompanySettingsAdmin />} />
-              <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
-              <Route path="/booking/company/:companyId" element={<Navigate to="/booking/1?company=true" replace />} />
-              <Route path="/service/:id" element={<ServiceDetails />} />
-              <Route path="/services" element={<Navigate to="/search?type=service" />} />
-              <Route path="/booking/:serviceId" element={<Booking />} />
-              <Route path="/booking/:bookingId/reschedule" element={<BookingReschedule />} />
-              <Route path="/booking-history" element={<BookingHistory />} />
               <Route path="/profile" element={<UserProfile />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/service/:id" element={<ServiceDetails />} />
+              <Route path="/professional/:id" element={<ProfessionalProfile />} />
               <Route path="/profile/professional/settings" element={<ProfessionalProfileSettings />} />
+              <Route path="/booking-history" element={<BookingHistory />} />
+              <Route path="/booking/:serviceId" element={<Booking />} />
+              <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
+              <Route path="/booking/reschedule/:appointmentId" element={<BookingReschedule />} />
+              <Route path="/company/:id" element={<CompanyProfile />} />
+              <Route path="/company/register" element={<CompanyRegister />} />
+              <Route path="/search" element={<Search />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/settings/*" element={<Settings />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/gamification" element={<Gamification />} />
+              <Route path="/professionals" element={<Professionals />} />
+              
+              {/* Company Admin Routes */}
+              <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />
+              <Route path="/company/my-company/services" element={<CompanyServicesAdmin />} />
+              <Route path="/company/my-company/profile" element={<CompanyProfileAdmin />} />
+              <Route path="/company/my-company/settings" element={<CompanySettingsAdmin />} />
+              <Route path="/company/my-company/reviews" element={<CompanyReviewsAdmin />} />
+              <Route path="/company/my-company/reports" element={<CompanyReportsAdmin />} />
+              <Route path="/company/my-company/staff" element={<CompanyStaff />} />
+              <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />
+              <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
+              <Route path="/company/:id/services" element={<CompanyServices />} />
+              
+              {/* New Publication Page */}
+              <Route path="/new-publication" element={<NewPublication />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </TooltipProvider>
+            <Toaster />
+          </Suspense>
         </AuthProvider>
-      </BrowserRouter>
+      </Router>
     </QueryClientProvider>
-  </React.StrictMode>
-);
+  );
+}
 
 export default App;
