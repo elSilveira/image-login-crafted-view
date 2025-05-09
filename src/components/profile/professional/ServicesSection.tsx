@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,9 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Assuming Select is available
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
-import { fetchServices } from "@/lib/api"; // Assuming an API function to fetch all services
+import { fetchServices } from "@/lib/api";
+import { AddServiceDialog } from "@/components/company/admin/services/AddServiceDialog";
+import { ServiceItem } from "@/components/company/admin/services/types";
+import { toast } from "sonner";
 
 // Define the structure for a single service association entry
 interface ProfessionalService {
@@ -21,16 +25,9 @@ interface ServicesFormData {
   services: ProfessionalService[];
 }
 
-// Interface for the fetched service data
-interface Service {
-  id: string;
-  name: string;
-  description?: string;
-  // Add other relevant service fields
-}
-
 export const ServicesSection = () => {
-  const { control, register, setValue, formState: { errors } } = useFormContext<ServicesFormData>();
+  const { control, register, setValue, watch, formState: { errors } } = useFormContext<ServicesFormData>();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -38,21 +35,31 @@ export const ServicesSection = () => {
   });
 
   // Fetch available services for the dropdown
-  const { data: availableServices, isLoading: isLoadingServices, isError: isErrorServices } = useQuery<Service[], Error>({
+  const { data: availableServices, isLoading: isLoadingServices, isError: isErrorServices } = useQuery({
     queryKey: ["availableServices"],
-    queryFn: fetchServices, // Assumes fetchServices returns Service[]
+    queryFn: fetchServices,
   });
+
+  // Handle adding a service via dialog
+  const handleAddService = (service: ServiceItem) => {
+    append({ 
+      serviceId: service.id, 
+      price: service.price 
+    });
+    toast.success(`Serviço "${service.name}" adicionado`);
+    setIsDialogOpen(false);
+  };
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
         <CardTitle>Serviços Oferecidos</CardTitle>
         <Button 
-          type="button" // Prevent form submission
+          type="button"
           variant="outline" 
           size="sm" 
           className="h-8"
-          onClick={() => append({ serviceId: "", price: undefined })} // Add empty service association
+          onClick={() => setIsDialogOpen(true)}
         >
           <Plus className="h-4 w-4 mr-2" />
           Adicionar Serviço
@@ -98,7 +105,7 @@ export const ServicesSection = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {availableServices?.map((service) => (
+                        {availableServices?.map((service: any) => (
                           <SelectItem key={service.id} value={service.id}>
                             {service.name}
                           </SelectItem>
@@ -120,14 +127,19 @@ export const ServicesSection = () => {
                     {...register(`services.${index}.price`, { valueAsNumber: true })}
                   />
                 </FormControl>
-                {/* Display error specifically for price if needed */}
-                {/* <FormMessage>{errors.services?.[index]?.price?.message}</FormMessage> */}
+                <FormMessage />
               </FormItem>
             </div>
           ))}
         </div>
       </CardContent>
+
+      {/* Dialog para adicionar novo serviço com mais opções */}
+      <AddServiceDialog 
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onAddService={handleAddService}
+      />
     </Card>
   );
 };
-
