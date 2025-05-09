@@ -4,8 +4,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const SocialFeed = () => {
+  const { user } = useAuth();
+  
   // Updated mock data with images
   const posts = [
     {
@@ -40,12 +43,21 @@ const SocialFeed = () => {
     }
   ];
 
+  // Check if user is a professional or company
+  const canCreatePublication = user && (user.professionalProfileId || false); // Add company check here in the future
+
   return (
     <Card className="bg-white shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Feed de Atualizações</CardTitle>
-        <Button variant="outline" className="hover:bg-[#4664EA] hover:text-white" asChild>
-          <Link to="/profile">Nova Publicação</Link>
+        <Button 
+          variant="outline" 
+          className="hover:bg-[#4664EA] hover:text-white" 
+          asChild
+        >
+          <Link to={canCreatePublication ? "/new-publication" : "/profile/professional/settings"}>
+            {canCreatePublication ? "Nova Publicação" : "Cadastrar Perfil Profissional"}
+          </Link>
         </Button>
       </CardHeader>
       <CardContent className="space-y-6">
