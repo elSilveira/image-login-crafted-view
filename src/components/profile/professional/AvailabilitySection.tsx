@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox"; // Assuming Checkbox is ava
 
 // Define the structure for a single availability slot
 interface AvailabilitySlot {
-  dayOfWeek: string; // e.g., "Monday", "Tuesday"
+  dayOfWeek: string; // e.g., "Segunda", "Terça" (frontend) que serão mapeados para "MONDAY", "TUESDAY" (backend)
   startTime: string; // e.g., "09:00"
   endTime: string;   // e.g., "17:00"
 }
@@ -20,7 +20,19 @@ interface AvailabilityFormData {
   availability: AvailabilitySlot[];
 }
 
+// Dias em português para interface do usuário
 const daysOfWeek = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+// Mapeamento para backend (para depuração)
+const dayOfWeekBackendMap: Record<string, string> = {
+  "Segunda": "MONDAY",
+  "Terça": "TUESDAY",
+  "Quarta": "WEDNESDAY",
+  "Quinta": "THURSDAY",
+  "Sexta": "FRIDAY",
+  "Sábado": "SATURDAY",
+  "Domingo": "SUNDAY"
+};
 
 export const AvailabilitySection = () => {
   const { control, register } = useFormContext<AvailabilityFormData>();
@@ -71,10 +83,14 @@ export const AvailabilitySection = () => {
         {/* Time Slots for Active Days */}
         {fields.length > 0 && (
           <div className="space-y-4 pt-4 border-t">
-            <Label>Definir Horários</Label>
-            {fields.map((field, index) => (
+            <Label>Definir Horários</Label>            {fields.map((field, index) => (
               <div key={field.id} className="flex items-center gap-4 border p-3 rounded-md bg-muted/50">
-                <span className="font-medium w-20 flex-shrink-0">{field.dayOfWeek}:</span>
+                <div className="font-medium w-20 flex-shrink-0 flex flex-col">
+                  <span>{field.dayOfWeek}:</span>
+                  <span className="text-xs text-muted-foreground" title={`Será enviado como ${dayOfWeekBackendMap[field.dayOfWeek]} para o backend`}>
+                    ({dayOfWeekBackendMap[field.dayOfWeek]})
+                  </span>
+                </div>
                 <FormItem className="flex-1">
                   <FormLabel className="sr-only">Início</FormLabel>
                   <FormControl>

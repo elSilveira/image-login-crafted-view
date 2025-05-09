@@ -1,4 +1,3 @@
-
 "use client"; 
 
 import React, { useEffect } from "react";
@@ -20,6 +19,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext"; 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; 
 import { useNavigate } from "react-router-dom"; 
+import { mapProfileImagesFromBackend, mapProfileImagesToBackend } from "./professional/ProfileImages";
 
 // --- Schemas for Array Items ---
 const experienceSchema = z.object({
@@ -46,8 +46,8 @@ const professionalServiceSchema = z.object({
 
 const availabilitySlotSchema = z.object({
   dayOfWeek: z.string().min(1, "Dia da semana inválido"),
-  startTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Hora de início inválida"),
-  endTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Hora de fim inválida"),
+  startTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Hora de início inválida (formato HH:mm, 24h)"),
+  endTime: z.string().regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/, "Hora de fim inválida (formato HH:mm, 24h)"),
 });
 
 const portfolioItemSchema = z.object({
@@ -57,16 +57,12 @@ const portfolioItemSchema = z.object({
 
 // --- Main Professional Profile Schema --- 
 const professionalProfileSchema = z.object({
-  // Fields from ProfessionalInfo
-  name: z.string().min(1, { message: "O nome é obrigatório." }), 
-  role: z.string().min(1, { message: "O cargo é obrigatório." }), 
-  image: z.string().url({ message: "URL da foto de perfil inválida." }).optional().or(z.literal("")), // Avatar mapped to image
+  name: z.string().min(1, { message: "O nome é obrigatório." }),
+  role: z.string().optional().or(z.literal("")),
+  avatar: z.string().url({ message: "URL da foto de perfil inválida." }).optional().or(z.literal("")), // Avatar
+  cover_image: z.string().url({ message: "URL da imagem de capa inválida." }).optional().or(z.literal("")),
   bio: z.string().optional().or(z.literal("")),
-  phone: z.string().optional().or(z.literal("")), 
-  // Cover image is handled separately in ProfileImages, not part of main professional model
-  cover_image_url: z.string().url({ message: "URL da imagem de capa inválida." }).optional().or(z.literal("")), // Kept for ProfileImages component state
-
-  // Arrays from Subcomponents
+  phone: z.string().optional().or(z.literal("")),
   experiences: z.array(experienceSchema).optional().default([]),
   educations: z.array(educationSchema).optional().default([]),
   services: z.array(professionalServiceSchema).optional().default([]),
@@ -74,10 +70,157 @@ const professionalProfileSchema = z.object({
   portfolio: z.array(portfolioItemSchema).optional().default([]),
 });
 
-type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema>;
+// Adiciona companyId ao tipo do formulário
+export type ProfessionalProfileFormData = z.infer<typeof professionalProfileSchema> & { companyId?: string };
 
 interface UserProfessionalInfoProps {
   professionalId?: string; 
+}
+
+// --- Mapping functions between backend and form schema ---
+
+// Mapeamento de dias da semana do frontend (pt-BR) para backend (enum inglês)
+const mapDayOfWeekToBackend = (day: string): string => {
+  const dayMap: Record<string, string> = {
+    "Segunda": "MONDAY",
+    "Terça": "TUESDAY",
+    "Quarta": "WEDNESDAY",
+    "Quinta": "THURSDAY",
+    "Sexta": "FRIDAY",
+    "Sábado": "SATURDAY",
+    "Domingo": "SUNDAY"
+  };
+  return dayMap[day] || day; // Retorna o mapeado ou o original se não encontrar
+};
+
+// Mapeamento de dias da semana do backend (enum inglês) para frontend (pt-BR)
+const mapDayOfWeekFromBackend = (day: string): string => {
+  const dayMap: Record<string, string> = {
+    "MONDAY": "Segunda",
+    "TUESDAY": "Terça",
+    "WEDNESDAY": "Quarta",
+    "THURSDAY": "Quinta",
+    "FRIDAY": "Sexta",
+    "SATURDAY": "Sábado",
+    "SUNDAY": "Domingo"
+  };
+  return dayMap[day] || day; // Retorna o mapeado ou o original se não encontrar
+};
+
+// Normaliza string de horário para HH:mm (24h, zero à esquerda)
+function normalizeTimeString(time: string): string {
+  if (!time) return "";
+  // Remove espaços
+  time = time.trim();
+  // Aceita HH:mm ou HH:mm:ss
+  const match = time.match(/^([01]?[0-9]|2[0-3]):([0-5][0-9])(?::[0-5][0-9])?$/);
+  if (match) {
+    // Garante zero à esquerda
+    const hour = match[1].padStart(2, '0');
+    const minute = match[2].padStart(2, '0');
+    return `${hour}:${minute}`;
+  }
+  // Se vier só HH, completa com :00
+  if (/^([01]?[0-9]|2[0-3])$/.test(time)) return time.padStart(2, '0') + ':00';
+  // Se não bater, retorna string vazia (para não enviar inválido)
+  return "";
+}
+
+function mapBackendToForm(data: any): ProfessionalProfileFormData {
+  return {
+    name: data.name || "",
+    role: data.role || data.title || "Profissional",
+    avatar: data.avatar || data.image || data.avatarUrl || "",
+    cover_image: data.coverImage || data.cover_image || "",
+    bio: data.bio || "",
+    phone: data.phone || "",
+    experiences: (data.experiences || []).map((exp: any) => ({
+      title: exp.title || "",
+      company: exp.company || exp.companyName || "",
+      startDate: exp.startDate || "",
+      endDate: exp.endDate || "",
+      description: exp.description || "",
+    })),
+    educations: (data.educations || []).map((edu: any) => ({
+      institution: edu.institution || edu.institutionName || "",
+      degree: edu.degree || "",
+      fieldOfStudy: edu.fieldOfStudy || edu.field_of_study || "",
+      startDate: edu.startDate || "",
+      endDate: edu.endDate || "",
+      description: edu.description || "",
+    })),
+    services: (data.services || []).map((srv: any) => ({
+      serviceId: srv.serviceId || srv.id || "",
+      price: srv.price,
+    })),
+    availability: (data.availability || []).map((slot: any) => ({
+      dayOfWeek: mapDayOfWeekFromBackend(slot.dayOfWeek || slot.day_of_week || ""),
+      startTime: slot.startTime || slot.start_time || "",
+      endTime: slot.endTime || slot.end_time || "",
+    })),
+    portfolio: (data.portfolio || data.portfolioItems || []).map((item: any) => ({
+      imageUrl: item.imageUrl || item.image_url || "",
+      description: item.description || "",
+    })),
+  };
+}
+
+// Map form data to backend contract (for create/update)
+function mapFormToBackend(data: ProfessionalProfileFormData) {
+  const payload: any = {
+    name: data.name,
+    role: data.role || undefined,
+    avatar: data.avatar || undefined,
+    coverImage: data.cover_image || undefined,
+    bio: data.bio || undefined,
+    phone: data.phone || undefined,
+  };
+  // companyId só se existir e for válido
+  if (data.companyId) payload.companyId = data.companyId;
+  if (data.experiences && data.experiences.length > 0) {
+    payload.experiences = data.experiences.map(exp => ({
+      title: exp.title,
+      companyName: exp.company,
+      startDate: exp.startDate,
+      endDate: exp.endDate,
+      description: exp.description,
+    }));
+  }
+  if (data.educations && data.educations.length > 0) {
+    payload.educations = data.educations.map(edu => ({
+      institutionName: edu.institution,
+      degree: edu.degree,
+      fieldOfStudy: edu.fieldOfStudy,
+      startDate: edu.startDate,
+      endDate: edu.endDate,
+      description: edu.description,
+    }));
+  }
+  if (data.services && data.services.length > 0) {
+    payload.services = data.services.map(srv => ({
+      serviceId: srv.serviceId,
+      price: srv.price,
+    }));
+  }
+  if (data.availability && data.availability.length > 0) {
+    payload.availability = data.availability
+      .filter(slot => slot.dayOfWeek && slot.startTime && slot.endTime)
+      .map(slot => ({
+        day_of_week: mapDayOfWeekToBackend(slot.dayOfWeek),
+        start_time: normalizeTimeString(slot.startTime),
+        end_time: normalizeTimeString(slot.endTime),
+      }));
+  }
+  if (data.portfolio && data.portfolio.length > 0) {
+    payload.portfolioItems = data.portfolio.map(item => ({
+      imageUrl: item.imageUrl,
+      description: item.description,
+    }));
+  }
+  Object.keys(payload).forEach(key => {
+    if (payload[key] === undefined || payload[key] === null || payload[key] === "") delete payload[key];
+  });
+  return payload;
 }
 
 export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ professionalId }) => {
@@ -86,10 +229,20 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
   const { user } = useAuth(); 
   const isEditing = !!professionalId;
 
-  // Fetch professional profile data ONLY if editing
+  React.useEffect(() => {
+    if (isEditing) {
+      console.log('[UserProfessionalInfo] useQuery enabled, professionalId:', professionalId);
+    } else {
+      console.log('[UserProfessionalInfo] useQuery DISABLED, professionalId:', professionalId);
+    }
+  }, [isEditing, professionalId]);
+
   const { data: professionalData, isLoading, isError, error } = useQuery<any, Error>({
     queryKey: ["professionalProfile", professionalId],
-    queryFn: () => fetchProfessionalDetails(professionalId!),
+    queryFn: () => {
+      console.log('[UserProfessionalInfo] fetchProfessionalDetails called with:', professionalId);
+      return fetchProfessionalDetails(professionalId!);
+    },
     enabled: isEditing, 
   });
 
@@ -99,10 +252,9 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
     defaultValues: {
       name: user?.name || "", 
       role: "Profissional", 
-      image: "",
+      avatar: "",
       bio: "",
-      phone: user?.phone || "", 
-      cover_image_url: "", // Initialize cover image URL
+      phone: "", // Remove user?.phone, not present in User type
       experiences: [],
       educations: [],
       services: [],
@@ -114,61 +266,70 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
   // Update form default values when data loads (for editing)
   useEffect(() => {
     if (isEditing && professionalData) {
-      methods.reset({
-        name: professionalData.name || user?.name || "",
-        role: professionalData.role || "Profissional",
-        image: professionalData.image || "", 
-        bio: professionalData.bio || "",
-        phone: professionalData.phone || user?.phone || "", 
-        cover_image_url: professionalData.cover_image_url || "", // Assuming cover is fetched
-        // Map arrays - ensure backend sends these arrays with the professional details
-        experiences: professionalData.experiences || [],
-        educations: professionalData.educations || [],
-        services: professionalData.services || [], // Ensure backend sends serviceId and price
-        availability: professionalData.availability || [],
-        portfolio: professionalData.portfolio || [], // Ensure backend sends imageUrl and description
-      });
+      console.log('[UserProfessionalInfo] professionalData loaded:', professionalData);
+      const formData = mapBackendToForm(professionalData);
+      const imageFields = mapProfileImagesFromBackend(professionalData);
+      methods.reset({ ...formData, ...imageFields });
+    } else if (isEditing && !professionalData) {
+      console.warn('[UserProfessionalInfo] isEditing but professionalData is missing:', professionalData);
     }
   }, [isEditing, professionalData, user, methods.reset]);
 
+  // Fetch professional profile data on mount if editing
+  useEffect(() => {
+    if (isEditing && professionalId) {
+      // Trigger the query manually if not already triggered
+      // This is a fallback in case react-query is not firing due to some state issue
+      fetchProfessionalDetails(professionalId)
+        .then((data) => {
+          console.log('[UserProfessionalInfo] Manual fetchProfessionalDetails result:', data);
+          const formData = mapBackendToForm(data);
+          const imageFields = mapProfileImagesFromBackend(data);
+          methods.reset({ ...formData, ...imageFields });
+        })
+        .catch((err) => {
+          console.error('[UserProfessionalInfo] Manual fetchProfessionalDetails error:', err);
+        });
+    }
+  }, [isEditing, professionalId]);
   // Mutation for creating or updating professional profile
   const mutation = useMutation({
-    mutationFn: (data: ProfessionalProfileFormData) => {
-      // Prepare payload, removing cover_image_url as it's not part of the main model
-      // Ensure empty strings for optional URL fields are sent as null or omitted
-      const { cover_image_url, ...payload } = data; 
-      if (payload.image === "") payload.image = undefined;
-      if (payload.bio === "") payload.bio = undefined;
-      if (payload.phone === "") payload.phone = undefined;
+    mutationFn: (formData: ProfessionalProfileFormData & { cover_image_url?: string; avatar_url?: string }) => {
+      // Map main fields
+      const payload = mapFormToBackend(formData);
+      // Map image fields
+      const imagePayload = mapProfileImagesToBackend(formData);
+      // Merge for backend
+      const finalPayload = { ...payload, ...imagePayload };
       
-      // Clean up empty optional fields in arrays if necessary (e.g., empty descriptions)
-      payload.experiences = payload.experiences?.map(exp => ({ ...exp, description: exp.description || undefined, endDate: exp.endDate || undefined }));
-      payload.educations = payload.educations?.map(edu => ({ ...edu, description: edu.description || undefined, endDate: edu.endDate || undefined }));
-      payload.portfolio = payload.portfolio?.map(item => ({ ...item, description: item.description || undefined }));
-      payload.services = payload.services?.map(srv => ({ ...srv, price: srv.price || undefined }));
-
-      console.log("Prepared Payload:", payload); // Log the final payload
-
+      // Log detalhado do payload por seções para facilitar depuração
+      console.log('[UserProfessionalInfo] Payload completo:', finalPayload);
+      
+      if (finalPayload.availability && finalPayload.availability.length > 0) {
+        console.log('[UserProfessionalInfo] Disponibilidade (availability):', 
+          finalPayload.availability.map((slot: any) => ({
+            dayOfWeek: slot.dayOfWeek,
+            startTime: slot.startTime,
+            endTime: slot.endTime
+          }))
+        );
+      }
+      
       if (isEditing) {
-        return updateProfessionalProfile(professionalId!, payload);
+        return updateProfessionalProfile(professionalId!, finalPayload);
       } else {
-        return createProfessionalProfile(payload);
+        return createProfessionalProfile(finalPayload);
       }
     },
     onSuccess: (data) => {
       if (isEditing) {
         queryClient.invalidateQueries({ queryKey: ["professionalProfile", professionalId] });
         toast.success(data.message || "Perfil profissional atualizado com sucesso!");
+        // Mantém na mesma página, apenas atualiza os dados
       } else {
         toast.success(data.message || "Perfil profissional criado com sucesso!");
-        queryClient.invalidateQueries({ queryKey: ["userProfile"] }); 
-        // Redirect to the newly created profile page
-        if (data.professional?.id) {
-          navigate(`/professional/${data.professional.id}`);
-        } else {
-          // Fallback or alternative navigation if ID is not directly available
-          navigate(`/settings/professional`); // Or navigate to a general success page
-        }
+        queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+        // Não faz redirect, mantém na página para novo status aparecer
       }
     },
     onError: (error: any) => {
@@ -188,8 +349,7 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
     },
   });
 
-  const onSubmit = (formData: ProfessionalProfileFormData) => {
-    console.log("Raw Form Data:", formData); // Log raw form data
+  const onSubmit = (formData: ProfessionalProfileFormData & { cover_image_url?: string; avatar_url?: string }) => {
     mutation.mutate(formData);
   };
 
@@ -217,10 +377,8 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
   return (
     <FormProvider {...methods}>
       <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
-        {/* ProfileImages uses cover_image_url and image from context */}
         <ProfileImages /> 
         
-        {/* Subcomponents use useFormContext to register fields */}
         <ProfessionalInfo />
         <ExperienceSection />
         <EducationSection />

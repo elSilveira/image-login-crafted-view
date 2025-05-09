@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -8,17 +7,33 @@ import { useFormContext } from "react-hook-form"; // Import useFormContext
 
 // Assuming the form data structure includes these fields
 interface ProfileImagesFormData {
-  cover_image_url?: string;
-  avatar_url?: string;
+  avatar?: string;
+  cover_image?: string;
+}
+
+// Helper: map backend avatar field to form field
+export function mapProfileImagesFromBackend(data: any) {
+  return {
+    avatar: data.avatar || data.image || data.avatarUrl || "",
+    cover_image: data.coverImage || data.cover_image || "",
+  };
+}
+
+// Helper: map form field to backend field
+export function mapProfileImagesToBackend(form: { avatar?: string; cover_image?: string }) {
+  return {
+    image: form.avatar || undefined, // O backend espera 'image'
+    coverImage: form.cover_image || undefined,
+  };
 }
 
 export const ProfileImages = () => {
   // Get methods from FormProvider
   const { register, watch } = useFormContext<ProfileImagesFormData>();
 
-  // Watch the URL fields to update the preview
-  const coverImageUrl = watch("cover_image_url");
-  const avatarUrl = watch("avatar_url");
+  // Watch the URL fields to update the previews
+  const avatar = watch("avatar");
+  const coverImage = watch("cover_image");
 
   return (
     <Card>
@@ -28,20 +43,20 @@ export const ProfileImages = () => {
       <CardContent className="space-y-6">
         {/* Cover Image Section */}
         <div className="space-y-2">
-          <Label htmlFor="cover_image_url">URL da Imagem de Capa</Label>
+          <Label htmlFor="cover_image">URL da Imagem de Capa</Label>
           <Input 
-            id="cover_image_url"
+            id="cover_image"
             type="url" 
             placeholder="https://exemplo.com/capa.jpg"
-            {...register("cover_image_url")} // Register the input with react-hook-form
+            {...register("cover_image")}
           />
           <div className="mt-2 h-40 w-full bg-muted rounded-lg overflow-hidden relative border">
-            {coverImageUrl ? (
+            {coverImage ? (
               <img 
-                src={coverImageUrl} 
+                src={coverImage} 
                 alt="Prévia da Capa" 
                 className="w-full h-full object-cover" 
-                onError={(e) => { e.currentTarget.style.display = 'none'; /* Hide on error */ }} 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
               />
             ) : (
@@ -51,21 +66,20 @@ export const ProfileImages = () => {
             )}
           </div>
         </div>
-        
         {/* Avatar Image Section */}
         <div className="space-y-2">
-          <Label htmlFor="avatar_url">URL da Foto de Perfil</Label>
+          <Label htmlFor="avatar">URL da Foto de Perfil</Label>
           <Input 
-            id="avatar_url"
+            id="avatar"
             type="url" 
             placeholder="https://exemplo.com/avatar.png"
-            {...register("avatar_url")} // Register the input with react-hook-form
+            {...register("avatar")}
           />
           <div className="mt-2 flex justify-center">
             <div className="h-24 w-24 bg-muted rounded-full overflow-hidden relative border">
-              {avatarUrl ? (
+              {avatar ? (
                 <img 
-                  src={avatarUrl} 
+                  src={avatar} 
                   alt="Prévia do Avatar" 
                   className="w-full h-full object-cover" 
                   onError={(e) => { e.currentTarget.style.display = 'none'; }}

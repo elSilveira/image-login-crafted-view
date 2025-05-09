@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { UserProfessionalInfo } from "@/components/profile/UserProfessionalInfo";
@@ -8,34 +7,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast"; 
 import { useNavigate } from "react-router-dom"; 
 
-// Function to fetch user profile and check professional status
-async function fetchUserProfileAndCheckProfessionalStatus(token: string): Promise<{ isProfessional: boolean | null, professionalId?: string, rawData?: any }> {
-  console.log("[fetchUserProfile] Fetching user profile...");
+// Função para buscar dados do profissional logado usando /professionals/me
+async function fetchProfessionalMe(token: string): Promise<{ isProfessional: boolean, professionalId?: string, rawData?: any }> {
   try {
-    const response = await apiClient.get("/users/me", { 
+    const response = await apiClient.get("/professionals/me", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    const userData = response.data;
-    console.log("[fetchUserProfile] Raw user data received:", userData);
-
-    // *** Adjust based on your actual User model structure ***
-    const isProf = !!userData.professionalProfileId; 
-    const profId = userData.professionalProfileId; 
-    // *** End of adjustment section ***
-
-    console.log(`[fetchUserProfile] Determined status: isProfessional=${isProf}, professionalId=${profId}`);
-    return { isProfessional: isProf, professionalId: profId, rawData: userData };
-
+    const professional = response.data;
+    if (professional && professional.id) {
+      return { isProfessional: true, professionalId: professional.id, rawData: professional };
+    }
+    return { isProfessional: false };
   } catch (error: any) {
-    console.error("[fetchUserProfile] Error fetching user profile/status:", error.response?.data || error.message);
-    toast({
-      title: "Erro",
-      description: "Não foi possível verificar o status do perfil profissional.",
-      variant: "destructive",
-    });
-    return { isProfessional: null }; // Return null on error
+    return { isProfessional: false };
   }
 }
 
@@ -54,10 +40,10 @@ const ProfessionalProfileSettings = () => {
 
     const checkStatus = async () => {
       console.log(`[checkStatus] Checking status. User: ${!!user}, AccessToken: ${!!accessToken}`);
-      if (user && accessToken) {
+      if (accessToken) {
         setIsLoadingStatus(true);
-        console.log("[checkStatus] Calling fetchUserProfile...");
-        const statusResult = await fetchUserProfileAndCheckProfessionalStatus(accessToken);
+        console.log("[checkStatus] Calling fetchProfessionalMe...");
+        const statusResult = await fetchProfessionalMe(accessToken);
         console.log("[checkStatus] Status result received:", statusResult);
         setIsProfessional(statusResult.isProfessional);
         setProfessionalId(statusResult.professionalId);
@@ -72,6 +58,11 @@ const ProfessionalProfileSettings = () => {
     };
     checkStatus();
   }, [user, accessToken, authLoading, navigate]);
+
+  useEffect(() => {
+    console.log('[ProfessionalProfileSettings] user:', user);
+    console.log('[ProfessionalProfileSettings] professionalId:', professionalId);
+  }, [user, professionalId]);
 
   const isLoading = authLoading || isLoadingStatus;
   console.log(`[Render Logic] Combined isLoading: ${isLoading}, isProfessional: ${isProfessional}, professionalId: ${professionalId}`);
