@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Mail, User, Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
-import apiClient from "../lib/api"; // Import the configured Axios client
+import { useAuth } from "@/contexts/AuthContext";
+import apiClient from "../lib/api";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -15,24 +16,20 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { updateAuthState } = useAuth(); // Get updateAuthState function from context
+  const { updateAuthState } = useAuth();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Use apiClient (Axios) instead of fetch
       const response = await apiClient.post("/auth/register", { name, email, password });
-
-      // Axios wraps the response data in `data` property
       const { user: registeredUser, accessToken, refreshToken } = response.data;
 
       if (!registeredUser || !accessToken) {
         throw new Error("Resposta de registro inválida do servidor.");
       }
 
-      // Update AuthContext state and localStorage using the function from context
       updateAuthState(registeredUser, accessToken, refreshToken);
 
       toast({
@@ -40,14 +37,12 @@ const Register = () => {
         description: `Bem-vindo(a), ${registeredUser.name}! Você será redirecionado.`,
       });
 
-      // Navigate to home page after a short delay
       setTimeout(() => {
         navigate("/");
       }, 1500);
 
     } catch (error: any) {
       console.error("Registration failed:", error);
-      // Handle Axios error structure (error.response.data)
       const errorMessage = error.response?.data?.message || error.message || "Ocorreu um erro inesperado.";
       toast({
         title: "Erro ao criar conta",
@@ -146,4 +141,3 @@ const Register = () => {
 };
 
 export default Register;
-

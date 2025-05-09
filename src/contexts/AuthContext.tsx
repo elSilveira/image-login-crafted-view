@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
@@ -79,10 +80,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (newRefreshToken) {
       localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
       setRefreshToken(newRefreshToken);
-    } else {
-      // If no new refresh token is provided (e.g., during refresh), don't clear the existing one
-      // localStorage.removeItem(REFRESH_TOKEN_KEY); // Avoid removing if not explicitly provided
-      // setRefreshToken(null);
     }
   }, []);
 
@@ -104,6 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       navigate("/");
+      
+      return Promise.resolve();
 
     } catch (error: any) {
       console.error("Login failed:", error);
@@ -113,13 +112,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: errorMessage,
         variant: "destructive",
       });
+      return Promise.reject(error);
     } finally {
       setIsLoading(false);
     }
   }, [navigate, toast, updateAuthState]);
 
   // Updated logout function
-  const logout = useCallback(async (callBackend = true) => {
+  const logout = useCallback(async (callBackend = true): Promise<void> => {
     console.log("Iniciando logout...");
     const currentRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
@@ -151,7 +151,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       title: "Logout realizado",
       description: "Você foi desconectado com sucesso",
     });
+    
     navigate("/login");
+    return Promise.resolve();
   }, [navigate, toast]);
 
   // Add listener for storage changes to handle logout from other tabs/windows or interceptor redirect
@@ -171,7 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, [logout]);
 
-
   return (
     <AuthContext.Provider
       value={{
@@ -189,4 +190,3 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     </AuthContext.Provider>
   );
 };
-

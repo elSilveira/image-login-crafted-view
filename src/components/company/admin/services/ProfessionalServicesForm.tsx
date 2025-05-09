@@ -1,141 +1,139 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchServices, fetchCompanyServices, updateCompanyDetails } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ServiceCard } from "@/components/company/admin/services/ServiceCard";
-import { Loader2, Plus } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
+import { ServiceCard } from "./ServiceCard";
+import { AddServiceDialog } from "./AddServiceDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { AddServiceDialog } from "@/components/company/admin/services/AddServiceDialog";
-import { toast } from "sonner";
-import { ServiceItem } from "@/components/company/admin/services/types";
+import { getProfessionalServices, removeServiceFromProfessional } from "@/lib/api-services";
+import { ServiceItem, ProfessionalService } from "./types";
 
 export const ProfessionalServicesForm: React.FC = () => {
   const { user } = useAuth();
-  const companyId = user?.companyId;
+  const { toast } = useToast();
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const professionalId = user?.professionalProfileId || "";
   
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedServices, setSelectedServices] = useState<ServiceItem[]>([]);
-  
-  // Fetch company services
-  const { data: companyServices, isLoading: isLoadingCompanyServices, refetch: refetchCompanyServices } = useQuery({
-    queryKey: ["companyServices", companyId],
-    queryFn: () => fetchCompanyServices(companyId!),
-    enabled: !!companyId,
+  const {
+    data: services,
+    isLoading,
+    isError,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ["professionalServices", professionalId],
+    queryFn: () => getProfessionalServices(professionalId),
+    enabled: !!professionalId,
   });
 
-  // Handle adding a service to the company
-  const handleAddService = async (service: ServiceItem) => {
-    try {
-      // Add service to local state first for immediate UI update
-      setSelectedServices((prev) => [...prev, service]);
-      
-      // Call API to update company services
-      if (companyId) {
-        await updateCompanyDetails(companyId, {
-          services: [...selectedServices, service].map(s => ({
-            id: s.id,
-            price: s.price
-          }))
-        });
-        
-        toast.success("Serviço adicionado com sucesso!");
-        refetchCompanyServices();
-      }
-    } catch (error) {
-      toast.error("Erro ao adicionar serviço");
-      console.error("Error adding service:", error);
-    }
+  const handleServiceAdded = () => {
+    refetch();
+    setIsAddDialogOpen(false);
+    toast({
+      title: "Serviço adicionado",
+      description: "O serviço foi adicionado com sucesso ao seu perfil.",
+    });
   };
 
-  // Handle removing a service from the company
   const handleRemoveService = async (serviceId: string) => {
+    if (!professionalId) {
+      toast({
+        title: "Erro",
+        description: "É necessário ter um perfil profissional para remover serviços.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      // Remove service from local state first for immediate UI update
-      setSelectedServices((prev) => prev.filter((s) => s.id !== serviceId));
-      
-      // Call API to update company services
-      if (companyId) {
-        await updateCompanyDetails(companyId, {
-          services: selectedServices
-            .filter((s) => s.id !== serviceId)
-            .map(s => ({
-              id: s.id,
-              price: s.price
-            }))
-        });
-        
-        toast.success("Serviço removido com sucesso!");
-        refetchCompanyServices();
-      }
+      await removeServiceFromProfessional(professionalId, serviceId);
+      refetch();
+      toast({
+        title: "Serviço removido",
+        description: "O serviço foi removido do seu perfil com sucesso.",
+      });
     } catch (error) {
-      toast.error("Erro ao remover serviço");
-      console.error("Error removing service:", error);
+      console.error("Erro ao remover serviço:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o serviço. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
-  // When component loads, set selected services from company services
-  React.useEffect(() => {
-    if (companyServices) {
-      setSelectedServices(companyServices);
-    }
-  }, [companyServices]);
-
-  if (isLoadingCompanyServices) {
+  if (!professionalId) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="text-center py-8">
+        <p className="text-muted-foreground mb-4">
+          É necessário criar um perfil profissional para gerenciar serviços.
+        </p>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-8">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
+  if (isError) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-destructive">
+          Ocorreu um erro ao carregar seus serviços: {error instanceof Error ? error.message : "Erro desconhecido"}
+        </p>
+      </div>
+    );
+  }
+
+  const professionalServices = services || [];
+  const serviceItems = professionalServices.map((ps: ProfessionalService) => ({
+    ...ps.service,
+    price: ps.price,
+    id: ps.serviceId
+  }));
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Serviços Oferecidos</h2>
-        <Button 
-          onClick={() => setIsDialogOpen(true)}
-          variant="default"
+        <h2 className="text-lg font-medium">Meus Serviços</h2>
+        <button
+          onClick={() => setIsAddDialogOpen(true)}
+          className="bg-iazi-primary hover:bg-iazi-primary-hover text-white px-4 py-2 rounded text-sm font-medium"
         >
-          <Plus className="mr-2 h-4 w-4" />
           Adicionar Serviço
-        </Button>
+        </button>
       </div>
 
-      {selectedServices.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-6">
-              <p className="text-muted-foreground">Nenhum serviço adicionado ainda.</p>
-              <Button 
-                onClick={() => setIsDialogOpen(true)} 
-                variant="outline" 
-                className="mt-4"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Adicionar Serviço
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      {serviceItems.length === 0 ? (
+        <div className="text-center py-8 border rounded-md border-dashed bg-muted/50">
+          <p className="text-muted-foreground">
+            Você ainda não tem serviços. Adicione serviços para começar a receber agendamentos.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {selectedServices.map((service) => (
-            <ServiceCard 
+          {serviceItems.map((service: ServiceItem) => (
+            <ServiceCard
               key={service.id}
               service={service}
               onRemove={() => handleRemoveService(service.id)}
+              onEdit={() => {/* Implementar edição futuramente */}}
             />
           ))}
         </div>
       )}
 
-      {/* Dialog para adicionar novo serviço */}
-      <AddServiceDialog 
-        isOpen={isDialogOpen} 
-        onClose={() => setIsDialogOpen(false)}
-        onAddService={handleAddService}
+      <AddServiceDialog
+        open={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onServiceAdded={handleServiceAdded}
+        professionalId={professionalId}
       />
     </div>
   );

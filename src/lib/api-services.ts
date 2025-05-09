@@ -1,20 +1,35 @@
 
 import apiClient from "./api";
 
+// Interface para tipagem dos dados de serviço
+export interface ServiceCreateData {
+  name: string;
+  description?: string;
+  price?: number;
+  duration?: number;
+  categoryId?: string;
+}
+
+// Interface para tipagem dos dados de serviço de profissional
+export interface ProfessionalServiceData {
+  serviceId: string;
+  price?: number;
+}
+
 // Criar um novo serviço
-export const createService = async (serviceData: any) => {
+export const createService = async (serviceData: ServiceCreateData) => {
   const response = await apiClient.post("/services", serviceData);
   return response.data;
 };
 
 // Atualizar um serviço existente
-export const updateService = async (serviceId: string, serviceData: any) => {
+export const updateService = async (serviceId: string, serviceData: ServiceCreateData) => {
   const response = await apiClient.put(`/services/${serviceId}`, serviceData);
   return response.data;
 };
 
 // Adicionar um serviço a um profissional
-export const addServiceToProfessional = async (professionalId: string, serviceData: any) => {
+export const addServiceToProfessional = async (professionalId: string, serviceData: ProfessionalServiceData) => {
   const response = await apiClient.post(`/professionals/${professionalId}/services`, serviceData);
   return response.data;
 };
@@ -28,6 +43,12 @@ export const removeServiceFromProfessional = async (professionalId: string, serv
 // Obter preços de serviços de um profissional
 export const getProfessionalServicePrices = async (professionalId: string) => {
   const response = await apiClient.get(`/professionals/${professionalId}/services/prices`);
+  return response.data;
+};
+
+// Obter serviços de um profissional
+export const getProfessionalServices = async (professionalId: string) => {
+  const response = await apiClient.get(`/professionals/${professionalId}/services`);
   return response.data;
 };
 

@@ -13,9 +13,14 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const { login, isLoading } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, password);
+    try {
+      await login(email, password);
+    } catch (error) {
+      // Error handling is done in the AuthContext
+      console.error("Login error", error);
+    }
   };
 
   return (
