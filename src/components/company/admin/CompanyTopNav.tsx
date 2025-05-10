@@ -10,6 +10,7 @@ import {
   Settings,
   Star,
   Users,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,9 +26,14 @@ const companyMenu = [
     path: "/company/my-company/profile",
   },
   {
-    title: "Serviços",
+    title: "Serviços da Empresa",
     icon: ClipboardList,
     path: "/company/my-company/services",
+  },
+  {
+    title: "Serviços Profissionais",
+    icon: Briefcase,
+    path: "/company/my-company/professional-services",
   },
   {
     title: "Funcionários",

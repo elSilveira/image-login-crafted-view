@@ -1,27 +1,29 @@
 
 import React from "react";
 import { CompanyLayout } from "@/components/company/admin/CompanyLayout";
-import { ProfessionalServicesForm } from "@/components/company/admin/services/ProfessionalServicesForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { ServiceAvailabilityForm } from "@/components/company/admin/services/ServiceAvailabilityForm";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 
+// Import a placeholder for company services (you would create this component later)
+import { CompanyServicesForm } from "@/components/company/admin/services/CompanyServicesForm";
+
 const CompanyServicesAdmin = () => {
   const { user } = useAuth();
-  const professionalId = user?.professionalProfileId;
+  const companyId = user?.companyProfileId;
   
-  if (!professionalId) {
+  if (!companyId) {
     return (
       <CompanyLayout>
         <div className="space-y-6 w-full">
-          <h1 className="text-2xl font-semibold">Gerenciar Serviços</h1>
+          <h1 className="text-2xl font-semibold">Serviços da Empresa</h1>
           <Alert variant="destructive">
-            <AlertTitle>Perfil profissional necessário</AlertTitle>
+            <AlertTitle>Perfil de empresa necessário</AlertTitle>
             <AlertDescription>
-              É necessário criar um perfil profissional antes de cadastrar serviços.
-              Por favor, crie seu perfil profissional primeiro.
+              É necessário criar um perfil de empresa antes de cadastrar serviços.
+              Por favor, crie seu perfil de empresa primeiro.
             </AlertDescription>
           </Alert>
         </div>
@@ -32,32 +34,32 @@ const CompanyServicesAdmin = () => {
   return (
     <CompanyLayout>
       <div className="space-y-6 w-full">
-        <h1 className="text-2xl font-semibold">Gerenciar Serviços</h1>
+        <h1 className="text-2xl font-semibold">Serviços da Empresa</h1>
         
         <Alert className="mb-6">
           <Info className="h-4 w-4" />
-          <AlertTitle>Novo fluxo de cadastro de serviços</AlertTitle>
+          <AlertTitle>Gerenciamento de serviços da empresa</AlertTitle>
           <AlertDescription>
-            Agora você pode cadastrar seus serviços e definir horários específicos para cada um deles nesta área,
-            separada do seu perfil profissional. Isso facilita a gestão e permite maior flexibilidade.
+            Aqui você pode cadastrar serviços oferecidos pela sua empresa e definir 
+            horários específicos para cada um deles.
           </AlertDescription>
         </Alert>
         
         <Tabs defaultValue="services" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="services">Meus Serviços</TabsTrigger>
+            <TabsTrigger value="services">Serviços da Empresa</TabsTrigger>
             <TabsTrigger value="availability">Horários por Serviço</TabsTrigger>
           </TabsList>
           
           <TabsContent value="services">
             <div className="bg-white rounded-lg border border-iazi-border p-6 space-y-6">
-              <ProfessionalServicesForm />
+              <CompanyServicesForm />
             </div>
           </TabsContent>
           
           <TabsContent value="availability">
             <div className="bg-white rounded-lg border border-iazi-border p-6 space-y-6">
-              <ServiceAvailabilityForm professionalId={professionalId} />
+              <ServiceAvailabilityForm professionalId={user?.professionalProfileId || ""} />
             </div>
           </TabsContent>
         </Tabs>

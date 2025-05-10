@@ -32,6 +32,7 @@ const CompanyBooking = lazy(() => import("./pages/CompanyBooking"));
 // Company Admin Routes
 const CompanyDashboard = lazy(() => import("./pages/CompanyDashboard"));
 const CompanyServicesAdmin = lazy(() => import("./pages/CompanyServicesAdmin"));
+const ProfessionalServicesAdmin = lazy(() => import("./pages/ProfessionalServicesAdmin")); // New import
 const CompanyProfileAdmin = lazy(() => import("./pages/CompanyProfileAdmin"));
 const CompanySettingsAdmin = lazy(() => import("./pages/CompanySettingsAdmin"));
 const CompanyReviewsAdmin = lazy(() => import("./pages/CompanyReviewsAdmin"));
@@ -82,6 +83,7 @@ function App() {
               {/* Company Admin Routes */}
               <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />
               <Route path="/company/my-company/services" element={<CompanyServicesAdmin />} />
+              <Route path="/company/my-company/professional-services" element={<ProfessionalServicesAdmin />} />
               <Route path="/company/my-company/profile" element={<CompanyProfileAdmin />} />
               <Route path="/company/my-company/settings" element={<CompanySettingsAdmin />} />
               <Route path="/company/my-company/reviews" element={<CompanyReviewsAdmin />} />

@@ -7,10 +7,10 @@ import apiClient from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton"; 
 import { toast } from "@/components/ui/use-toast"; 
 import { useNavigate } from "react-router-dom"; 
-import { fetchProfessionalDetails } from "@/lib/api";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CalendarRange, Info } from "lucide-react";
+import { CalendarRange, Info, Briefcase, ClipboardList } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 // Função para buscar dados do profissional logado usando /professionals/me
 async function fetchProfessionalMe(token: string): Promise<{ isProfessional: boolean, professionalId?: string, rawData?: any }> {
@@ -35,7 +35,7 @@ const ProfessionalProfileSettings = () => {
   const [isProfessional, setIsProfessional] = useState<boolean | null>(null);
   const [professionalId, setProfessionalId] = useState<string | undefined>(undefined);
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
-  const [professionalData, setProfessionalData] = useState<any>(null); // <-- NEW
+  const [professionalData, setProfessionalData] = useState<any>(null); 
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -47,7 +47,7 @@ const ProfessionalProfileSettings = () => {
         const statusResult = await fetchProfessionalMe(accessToken);
         setIsProfessional(statusResult.isProfessional);
         setProfessionalId(statusResult.professionalId);
-        setProfessionalData(statusResult.rawData || null); // <-- NEW
+        setProfessionalData(statusResult.rawData || null);
         setIsLoadingStatus(false);
       } else {
         toast({ title: "Acesso Negado", description: "Faça login para acessar esta página.", variant: "destructive" });
@@ -78,16 +78,39 @@ const ProfessionalProfileSettings = () => {
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">Editar Perfil Profissional</h1>
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-bold">Editar Perfil Profissional</h1>
+            <div className="flex gap-2">
+              <Button variant="outline" asChild>
+                <Link to="/company/my-company/professional-services" className="flex items-center gap-1">
+                  <Briefcase className="h-4 w-4" /> Gerenciar Serviços Profissionais
+                </Link>
+              </Button>
+              {user?.companyProfileId && (
+                <Button variant="outline" asChild>
+                  <Link to="/company/my-company/services" className="flex items-center gap-1">
+                    <ClipboardList className="h-4 w-4" /> Gerenciar Serviços da Empresa
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
           
           <Alert className="mb-6">
             <Info className="h-4 w-4" />
             <AlertTitle>Serviços e Horários</AlertTitle>
             <AlertDescription className="flex flex-col gap-2">
-              <span>Os serviços e horários agora são gerenciados em uma área específica.</span>
-              <Link to="/company/my-company/services" className="text-iazi-primary hover:underline flex items-center gap-1">
-                <CalendarRange className="h-4 w-4" /> Gerenciar meus serviços e horários
-              </Link>
+              <span>Os serviços e horários agora são gerenciados em áreas específicas.</span>
+              <div className="flex gap-4 mt-2">
+                <Link to="/company/my-company/professional-services" className="text-iazi-primary hover:underline flex items-center gap-1">
+                  <Briefcase className="h-4 w-4" /> Serviços Profissionais
+                </Link>
+                {user?.companyProfileId && (
+                  <Link to="/company/my-company/services" className="text-iazi-primary hover:underline flex items-center gap-1">
+                    <ClipboardList className="h-4 w-4" /> Serviços da Empresa
+                  </Link>
+                )}
+              </div>
             </AlertDescription>
           </Alert>
           

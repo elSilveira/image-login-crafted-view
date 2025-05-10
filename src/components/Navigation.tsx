@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth, getEffectiveUserRole } from "@/contexts/AuthContext";
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings } from "lucide-react"; // Adicionado Settings
+import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList } from "lucide-react";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
@@ -86,7 +87,19 @@ export default function Navigation() {
                       Editar Perfil Profissional
                     </Link>
                   </DropdownMenuItem>
-                  {/* Adicionado item de Configurações */}
+                  {/* New menu items for services */}
+                  <DropdownMenuItem asChild>
+                    <Link to="/company/my-company/services" className="flex items-center">
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Serviços da Empresa
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/company/my-company/professional-services" className="flex items-center">
+                      <Briefcase className="mr-2 h-4 w-4" />
+                      Serviços Profissionais
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/settings" className="flex items-center">
                       <Settings className="mr-2 h-4 w-4" />
