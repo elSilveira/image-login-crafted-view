@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMutation } from "@tanstack/react-query";
-import { createServiceSchema, createService } from "@/lib/api";
+import { createService } from "@/lib/api-services";
 import { toast } from "sonner";
 import { Category, ServiceItem } from "./types";
 import { Loader2 } from "lucide-react";
@@ -23,13 +22,54 @@ interface CreateServiceFormProps {
 const serviceFormSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
   description: z.string().optional(),
-  price: z.string().optional().transform(val => val ? Number(val) : undefined),
-  duration: z.string().optional().transform(val => val ? Number(val) : undefined),
+  price: z.preprocess(
+    (val) => {
+      if (typeof val === "string") {
+        // Remove espaços e substitui vírgula por ponto
+        const normalized = val.replace(/\s/g, '').replace(',', '.');
+        // Se for vazio, retorna undefined (campo opcional)
+        if (normalized === "") return undefined;
+        // Permite números inteiros ou decimais com 1 ou 2 casas
+        if (!/^\d+([.,]\d{1,2})?$/.test(val)) return NaN;
+        return Number(normalized);
+      }
+      if (typeof val === "number") {
+        return val;
+      }
+      return undefined;
+    },
+    z.number({ invalid_type_error: "Informe um valor válido (ex: 100, 100.00 ou 100,00)" })
+      .positive("O valor deve ser maior que 0")
+      .optional()
+  ),
+  duration: z.preprocess(
+    (val) => {
+      if (typeof val === "string") {
+        if (val.trim() === "") return undefined;
+        if (isNaN(Number(val))) return NaN;
+        return Number(val);
+      }
+      return val;
+    },
+    z.number({ invalid_type_error: "Informe uma duração válida" })
+      .positive("A duração deve ser maior que 0")
+      .optional()
+  ),
   categoryId: z.string().optional(),
-  image: z.string().url("URL da imagem inválida").optional().or(z.literal("")),
+  image: z.preprocess(
+    (val) => (typeof val === "string" && val.trim() === "") ? undefined : val,
+    z.string().url("URL da imagem inválida").optional()
+  ),
 });
 
-type ServiceFormValues = z.infer<typeof serviceFormSchema>;
+type ServiceFormValues = {
+  name: string;
+  description?: string;
+  price?: number | string;
+  duration?: number | string;
+  categoryId?: string;
+  image?: string;
+};
 
 export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
   categories,
@@ -40,8 +80,8 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
     defaultValues: {
       name: "",
       description: "",
-      price: "",
-      duration: "60",
+      price: undefined,
+      duration: 60,
       categoryId: "",
       image: "",
     },
@@ -50,12 +90,11 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
   // Mutation para criar um novo serviço
   const mutation = useMutation({
     mutationFn: (data: ServiceFormValues) => {
-      // Implement API call to create service
-      return Promise.resolve({ 
+      // Simula criação de serviço para preview local (não usar categories aqui)
+      return Promise.resolve({
         id: `new-service-${Date.now()}`,
         ...data,
-        categoryName: data.categoryId ? 
-          categories.find(c => c.id === data.categoryId)?.name : undefined
+        categoryName: categories.find(c => c.id === data.categoryId)?.name || undefined
       });
     },
     onSuccess: (data) => {
@@ -130,12 +169,13 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
               <FormItem>
                 <FormLabel>Preço (R$)</FormLabel>
                 <FormControl>
-                  <Input 
-                    {...field} 
-                    type="number" 
-                    min="0"
-                    step="0.01"
-                    placeholder="100.00" 
+                  <Input
+                    {...field}
+                    type="text"
+                    inputMode="decimal"
+                    pattern="^\d+([.,]\d{1,2})?$"
+                    placeholder="100.00"
+                    autoComplete="off"
                   />
                 </FormControl>
                 <FormMessage />
@@ -170,9 +210,10 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Categoria</FormLabel>
-              <Select 
-                onValueChange={field.onChange}
-                defaultValue={field.value}
+              <Select
+                value={field.value || ""}
+                onValueChange={val => field.onChange(val)}
+                disabled={categories.length === 0}
               >
                 <FormControl>
                   <SelectTrigger>
@@ -181,7 +222,7 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
                 </FormControl>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
+                    <SelectItem key={category.id} value={String(category.id)}>
                       {category.name}
                     </SelectItem>
                   ))}
@@ -199,9 +240,11 @@ export const CreateServiceForm: React.FC<CreateServiceFormProps> = ({
             <FormItem>
               <FormLabel>URL da Imagem</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
-                  placeholder="https://exemplo.com/imagem.jpg" 
+                <Input
+                  {...field}
+                  type="url"
+                  placeholder="https://exemplo.com/imagem.jpg"
+                  autoComplete="off"
                 />
               </FormControl>
               <FormDescription>

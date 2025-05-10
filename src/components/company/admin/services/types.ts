@@ -1,9 +1,8 @@
-
 export interface ServiceItem {
   id: string;
   name: string;
   description?: string;
-  price?: number;
+  price?: number | string; // Permitir string para fluxo do formulário
   duration?: number;
   categoryId?: string;
   categoryName?: string;
