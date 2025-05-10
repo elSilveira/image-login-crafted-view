@@ -1,4 +1,4 @@
-import { MessageSquare, User, Image, PlusCircle } from "lucide-react";
+import { MessageSquare, User, PlusCircle, Edit } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
@@ -78,27 +78,18 @@ const SocialFeed = () => {
         <CardTitle>Feed de Atualizações</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Publication Form Toggle */}
+        {/* Only show the Create Publication button for professionals or companies */}
         {canPublish && (
           <div className="border rounded-lg p-4 mb-4">
             {!showPublicationForm ? (
-              <div 
+              <Button 
                 onClick={() => setShowPublicationForm(true)} 
-                className="flex items-center gap-3 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2"
+                variant="outline"
               >
-                <Avatar>
-                  <AvatarImage src={user?.profilePicture || undefined} />
-                  <AvatarFallback>
-                    <User className="h-5 w-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 bg-muted rounded-full px-4 py-2 text-muted-foreground hover:bg-muted/80">
-                  O que você gostaria de compartilhar?
-                </div>
-                <Button variant="ghost" size="icon">
-                  <Image className="h-5 w-5 text-muted-foreground" />
-                </Button>
-              </div>
+                <Edit className="h-4 w-4" />
+                Criar Publicação
+              </Button>
             ) : (
               <div className="border rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-4">Nova Publicação</h3>
@@ -109,21 +100,6 @@ const SocialFeed = () => {
                 />
               </div>
             )}
-          </div>
-        )}
-
-        {/* "Create Professional Profile" Button for users who can't publish yet */}
-        {!canPublish && user && (
-          <div className="border rounded-lg p-4 mb-4 bg-muted/30">
-            <p className="text-sm text-muted-foreground mb-2">
-              Para criar publicações, você precisa ter um perfil profissional.
-            </p>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/profile/professional/settings">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Criar Perfil Profissional
-              </Link>
-            </Button>
           </div>
         )}
 

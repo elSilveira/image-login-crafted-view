@@ -9,7 +9,10 @@ type User = {
   name: string;
   email: string;
   avatar?: string;
+  profilePicture?: string; // Added profile picture
+  phone?: string; // Added phone
   professionalProfileId?: string | null; // Added professional profile ID
+  companyId?: string | null; // Added company ID
   // Add other relevant user fields from backend if needed (e.g., role)
 };
 
