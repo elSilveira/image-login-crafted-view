@@ -11,6 +11,23 @@ interface ServiceCardProps {
   onEdit?: () => void;
 }
 
+// Helper function to format price
+const formatPrice = (price: string | number | undefined): string => {
+  if (price === undefined || price === null) return "Não definido";
+  
+  if (typeof price === 'number') {
+    return `R$ ${price.toFixed(2)}`;
+  }
+  
+  // If it's a string, try to convert to number if possible
+  const numPrice = parseFloat(price);
+  if (!isNaN(numPrice)) {
+    return `R$ ${numPrice.toFixed(2)}`;
+  }
+  
+  return price; // Just return the string if it's not a valid number
+};
+
 export const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
   onRemove,
@@ -29,7 +46,7 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
           <div className="flex justify-between text-sm">
             <span>Preço:</span>
             <span className="font-medium">
-              {service.price ? `R$ ${service.price.toFixed(2)}` : "Não definido"}
+              {formatPrice(service.price)}
             </span>
           </div>
           {service.duration && (
