@@ -6,6 +6,7 @@ import apiClient from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton"; 
 import { toast } from "@/components/ui/use-toast"; 
 import { useNavigate } from "react-router-dom"; 
+import { fetchProfessionalDetails } from "@/lib/api";
 
 // Função para buscar dados do profissional logado usando /professionals/me
 async function fetchProfessionalMe(token: string): Promise<{ isProfessional: boolean, professionalId?: string, rawData?: any }> {
@@ -30,46 +31,31 @@ const ProfessionalProfileSettings = () => {
   const [isProfessional, setIsProfessional] = useState<boolean | null>(null);
   const [professionalId, setProfessionalId] = useState<string | undefined>(undefined);
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
+  const [professionalData, setProfessionalData] = useState<any>(null); // <-- NEW
   const navigate = useNavigate();
 
-  console.log(`[ProfessionalProfileSettings] Rendering. AuthLoading: ${authLoading}, User: ${!!user}, AccessToken: ${!!accessToken}`);
-
   useEffect(() => {
-    console.log(`[Effect] Running. AuthLoading: ${authLoading}`);
     if (authLoading) return;
-
     const checkStatus = async () => {
-      console.log(`[checkStatus] Checking status. User: ${!!user}, AccessToken: ${!!accessToken}`);
       if (accessToken) {
         setIsLoadingStatus(true);
-        console.log("[checkStatus] Calling fetchProfessionalMe...");
+        // Always use /professionals/me for the logged-in user
         const statusResult = await fetchProfessionalMe(accessToken);
-        console.log("[checkStatus] Status result received:", statusResult);
         setIsProfessional(statusResult.isProfessional);
         setProfessionalId(statusResult.professionalId);
+        setProfessionalData(statusResult.rawData || null); // <-- NEW
         setIsLoadingStatus(false);
-        console.log(`[checkStatus] State updated: isProfessional=${statusResult.isProfessional}, professionalId=${statusResult.professionalId}, isLoadingStatus=false`);
       } else {
-        console.log("[checkStatus] User not logged in, redirecting...");
         toast({ title: "Acesso Negado", description: "Faça login para acessar esta página.", variant: "destructive" });
-        navigate("/login"); 
-        setIsLoadingStatus(false); 
+        navigate("/login");
+        setIsLoadingStatus(false);
       }
     };
     checkStatus();
   }, [user, accessToken, authLoading, navigate]);
 
-  useEffect(() => {
-    console.log('[ProfessionalProfileSettings] user:', user);
-    console.log('[ProfessionalProfileSettings] professionalId:', professionalId);
-  }, [user, professionalId]);
-
-  const isLoading = authLoading || isLoadingStatus;
-  console.log(`[Render Logic] Combined isLoading: ${isLoading}, isProfessional: ${isProfessional}, professionalId: ${professionalId}`);
-
   // --- Loading State --- 
-  if (isLoading) {
-    console.log("[Render Logic] Showing Loading State");
+  if (authLoading || isLoadingStatus) {
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
@@ -83,13 +69,13 @@ const ProfessionalProfileSettings = () => {
 
   // --- Editing Existing Profile --- 
   if (isProfessional === true && professionalId) {
-    console.log("[Render Logic] Showing Editing Form");
+    // Pass only professionalData to UserProfessionalInfo for the logged-in user
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">Editar Perfil Profissional</h1>
-          <UserProfessionalInfo professionalId={professionalId} /> 
+          <UserProfessionalInfo professionalData={professionalData} />
         </div>
       </div>
     );
@@ -97,20 +83,19 @@ const ProfessionalProfileSettings = () => {
 
   // --- Creating New Profile --- 
   if (isProfessional === false) {
-    console.log("[Render Logic] Showing Creation Form");
+    // Never pass professionalId for creation mode
     return (
       <div className="min-h-screen bg-background">
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">Cadastro de Perfil Profissional</h1>
-          <UserProfessionalInfo professionalId={undefined} /> 
+          <UserProfessionalInfo professionalId={undefined} />
         </div>
       </div>
     );
   }
 
   // --- Fallback/Error State --- 
-  console.log("[Render Logic] Showing Fallback/Error State");
   return (
     <div className="min-h-screen bg-background">
       <Navigation />

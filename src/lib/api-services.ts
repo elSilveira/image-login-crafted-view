@@ -1,4 +1,3 @@
-
 import apiClient from "./api";
 
 // Interface para tipagem dos dados de serviço
@@ -55,5 +54,11 @@ export const getProfessionalServices = async (professionalId: string) => {
 // Atualizar preço de um serviço para um profissional
 export const updateProfessionalServicePrice = async (professionalId: string, serviceId: string, price: number) => {
   const response = await apiClient.patch(`/professionals/${professionalId}/services/${serviceId}/price`, { price });
+  return response.data;
+};
+
+// Obter serviços do profissional autenticado
+export const getMyProfessionalServices = async () => {
+  const response = await apiClient.get(`/professionals/me/services`);
   return response.data;
 };

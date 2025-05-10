@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,6 +17,7 @@ interface AddServiceDialogProps {
   onClose: () => void;
   onAddService: (service: ServiceItem) => void;
   professionalId: string;
+  persistImmediately?: boolean; // NEW: if false, do not persist to backend
 }
 
 export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
@@ -25,6 +25,7 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
   onClose,
   onAddService,
   professionalId,
+  persistImmediately = true, // default true for backward compatibility
 }) => {
   const [activeTab, setActiveTab] = useState("existing");
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
@@ -39,18 +40,17 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
   });
 
   // Map API services to ServiceItem shape expected by ExistingServicesList
-  const mappedServices = Array.isArray(services)
-    ? services.map((service: any) => ({
-        id: service.id,
-        name: service.name,
-        description: service.description || "",
-        price: service.price,
-        duration: service.duration,
-        categoryId: service.categoryId || service.category?.id,
-        categoryName: service.categoryName || service.category?.name || "",
-        image: service.image,
-      }))
-    : [];
+  const serviceList = Array.isArray(services?.data) ? services.data : Array.isArray(services) ? services : [];
+  const mappedServices = serviceList.map((service: any) => ({
+    id: service.id,
+    name: service.name,
+    description: service.description || "",
+    price: service.price,
+    duration: service.duration,
+    categoryId: service.categoryId || service.category?.id,
+    categoryName: service.categoryName || service.category?.name || "",
+    image: service.image,
+  }));
 
   // Fetch categories for the new service form
   const { data: categories } = useQuery({
@@ -59,14 +59,33 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
     enabled: isOpen && activeTab === "new",
   });
 
-  const handleAddExistingService = () => {
-    if (selectedService) {
-      const serviceWithPrice = {
-        ...selectedService,
-        price: typeof servicePrice === 'string' ? Number(servicePrice) : servicePrice
-      };
-      onAddService(serviceWithPrice);
+  const handleAddExistingService = async () => {
+    if (!selectedService) return;
+    try {
+      // Garante que o preço está correto
+      let price = servicePrice;
+      if (typeof price === 'string') {
+        price = price.replace(/\s/g, '').replace(',', '.');
+        price = Number(price);
+      } else if (typeof price !== 'number') {
+        price = Number(price ?? 0);
+      }
+      if (typeof price !== 'number' || isNaN(price) || price <= 0) {
+        toast.error("Informe um valor válido para o preço (ex: 100 ou 100.00)");
+        return;
+      }
+      if (persistImmediately) {
+        await addServiceToProfessional(professionalId, {
+          serviceId: selectedService.id,
+          price,
+        });
+        toast.success("Serviço adicionado ao profissional com sucesso!");
+      }
+      onAddService({ ...selectedService, price });
       handleClose();
+    } catch (error) {
+      toast.error("Erro ao adicionar serviço ao profissional");
+      console.error(error);
     }
   };
 
@@ -90,21 +109,26 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
         toast.error("Informe um valor válido para o preço (ex: 100 ou 100.00)");
         return;
       }
-      const payload = {
-        name: newService.name,
-        description: newService.description,
-        price,
-        duration: typeof newService.duration === 'string' ? Number(newService.duration) : newService.duration,
-        categoryId: String(newService.categoryId),
-        ...(validImage(newService.image) && { image: validImage(newService.image) })
-      };
-      const createdService = await createService(payload);
-      await addServiceToProfessional(professionalId, {
-        serviceId: createdService.id,
-        price,
-      });
-      toast.success("Serviço criado e adicionado ao profissional com sucesso!");
-      onAddService({ ...newService, id: createdService.id, price });
+      if (persistImmediately) {
+        const payload = {
+          name: newService.name,
+          description: newService.description,
+          price,
+          duration: typeof newService.duration === 'string' ? Number(newService.duration) : newService.duration,
+          categoryId: String(newService.categoryId),
+          ...(validImage(newService.image) && { image: validImage(newService.image) })
+        };
+        const createdService = await createService(payload);
+        await addServiceToProfessional(professionalId, {
+          serviceId: createdService.id,
+          price,
+        });
+        toast.success("Serviço criado e adicionado ao profissional com sucesso!");
+        onAddService({ ...newService, id: createdService.id, price });
+      } else {
+        // Only return the new service, let parent handle persistence on save
+        onAddService({ ...newService, price });
+      }
       handleClose();
     } catch (error) {
       toast.error("Erro ao criar e adicionar serviço ao profissional");

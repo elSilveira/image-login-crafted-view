@@ -1,8 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import apiClient from "../lib/api"; // Import the configured Axios client
+
+type UserRole = 'admin' | 'company' | 'professional' | 'user';
 
 type User = {
   id: string;
@@ -13,8 +14,20 @@ type User = {
   phone?: string; // Added phone
   professionalProfileId?: string | null; // Added professional profile ID
   companyId?: string | null; // Added company ID
+  role?: UserRole; // Adicionado para facilitar o controle de permissão
+  admin?: boolean; // fallback para sistemas antigos
   // Add other relevant user fields from backend if needed (e.g., role)
 };
+
+// Utilitário para obter o papel efetivo do usuário
+export function getEffectiveUserRole(user: User | null): UserRole {
+  if (!user) return 'user';
+  if (user.role) return user.role;
+  if (user.admin) return 'admin';
+  if (user.companyId) return 'company';
+  if (user.professionalProfileId) return 'professional';
+  return 'user';
+}
 
 interface AuthContextProps {
   user: User | null;

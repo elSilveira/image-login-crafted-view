@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchServiceDetails } from "@/lib/api"; // Import API function
@@ -41,6 +41,8 @@ const ServiceDetails = () => {
     enabled: !!id, // Ensures id is not undefined before fetching
     // staleTime: 5 * 60 * 1000, // Optional: Cache data for 5 minutes
   });
+
+  const [imageError, setImageError] = useState(false);
 
   // --- Loading State --- 
   if (isLoading) {
@@ -98,12 +100,14 @@ const ServiceDetails = () => {
       <div className="container mx-auto px-4 py-8 mt-16">
         {/* Hero Section */}
         <div className="relative h-[300px] md:h-[400px] w-full mb-8 rounded-lg overflow-hidden bg-muted">
-          <img
-            src={mainImage}
-            alt={service.name}
-            className="w-full h-full object-cover"
-            onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/800x400?text=Imagem+Indisponível"; }} // Fallback image
-          />
+          {!imageError && (
+            <img
+              src={mainImage}
+              alt={service.name}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          )}
         </div>
 
         {/* Service Info */}
@@ -175,13 +179,13 @@ const ServiceDetails = () => {
               </TabsContent>
 
               <TabsContent value="includes">
-                {/* Pass service data if needed */}
-                <ServiceIncludes service={service} />
+                {/* ServiceIncludes does not accept props, so remove them */}
+                <ServiceIncludes />
               </TabsContent>
 
               <TabsContent value="faq">
-                {/* Pass service data if needed */}
-                <ServiceFAQ serviceId={service.id} />
+                {/* ServiceFAQ does not accept props, so remove them */}
+                <ServiceFAQ />
               </TabsContent>
             </Tabs>
           </div>
@@ -192,7 +196,7 @@ const ServiceDetails = () => {
               <CardContent className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Serviços Relacionados</h3>
                 {/* Pass categoryId or other relevant data */}
-                <RelatedServices currentServiceId={service.id} categoryId={service.category?.id} />
+                <RelatedServices currentServiceId={String(service.id)} categoryId={service.category?.id} />
               </CardContent>
             </Card>
 

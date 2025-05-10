@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/components/ui/use-toast";
@@ -6,30 +5,28 @@ import { Loader2 } from "lucide-react";
 import { ServiceCard } from "./ServiceCard";
 import { AddServiceDialog } from "./AddServiceDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { getProfessionalServices, removeServiceFromProfessional } from "@/lib/api-services";
+import { getMyProfessionalServices, removeServiceFromProfessional } from "@/lib/api-services";
 import { ServiceItem, ProfessionalService } from "./types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export const ProfessionalServicesForm: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const professionalId = user?.professionalProfileId || "";
   
-  const {
-    data: services,
-    isLoading,
-    isError,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ["professionalServices", professionalId],
-    queryFn: () => getProfessionalServices(professionalId),
-    enabled: !!professionalId,
+  const { data: services, isLoading, isError, refetch, error } = useQuery({
+    queryKey: ["myProfessionalServices"],
+    queryFn: () => getMyProfessionalServices(),
+    enabled: true,
   });
 
   const handleServiceAdded = (service: ServiceItem) => {
     refetch();
     setIsAddDialogOpen(false);
+    setHasUnsavedChanges(true);
     toast({
       title: "Serviço adicionado",
       description: "O serviço foi adicionado com sucesso ao seu perfil.",
@@ -49,6 +46,7 @@ export const ProfessionalServicesForm: React.FC = () => {
     try {
       await removeServiceFromProfessional(professionalId, serviceId);
       refetch();
+      setHasUnsavedChanges(true);
       toast({
         title: "Serviço removido",
         description: "O serviço foi removido do seu perfil com sucesso.",
@@ -61,6 +59,22 @@ export const ProfessionalServicesForm: React.FC = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      setShowCancelConfirm(true);
+    } else {
+      // Redirecionar ou fechar normalmente
+      // Exemplo: window.history.back();
+    }
+  };
+
+  const confirmCancel = () => {
+    setShowCancelConfirm(false);
+    setHasUnsavedChanges(false);
+    // Redirecionar ou fechar normalmente
+    // Exemplo: window.history.back();
   };
 
   if (!professionalId) {
@@ -103,6 +117,12 @@ export const ProfessionalServicesForm: React.FC = () => {
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium">Meus Serviços</h2>
         <button
+          onClick={handleCancel}
+          className="bg-muted text-foreground px-4 py-2 rounded text-sm font-medium border"
+        >
+          Cancelar Edição
+        </button>
+        <button
           onClick={() => setIsAddDialogOpen(true)}
           className="bg-iazi-primary hover:bg-iazi-primary-hover text-white px-4 py-2 rounded text-sm font-medium"
         >
@@ -135,6 +155,18 @@ export const ProfessionalServicesForm: React.FC = () => {
         onAddService={handleServiceAdded}
         professionalId={professionalId}
       />
+      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Descartar alterações?</DialogTitle>
+          </DialogHeader>
+          <p>Você fez alterações nos serviços. Se cancelar agora, perderá todas as mudanças não salvas.</p>
+          <DialogFooter>
+            <button onClick={() => setShowCancelConfirm(false)} className="px-4 py-2 rounded border">Continuar editando</button>
+            <button onClick={confirmCancel} className="px-4 py-2 rounded bg-destructive text-white">Descartar alterações</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

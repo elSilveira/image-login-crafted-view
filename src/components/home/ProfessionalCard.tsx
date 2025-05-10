@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { User, Star } from "lucide-react";
@@ -18,7 +17,13 @@ export const ProfessionalCard = ({ name, rating, image, id }: ProfessionalCardPr
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
             {image ? (
-              <img src={image} alt={name} className="w-full h-full object-cover" />
+              <img 
+                src={image} 
+                alt={name} 
+                className="w-full h-full object-cover" 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
+              />
             ) : (
               <User className="h-8 w-8 text-gray-400" />
             )}

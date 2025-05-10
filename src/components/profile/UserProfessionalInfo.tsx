@@ -75,6 +75,7 @@ export type ProfessionalProfileFormData = z.infer<typeof professionalProfileSche
 
 interface UserProfessionalInfoProps {
   professionalId?: string; 
+  professionalData?: any; // <-- NEW
 }
 
 // --- Mapping functions between backend and form schema ---
@@ -126,7 +127,27 @@ function normalizeTimeString(time: string): string {
   return "";
 }
 
+// ...existing code...
 function mapBackendToForm(data: any): ProfessionalProfileFormData {
+  // Suporta tanto o formato de associação quanto array simples de serviços
+  let services: any[] = [];
+  if (Array.isArray(data.services)) {
+    // Se vierem objetos com serviceId OU id e price
+    services = data.services.map((srv: any) => {
+      // Se vier no formato { id, name, ... }
+      if (srv && typeof srv === 'object' && srv.id && !srv.serviceId) {
+        return {
+          serviceId: srv.id,
+          price: typeof srv.price === 'string' ? Number(srv.price) : (typeof srv.price === 'number' ? srv.price : undefined),
+        };
+      }
+      // Se vier no formato { serviceId, price }
+      return {
+        serviceId: srv.serviceId || srv.id || '',
+        price: typeof srv.price === 'string' ? Number(srv.price) : (typeof srv.price === 'number' ? srv.price : undefined),
+      };
+    });
+  }
   return {
     name: data.name || "",
     role: data.role || data.title || "Profissional",
@@ -137,22 +158,19 @@ function mapBackendToForm(data: any): ProfessionalProfileFormData {
     experiences: (data.experiences || []).map((exp: any) => ({
       title: exp.title || "",
       company: exp.company || exp.companyName || "",
-      startDate: exp.startDate || "",
-      endDate: exp.endDate || "",
+      startDate: exp.startDate ? new Date(exp.startDate).toISOString().slice(0, 7) : "",
+      endDate: exp.endDate ? new Date(exp.endDate).toISOString().slice(0, 7) : "",
       description: exp.description || "",
     })),
     educations: (data.educations || []).map((edu: any) => ({
       institution: edu.institution || edu.institutionName || "",
       degree: edu.degree || "",
       fieldOfStudy: edu.fieldOfStudy || edu.field_of_study || "",
-      startDate: edu.startDate || "",
-      endDate: edu.endDate || "",
+      startDate: edu.startDate ? new Date(edu.startDate).toISOString().slice(0, 7) : "",
+      endDate: edu.endDate ? new Date(edu.endDate).toISOString().slice(0, 7) : "",
       description: edu.description || "",
     })),
-    services: (data.services || []).map((srv: any) => ({
-      serviceId: srv.serviceId || srv.id || "",
-      price: srv.price,
-    })),
+    services,
     availability: (data.availability || []).map((slot: any) => ({
       dayOfWeek: mapDayOfWeekFromBackend(slot.dayOfWeek || slot.day_of_week || ""),
       startTime: slot.startTime || slot.start_time || "",
@@ -164,6 +182,7 @@ function mapBackendToForm(data: any): ProfessionalProfileFormData {
     })),
   };
 }
+// ...existing code...
 
 // Map form data to backend contract (for create/update)
 function mapFormToBackend(data: ProfessionalProfileFormData) {
@@ -177,121 +196,96 @@ function mapFormToBackend(data: ProfessionalProfileFormData) {
   };
   // companyId só se existir e for válido
   if (data.companyId) payload.companyId = data.companyId;
-  if (data.experiences && data.experiences.length > 0) {
-    payload.experiences = data.experiences.map(exp => ({
-      title: exp.title,
-      companyName: exp.company,
-      startDate: exp.startDate,
-      endDate: exp.endDate,
-      description: exp.description,
-    }));
-  }
-  if (data.educations && data.educations.length > 0) {
-    payload.educations = data.educations.map(edu => ({
-      institutionName: edu.institution,
-      degree: edu.degree,
-      fieldOfStudy: edu.fieldOfStudy,
-      startDate: edu.startDate,
-      endDate: edu.endDate,
-      description: edu.description,
-    }));
-  }
-  if (data.services && data.services.length > 0) {
-    payload.services = data.services.map(srv => ({
-      serviceId: srv.serviceId,
-      price: srv.price,
-    }));
-  }
-  if (data.availability && data.availability.length > 0) {
-    payload.availability = data.availability
-      .filter(slot => slot.dayOfWeek && slot.startTime && slot.endTime)
-      .map(slot => ({
-        day_of_week: mapDayOfWeekToBackend(slot.dayOfWeek),
-        start_time: normalizeTimeString(slot.startTime),
-        end_time: normalizeTimeString(slot.endTime),
-      }));
-  }
-  if (data.portfolio && data.portfolio.length > 0) {
-    payload.portfolioItems = data.portfolio.map(item => ({
-      imageUrl: item.imageUrl,
-      description: item.description,
-    }));
-  }
+  // Sempre envia arrays, mesmo vazios
+  payload.experiences = (data.experiences || []).map(exp => ({
+    title: exp.title,
+    companyName: exp.company,
+    startDate: exp.startDate,
+    endDate: exp.endDate,
+    description: exp.description,
+  }));
+  payload.educations = (data.educations || []).map(edu => ({
+    institutionName: edu.institution,
+    degree: edu.degree,
+    fieldOfStudy: edu.fieldOfStudy,
+    startDate: edu.startDate,
+    endDate: edu.endDate,
+    description: edu.description,
+  }));
+  payload.services = (data.services || []).map(srv => ({
+    serviceId: srv.serviceId,
+    price:
+      srv.price === undefined || srv.price === null
+        ? undefined
+        : typeof srv.price === "string"
+          ? Number(srv.price)
+          : srv.price,
+  }));
+  payload.availability = (data.availability || []).filter(slot => slot.dayOfWeek && slot.startTime && slot.endTime).map(slot => ({
+    day_of_week: mapDayOfWeekToBackend(slot.dayOfWeek),
+    start_time: normalizeTimeString(slot.startTime),
+    end_time: normalizeTimeString(slot.endTime),
+  }));
+  payload.portfolioItems = (data.portfolio || []).map(item => ({
+    imageUrl: item.imageUrl,
+    description: item.description,
+  }));
+  // Remove apenas undefined/null, mas mantém arrays vazios
   Object.keys(payload).forEach(key => {
-    if (payload[key] === undefined || payload[key] === null || payload[key] === "") delete payload[key];
+    if (payload[key] === undefined || payload[key] === null) delete payload[key];
   });
   return payload;
 }
 
-export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ professionalId }) => {
+export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ professionalId, professionalData }) => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { user } = useAuth(); 
-  const isEditing = !!professionalId;
 
-  React.useEffect(() => {
-    if (isEditing) {
-      console.log('[UserProfessionalInfo] useQuery enabled, professionalId:', professionalId);
-    } else {
-      console.log('[UserProfessionalInfo] useQuery DISABLED, professionalId:', professionalId);
-    }
-  }, [isEditing, professionalId]);
+  // --- NEW LOGIC: Determine edit mode for /me (logged-in user) or by ID (should not happen) ---
+  // If professionalData exists and has an id, we are editing
+  const isEditing = !!(professionalData && (professionalData.id || professionalData._id));
 
-  const { data: professionalData, isLoading, isError, error } = useQuery<any, Error>({
-    queryKey: ["professionalProfile", professionalId],
-    queryFn: () => {
-      console.log('[UserProfessionalInfo] fetchProfessionalDetails called with:', professionalId);
-      return fetchProfessionalDetails(professionalId!);
-    },
-    enabled: isEditing, 
-  });
+  // Only allow editing by ID if it's the user's own profile (should not happen)
+  const isOwnProfile = !!user && professionalId === user?.professionalProfileId;
+  if (professionalId && !isOwnProfile) {
+    return (
+      <div className="p-8 text-center text-destructive">
+        <p>Erro: Não é permitido buscar perfil profissional por ID nesta página.</p>
+      </div>
+    );
+  }
 
   // Setup react-hook-form
   const methods = useForm<ProfessionalProfileFormData>({
     resolver: zodResolver(professionalProfileSchema), 
-    defaultValues: {
-      name: user?.name || "", 
-      role: "Profissional", 
-      avatar: "",
-      bio: "",
-      phone: "", // Remove user?.phone, not present in User type
-      experiences: [],
-      educations: [],
-      services: [],
-      availability: [],
-      portfolio: [],
-    },
+    defaultValues: professionalData
+      ? { ...mapBackendToForm(professionalData), ...mapProfileImagesFromBackend(professionalData) }
+      : {
+          name: user?.name || "", 
+          role: "Profissional", 
+          avatar: "",
+          bio: "",
+          phone: "", // Remove user?.phone, not present in User type
+          experiences: [],
+          educations: [],
+          services: [],
+          availability: [],
+          portfolio: [],
+        },
   });
 
   // Update form default values when data loads (for editing)
   useEffect(() => {
-    if (isEditing && professionalData) {
-      console.log('[UserProfessionalInfo] professionalData loaded:', professionalData);
-      const formData = mapBackendToForm(professionalData);
-      const imageFields = mapProfileImagesFromBackend(professionalData);
+    if (isEditing && (professionalData || user)) {
+      const formData = mapBackendToForm(professionalData || user);
+      const imageFields = mapProfileImagesFromBackend(professionalData || user);
       methods.reset({ ...formData, ...imageFields });
-    } else if (isEditing && !professionalData) {
-      console.warn('[UserProfessionalInfo] isEditing but professionalData is missing:', professionalData);
+    } else if (isEditing && !professionalData && !user) {
+      console.warn('[UserProfessionalInfo] isEditing but no data is available');
     }
   }, [isEditing, professionalData, user, methods.reset]);
 
-  // Fetch professional profile data on mount if editing
-  useEffect(() => {
-    if (isEditing && professionalId) {
-      // Trigger the query manually if not already triggered
-      // This is a fallback in case react-query is not firing due to some state issue
-      fetchProfessionalDetails(professionalId)
-        .then((data) => {
-          console.log('[UserProfessionalInfo] Manual fetchProfessionalDetails result:', data);
-          const formData = mapBackendToForm(data);
-          const imageFields = mapProfileImagesFromBackend(data);
-          methods.reset({ ...formData, ...imageFields });
-        })
-        .catch((err) => {
-          console.error('[UserProfessionalInfo] Manual fetchProfessionalDetails error:', err);
-        });
-    }
-  }, [isEditing, professionalId]);
   // Mutation for creating or updating professional profile
   const mutation = useMutation({
     mutationFn: (formData: ProfessionalProfileFormData & { cover_image_url?: string; avatar_url?: string }) => {
@@ -316,7 +310,8 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
       }
       
       if (isEditing) {
-        return updateProfessionalProfile(professionalId!, finalPayload);
+        // Atualiza o perfil do profissional logado (PUT /professionals/me)
+        return updateProfessionalProfile(finalPayload);
       } else {
         return createProfessionalProfile(finalPayload);
       }
@@ -350,27 +345,16 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
   });
 
   const onSubmit = (formData: ProfessionalProfileFormData & { cover_image_url?: string; avatar_url?: string }) => {
+    // Debug: log current services in form state before mutation
+    console.log('[UserProfessionalInfo] onSubmit - current services:', methods.getValues('services'));
     mutation.mutate(formData);
   };
 
-  if (isEditing && isLoading) {
+  if (isEditing && !user) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
-    );
-  }
-
-  if (isEditing && isError) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Erro</AlertTitle>
-        <AlertDescription>
-          Não foi possível carregar o perfil profissional para edição. Tente novamente mais tarde.
-          {error?.message && <p className="text-xs mt-2">Detalhes: {error.message}</p>}
-        </AlertDescription>
-      </Alert>
     );
   }
 

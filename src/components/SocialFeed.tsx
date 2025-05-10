@@ -8,13 +8,14 @@ import { useState } from "react";
 import PublicationForm from "./social/PublicationForm";
 import { useQuery } from "@tanstack/react-query";
 import { getProfessionalServices } from "@/lib/api-services";
+import { getEffectiveUserRole } from "@/contexts/AuthContext";
 
 const SocialFeed = () => {
   const { user } = useAuth();
   const [showPublicationForm, setShowPublicationForm] = useState(false);
   
-  // Check if user is a professional or company
-  const canPublish = user && (user.professionalProfileId || false); // Add company check here in the future
+  // Show create publication if user has professionalProfileId, companyId, or is admin (boolean or role)
+  const canPublish = !!(user && (user.professionalProfileId || user.companyId || user.admin === true || user.role === 'admin'));
   
   // Fetch professional services if user can publish
   const { data: professionalServices = [] } = useQuery({
@@ -131,6 +132,8 @@ const SocialFeed = () => {
                         src={post.image} 
                         alt="Post content" 
                         className="w-full h-auto object-cover rounded-lg hover:opacity-95 transition-opacity cursor-pointer"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        onLoad={(e) => { e.currentTarget.style.display = 'block'; }}
                       />
                     </div>
                   </Link>

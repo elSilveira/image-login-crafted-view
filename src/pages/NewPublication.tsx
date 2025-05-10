@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, getEffectiveUserRole } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProfessionalDetails, fetchServices } from "@/lib/api";
 import Navigation from "@/components/Navigation";
@@ -25,26 +24,41 @@ const NewPublication = () => {
   const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [canPublish, setCanPublish] = useState(false);
-  
-  // Check if user can publish (professional or company)
+
+  // Nova lógica de permissão baseada em role
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
-    
-    const checkPublishPermission = async () => {
-      if (user.professionalProfileId) {
-        setCanPublish(true);
-      } else {
-        // Here you would check if user has a company role
-        // For now, we'll use professionalProfileId as the check
-        setCanPublish(!!user.professionalProfileId);
-      }
-    };
-    
-    checkPublishPermission();
+    const role = getEffectiveUserRole(user);
+    // Leveling:
+    // - Professional: pode publicar se for professional, company ou admin
+    // - Company: pode publicar se for company ou admin
+    // - Admin: só admin
+    if (role === 'admin') {
+      setCanPublish(true);
+    } else if (role === 'company') {
+      setCanPublish(true);
+    } else if (role === 'professional') {
+      setCanPublish(true);
+    } else {
+      setCanPublish(false);
+    }
   }, [user, navigate]);
+
+  // Mensagem de permissão detalhada
+  const getPermissionMessage = () => {
+    const role = getEffectiveUserRole(user);
+    if (role === 'admin') {
+      return 'Apenas administradores podem criar publicações.';
+    } else if (role === 'company') {
+      return 'Apenas empresas e administradores podem criar publicações.';
+    } else if (role === 'professional') {
+      return 'Apenas profissionais, empresas e administradores podem criar publicações.';
+    }
+    return 'Você não tem permissão para criar publicações.';
+  };
 
   // Fetch professional details to get their services
   const { data: professionalData, isLoading: isLoadingProfessional } = useQuery({
@@ -150,7 +164,7 @@ const NewPublication = () => {
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Não autorizado</AlertTitle>
                 <AlertDescription>
-                  Apenas profissionais ou empresas podem criar publicações.
+                  {getPermissionMessage()}
                 </AlertDescription>
               </Alert>
             </CardContent>

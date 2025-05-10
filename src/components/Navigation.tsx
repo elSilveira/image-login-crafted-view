@@ -1,7 +1,6 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, getEffectiveUserRole } from "@/contexts/AuthContext";
 import { SearchDropdown } from "@/components/SearchDropdown";
 import {
   DropdownMenu,
@@ -16,6 +15,7 @@ import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, 
 
 export default function Navigation() {
   const { user, logout } = useAuth();
+  const userRole = getEffectiveUserRole(user);
 
   // Create a handler function for logout
   const handleLogout = () => {
@@ -34,7 +34,7 @@ export default function Navigation() {
             <Link to="/booking-history" className="text-sm font-medium transition-colors hover:text-primary">
               Meus Agendamentos
             </Link>
-            <Link to="/services" className="text-sm font-medium transition-colors hover:text-primary">
+            <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
               Explorar
             </Link>
           </div>
@@ -61,6 +61,10 @@ export default function Navigation() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                  {/* Exibe a role do usuário no topo do dropdown, como item não clicável */}
+                  <div className="px-3 py-2 text-xs text-muted-foreground font-mono bg-gray-100 rounded mb-1 cursor-default select-none">
+                    {userRole}
+                  </div>
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="flex items-center">
                       <User className="mr-2 h-4 w-4" />

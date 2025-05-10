@@ -241,14 +241,19 @@ export const createProfessionalProfile = async (data: any) => {
   const response = await apiClient.post(`/professionals`, data);
   return response.data;
 }
-export const updateProfessionalProfile = async (professionalId:string, data: any) => {
-  const response = await apiClient.put(`/professionals/${professionalId}`, data);
+export const updateProfessionalProfile = async (data: any) => {
+  // Atualiza o perfil do profissional logado (PUT /professionals/me)
+  const response = await apiClient.put(`/professionals/me`, data);
   return response.data;
 }
 export const fetchAvailability = async (professionalId:string, date:string) => {
   const response = await apiClient.get(`/professionals/${professionalId}/availability`, { params: { date } });
   return response.data;
 }
+export const fetchProfessionalMe = async () => {
+  const response = await apiClient.get("/api/professionals/me");
+  return response.data;
+};
 
 // --- Notifications API Function (Example) ---
 export const fetchNotifications = async (params: any = {}) => {

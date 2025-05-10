@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchProfessionalDetails } from "@/lib/api"; // Import API function
+import { fetchProfessionalDetails, fetchProfessionalMe } from "@/lib/api"; // Import API function
 import Navigation from "@/components/Navigation";
 import { 
   Calendar as CalendarIcon, 
@@ -41,6 +41,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { pt } from 'date-fns/locale';
+import { useAuth } from "@/contexts/AuthContext";
 
 // Removed mock data
 
@@ -156,14 +157,22 @@ const formatDate = (dateString?: string | null, dateFormat = "dd/MM/yyyy") => {
 
 const ProfessionalProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState("about");
 
-  // Fetch professional details using React Query
-  const { data: professional, isLoading, isError, error } = useQuery<Professional, Error>({
-    queryKey: ["professionalDetails", id],
-    queryFn: () => fetchProfessionalDetails(id!),
-    enabled: !!id,
+  // Se não houver id na URL, buscar dados do próprio profissional logado
+  const isOwnProfile = !id || (user && id === user.professionalProfileId);
+
+  const {
+    data: professional,
+    isLoading,
+    isError,
+    error
+  } = useQuery<Professional, Error>({
+    queryKey: [isOwnProfile ? "professionalMe" : "professionalDetails", id],
+    queryFn: () => isOwnProfile ? fetchProfessionalMe() : fetchProfessionalDetails(id!),
+    enabled: isOwnProfile || !!id,
   });
 
   // --- Loading State --- 
@@ -191,7 +200,7 @@ const ProfessionalProfile = () => {
               <p className="text-sm mb-4">
                 Não foi possível carregar os detalhes do profissional. Tente novamente mais tarde.
               </p>
-              {error && <p className="text-xs">Detalhes: {error.message}</p>}
+              {error && <p className="text-xs">Detalhes: {error instanceof Error ? error.message : String(error)}</p>}
               <Button variant="destructive" asChild className="mt-4">
                 <Link to="/">Voltar para Home</Link>
               </Button>
@@ -203,6 +212,7 @@ const ProfessionalProfile = () => {
   }
 
   // --- Success State --- 
+  // Todas as referências a 'professional' abaixo estão seguras
   const coverImage = professional.coverImageUrl || "https://via.placeholder.com/1200x300?text=Sem+Imagem+de+Capa";
   const avatarImage = professional.avatarUrl;
   const avatarFallback = professional.name.substring(0, 2).toUpperCase();
