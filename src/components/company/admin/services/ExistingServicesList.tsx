@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +54,16 @@ export const ExistingServicesList: React.FC<ExistingServicesListProps> = ({
                       : "hover:bg-accent border border-transparent"
                   }`}
                   onClick={() => onSelectService(service)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onSelectService(service);
+                    }
+                  }}
+                  aria-selected={selectedService?.id === service.id}
+                  style={{ outline: selectedService?.id === service.id ? '2px solid var(--primary)' : undefined }}
                 >
                   <div className="flex flex-col">
                     <span className="font-medium">{service.name}</span>
@@ -70,7 +79,7 @@ export const ExistingServicesList: React.FC<ExistingServicesListProps> = ({
                     )}
                   </div>
                   {selectedService?.id === service.id && (
-                    <Check className="h-5 w-5 text-primary" />
+                    <Check className="h-5 w-5 text-primary pointer-events-none" />
                   )}
                 </div>
               ))}
