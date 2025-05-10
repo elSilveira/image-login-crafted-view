@@ -27,7 +27,7 @@ export const ProfessionalServicesForm: React.FC = () => {
     enabled: !!professionalId,
   });
 
-  const handleServiceAdded = () => {
+  const handleServiceAdded = (service: ServiceItem) => {
     refetch();
     setIsAddDialogOpen(false);
     toast({
@@ -130,9 +130,9 @@ export const ProfessionalServicesForm: React.FC = () => {
       )}
 
       <AddServiceDialog
-        open={isAddDialogOpen}
+        isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
-        onServiceAdded={handleServiceAdded}
+        onAddService={handleServiceAdded}
         professionalId={professionalId}
       />
     </div>

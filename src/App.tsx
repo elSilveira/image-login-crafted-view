@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -39,9 +40,6 @@ const CompanyStaff = lazy(() => import("./pages/CompanyStaff"));
 const CompanyCalendar = lazy(() => import("./pages/CompanyCalendar"));
 const StaffCalendar = lazy(() => import("./pages/StaffCalendar"));
 const CompanyServices = lazy(() => import("./pages/CompanyServices"));
-
-// Add the new publication page
-const NewPublication = lazy(() => import("./pages/NewPublication"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,9 +90,6 @@ function App() {
               <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />
               <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
               <Route path="/company/:id/services" element={<CompanyServices />} />
-              
-              {/* New Publication Page */}
-              <Route path="/new-publication" element={<NewPublication />} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
