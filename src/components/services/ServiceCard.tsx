@@ -53,65 +53,66 @@ export const ServiceCard = ({
   const servicePrice = typeof service.price === "string" ? service.price : "Preço não informado";
   const serviceDuration = typeof service.duration === "string" ? service.duration : "Duração não informada";
   
-  // Get service initials for avatar fallback
+  // Get service initials for avatar fallback (safely)
   const serviceInitials = serviceName ? serviceName.substring(0, 2).toUpperCase() : "SV";
 
   return (
     <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
-      isHighlighted ? "ring-2 ring-[#4664EA]" : ""
+      isHighlighted ? "border-[#4664EA]" : ""
     }`}>
-      <CardContent className="p-0">
-        <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-gray-50">
-            <Avatar className="h-20 w-20 mb-2">
-              <AvatarImage src={service.image} alt={serviceName} />
-              <AvatarFallback className="bg-sky-100 text-sky-700">
-                {serviceInitials}
-              </AvatarFallback>
-            </Avatar>
-          </div>
-          <div className="md:w-3/4 p-5 flex flex-col">
-            <div className="flex-grow">
-              <h3 className="text-lg font-semibold mb-1">{serviceName}</h3>
-              <p className="text-gray-600 text-sm mb-3 line-clamp-2">{serviceDescription}</p>
-              
-              <div className="flex flex-wrap gap-2 mb-3">
+      <CardContent className="p-5">
+        <div className="flex gap-4">
+          <Avatar className="h-16 w-16 flex-shrink-0">
+            <AvatarImage src={service.image} alt={serviceName} />
+            <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
+              {serviceInitials}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex flex-col flex-grow">
+            <h3 className="text-lg font-semibold mb-1">{serviceName}</h3>
+            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{serviceDescription}</p>
+            
+            <div className="flex flex-wrap items-center gap-3 mt-auto">
+              {serviceDuration && (
                 <div className="flex items-center text-sm text-gray-600">
                   <Clock className="h-4 w-4 mr-1" /> 
                   <span>{serviceDuration}</span>
                 </div>
+              )}
+              {servicePrice && (
                 <div className="text-sm font-medium text-iazi-primary">
                   {servicePrice}
                 </div>
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-2 mt-2 justify-end">
-              {onPause && (
-                <Button variant="outline" size="sm" onClick={onPause}>
-                  <PauseCircle className="h-4 w-4 mr-1" />
-                  Pausar
-                </Button>
-              )}
-              {onEdit && (
-                <Button variant="outline" size="sm" onClick={onEdit}>
-                  <Pencil className="h-4 w-4 mr-1" />
-                  Editar
-                </Button>
-              )}
-              {onDelete && (
-                <Button variant="destructive" size="sm" onClick={onDelete}>
-                  <Trash className="h-4 w-4 mr-1" />
-                  Deletar
-                </Button>
-              )}
-              {!onEdit && !onPause && !onDelete && (
-                <Button className="flex-1" asChild>
-                  <Link to={`/service/${serviceId}`}>Ver detalhes</Link>
-                </Button>
               )}
             </div>
           </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2 mt-4 justify-end border-t pt-4">
+          {onPause && (
+            <Button variant="outline" size="sm" onClick={onPause}>
+              <PauseCircle className="h-4 w-4 mr-1" />
+              Pausar
+            </Button>
+          )}
+          {onEdit && (
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Pencil className="h-4 w-4 mr-1" />
+              Editar
+            </Button>
+          )}
+          {onDelete && (
+            <Button variant="destructive" size="sm" onClick={onDelete}>
+              <Trash className="h-4 w-4 mr-1" />
+              Deletar
+            </Button>
+          )}
+          {!onEdit && !onPause && !onDelete && (
+            <Button className="flex-1" asChild>
+              <Link to={`/service/${serviceId}`}>Ver detalhes</Link>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
