@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { UserProfessionalInfo } from "@/components/profile/UserProfessionalInfo";
@@ -32,7 +31,10 @@ async function fetchProfessionalMe(token: string): Promise<{ isProfessional: boo
 
 const ProfessionalProfileSettings = () => {
   const { user, accessToken, isLoading: authLoading } = useAuth();
-  const [isProfessional, setIsProfessional] = useState<boolean | null>(null);
+  // Use new flags from user context
+  const isAdmin = !!user?.isAdmin;
+  const isProfessional = !!user?.isProfessional;
+  const hasCompany = !!user?.hasCompany;
   const [professionalId, setProfessionalId] = useState<string | undefined>(undefined);
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const [professionalData, setProfessionalData] = useState<any>(null); 
@@ -45,7 +47,6 @@ const ProfessionalProfileSettings = () => {
         setIsLoadingStatus(true);
         // Always use /professionals/me for the logged-in user
         const statusResult = await fetchProfessionalMe(accessToken);
-        setIsProfessional(statusResult.isProfessional);
         setProfessionalId(statusResult.professionalId);
         setProfessionalData(statusResult.rawData || null);
         setIsLoadingStatus(false);
@@ -72,7 +73,7 @@ const ProfessionalProfileSettings = () => {
   }
 
   // --- Editing Existing Profile --- 
-  if (isProfessional === true && professionalId) {
+  if (isProfessional === true && professionalData && professionalData.id) {
     // Pass only professionalData to UserProfessionalInfo for the logged-in user
     return (
       <div className="min-h-screen bg-background">
@@ -82,13 +83,13 @@ const ProfessionalProfileSettings = () => {
             <h1 className="text-3xl font-bold">Editar Perfil Profissional</h1>
             <div className="flex gap-2">
               <Button variant="outline" asChild>
-                <Link to="/company/my-company/professional-services" className="flex items-center gap-1">
+                <Link to="/servicos" className="flex items-center gap-1">
                   <Briefcase className="h-4 w-4" /> Gerenciar Serviços Profissionais
                 </Link>
               </Button>
-              {user?.companyProfileId && (
+              {hasCompany && (
                 <Button variant="outline" asChild>
-                  <Link to="/company/my-company/services" className="flex items-center gap-1">
+                  <Link to="/servicos" className="flex items-center gap-1">
                     <ClipboardList className="h-4 w-4" /> Gerenciar Serviços da Empresa
                   </Link>
                 </Button>
@@ -102,11 +103,11 @@ const ProfessionalProfileSettings = () => {
             <AlertDescription className="flex flex-col gap-2">
               <span>Os serviços e horários agora são gerenciados em áreas específicas.</span>
               <div className="flex gap-4 mt-2">
-                <Link to="/company/my-company/professional-services" className="text-iazi-primary hover:underline flex items-center gap-1">
+                <Link to="/servicos" className="text-iazi-primary hover:underline flex items-center gap-1">
                   <Briefcase className="h-4 w-4" /> Serviços Profissionais
                 </Link>
-                {user?.companyProfileId && (
-                  <Link to="/company/my-company/services" className="text-iazi-primary hover:underline flex items-center gap-1">
+                {hasCompany && (
+                  <Link to="/servicos" className="text-iazi-primary hover:underline flex items-center gap-1">
                     <ClipboardList className="h-4 w-4" /> Serviços da Empresa
                   </Link>
                 )}
@@ -136,7 +137,7 @@ const ProfessionalProfileSettings = () => {
               Na próxima etapa, você poderá cadastrar seus serviços e definir horários específicos para cada um deles.
             </AlertDescription>
           </Alert>
-          <UserProfessionalInfo professionalId={undefined} />
+          <UserProfessionalInfo />
         </div>
       </div>
     );

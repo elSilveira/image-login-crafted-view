@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -79,11 +78,11 @@ function App() {
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/gamification" element={<Gamification />} />
               <Route path="/professionals" element={<Professionals />} />
+              <Route path="/servicos" element={<ProfessionalServicesAdmin />} />
               
               {/* Company Admin Routes */}
               <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />
               <Route path="/company/my-company/services" element={<CompanyServicesAdmin />} />
-              <Route path="/company/my-company/professional-services" element={<ProfessionalServicesAdmin />} />
               <Route path="/company/my-company/profile" element={<CompanyProfileAdmin />} />
               <Route path="/company/my-company/settings" element={<CompanySettingsAdmin />} />
               <Route path="/company/my-company/reviews" element={<CompanyReviewsAdmin />} />

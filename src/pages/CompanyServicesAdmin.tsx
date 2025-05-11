@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CompanyLayout } from "@/components/company/admin/CompanyLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,24 +11,7 @@ import { CompanyServicesForm } from "@/components/company/admin/services/Company
 
 const CompanyServicesAdmin = () => {
   const { user } = useAuth();
-  const companyId = user?.companyProfileId;
-  
-  if (!companyId) {
-    return (
-      <CompanyLayout>
-        <div className="space-y-6 w-full">
-          <h1 className="text-2xl font-semibold">Serviços da Empresa</h1>
-          <Alert variant="destructive">
-            <AlertTitle>Perfil de empresa necessário</AlertTitle>
-            <AlertDescription>
-              É necessário criar um perfil de empresa antes de cadastrar serviços.
-              Por favor, crie seu perfil de empresa primeiro.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </CompanyLayout>
-    );
-  }
+  // const companyId = user?.companyProfileId;
   
   return (
     <CompanyLayout>
@@ -59,7 +41,7 @@ const CompanyServicesAdmin = () => {
           
           <TabsContent value="availability">
             <div className="bg-white rounded-lg border border-iazi-border p-6 space-y-6">
-              <ServiceAvailabilityForm professionalId={user?.professionalProfileId || ""} />
+              <ServiceAvailabilityForm professionalId={""} /> {/* TODO: Refactor to use backend-fetched professionalId if needed */}
             </div>
           </TabsContent>
         </Tabs>

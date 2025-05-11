@@ -14,14 +14,15 @@ const SocialFeed = () => {
   const { user } = useAuth();
   const [showPublicationForm, setShowPublicationForm] = useState(false);
   
-  // Show create publication if user has professionalProfileId, companyId, or is admin (boolean or role)
-  const canPublish = !!(user && (user.professionalProfileId || user.companyId || user.admin === true || user.role === 'admin'));
+  // Show create publication if user has isProfessional, hasCompany, or isAdmin
+  const canPublish = !!(user && (user.isProfessional || user.hasCompany || user.isAdmin));
   
-  // Fetch professional services if user can publish
+  // Fetch professional services only if user is professional and a backend ID is available (not from user context)
+  // This example disables the fetch if no backend ID is available
   const { data: professionalServices = [] } = useQuery({
-    queryKey: ["professionalServices", user?.professionalProfileId],
-    queryFn: () => getProfessionalServices(user?.professionalProfileId || ""),
-    enabled: !!canPublish && !!user?.professionalProfileId,
+    queryKey: ["professionalServices", user?.id], // Use user.id as a fallback, or fetch after login
+    queryFn: () => user?.isProfessional ? getProfessionalServices(user?.id || "") : [],
+    enabled: !!canPublish && !!user?.isProfessional && !!user?.id,
   });
 
   // Convert professional services to the format expected by PublicationForm
@@ -77,30 +78,33 @@ const SocialFeed = () => {
     <Card className="bg-white shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Feed de Atualizações</CardTitle>
+        {canPublish && (
+          <Button
+            size="icon"
+            variant="outline"
+            className="ml-2"
+            title="Criar Publicação"
+            onClick={() => setShowPublicationForm(true)}
+          >
+            <Edit className="h-5 w-5" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Only show the Create Publication button for professionals or companies */}
-        {canPublish && (
+        {/* Only show the PublicationForm if requested */}
+        {canPublish && showPublicationForm && (
           <div className="border rounded-lg p-4 mb-4">
-            {!showPublicationForm ? (
-              <Button 
-                onClick={() => setShowPublicationForm(true)} 
-                className="w-full flex items-center justify-center gap-2"
-                variant="outline"
-              >
-                <Edit className="h-4 w-4" />
-                Criar Publicação
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold">Nova Publicação</span>
+              <Button size="icon" variant="ghost" onClick={() => setShowPublicationForm(false)} title="Fechar">
+                ×
               </Button>
-            ) : (
-              <div className="border rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-4">Nova Publicação</h3>
-                <PublicationForm 
-                  services={formattedServices}
-                  onSubmit={handlePublicationSubmit}
-                  isLoading={false}
-                />
-              </div>
-            )}
+            </div>
+            <PublicationForm 
+              services={formattedServices}
+              onSubmit={handlePublicationSubmit}
+              isLoading={false}
+            />
           </div>
         )}
 

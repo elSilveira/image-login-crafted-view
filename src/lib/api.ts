@@ -251,7 +251,7 @@ export const fetchAvailability = async (professionalId:string, date:string) => {
   return response.data;
 }
 export const fetchProfessionalMe = async () => {
-  const response = await apiClient.get("/api/professionals/me");
+  const response = await apiClient.get("/professionals/me");
   return response.data;
 };
 

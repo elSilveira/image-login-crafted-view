@@ -8,7 +8,7 @@ import { ServicePagination } from "@/components/services/ServicePagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
-import { Decimal } from "@prisma/client/runtime/library"; // Import Decimal type if needed for comparison
+// Removed: import { Decimal } from "@prisma/client/runtime/library"; // Import Decimal type if needed for comparison
 
 // Define the structure of a Service object fetched from the API (based on schema.prisma)
 interface ApiService {
@@ -58,30 +58,27 @@ interface ServiceCardData {
 
 // Adapt API service data to the format needed by ServiceCard and filtering logic
 const adaptApiService = (apiService: ApiService): ServiceCardData => {
-  // Calculate average rating and review count (example)
-  const averageRating = apiService.reviews && apiService.reviews.length > 0
+  const averageRating = Array.isArray(apiService.reviews) && apiService.reviews.length > 0
     ? apiService.reviews.reduce((sum, review) => sum + review.rating, 0) / apiService.reviews.length
     : 0;
   const reviewCount = apiService._count?.reviews ?? 0;
-
-  // Format price string (example: assuming API returns a number string)
-  const formattedPrice = `R$${parseFloat(apiService.price).toFixed(2).replace(".", ",")}`;
+  const formattedPrice = apiService.price ? `R$${parseFloat(apiService.price).toFixed(2).replace('.', ',')}` : "Preço não informado";
 
   return {
-    id: apiService.id,
-    name: apiService.name,
-    category: apiService.category.name,
-    company: apiService.company.name,
-    // professional: apiService.professionals?.[0]?.name ?? "N/A", // Example if professionals included
-    image: apiService.image,
-    rating: parseFloat(averageRating.toFixed(1)), // Format rating
-    reviews: reviewCount,
-    price: formattedPrice, // Use formatted price string
-    duration: apiService.duration, // Use duration directly
-    // availability: "Consultar", // Placeholder as availability is complex
-    company_id: apiService.companyId,
-    // professional_id: apiService.professionals?.[0]?.id, // Example
-    description: apiService.description,
+    id: apiService.id ?? "",
+    name: apiService.name || "Serviço não informado",
+    category: apiService.category?.name || "Categoria não informada",
+    company: apiService.company?.name || "Empresa não informada",
+    professional: undefined, // Not available in this API, fallback to undefined
+    image: apiService.image || undefined,
+    rating: typeof averageRating === 'number' && !isNaN(averageRating) ? parseFloat(averageRating.toFixed(1)) : 0,
+    reviews: typeof reviewCount === 'number' ? reviewCount : 0,
+    price: formattedPrice,
+    duration: apiService.duration || "Duração não informada",
+    availability: undefined, // Not available in this API, fallback to undefined
+    company_id: apiService.companyId || "",
+    professional_id: undefined, // Not available in this API, fallback to undefined
+    description: apiService.description || "",
   };
 };
 
@@ -96,7 +93,7 @@ const Services = () => {
   const [sortBy, setSortBy] = useState("rating");
   const [ratingFilter, setRatingFilter] = useState([0]);
   const [priceRange, setPriceRange] = useState("Qualquer preço");
-  // const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data"); // Removed for now
+  const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
   const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch services from API
@@ -266,9 +263,8 @@ const Services = () => {
           setRatingFilter={setRatingFilter}
           priceRange={priceRange}
           setPriceRange={setPriceRange}
-          // availabilityFilter={availabilityFilter} // Removed
-          // setAvailabilityFilter={setAvailabilityFilter} // Removed
-          // availabilityOptions={[]} // Removed
+          availabilityFilter={availabilityFilter}
+          setAvailabilityFilter={setAvailabilityFilter}
         />
 
         <div className="text-gray-600 mb-4">

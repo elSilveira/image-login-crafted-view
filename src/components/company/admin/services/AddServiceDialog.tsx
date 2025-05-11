@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchServices, fetchCategories } from "@/lib/api";
-import { createService, addServiceToProfessional } from "@/lib/api-services";
+import { createService, addServiceToProfessional, addServiceToMe } from "@/lib/api-services";
 import { ExistingServicesList } from "./ExistingServicesList";
 import { CreateServiceForm } from "./CreateServiceForm";
 import { ServiceItem } from "./types";
@@ -30,6 +30,10 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
   const [activeTab, setActiveTab] = useState("existing");
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   const [servicePrice, setServicePrice] = useState<number | undefined>(undefined);
+  const [serviceDescription, setServiceDescription] = useState<string>("");
+  const [serviceSchedule, setServiceSchedule] = useState([
+    { dayOfWeek: "MONDAY", startTime: "09:00", endTime: "17:00" }
+  ]);
   const { user } = useAuth();
 
   // Fetch all available services
@@ -62,11 +66,10 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
   const handleAddExistingService = async () => {
     if (!selectedService) return;
     try {
-      // Garante que o preço está correto
       let price = servicePrice;
       if (typeof price === 'string') {
-        price = price.replace(/\s/g, '').replace(',', '.');
-        price = Number(price);
+        const priceStr = (price as string).replace(/\s/g, '').replace(',', '.');
+        price = Number(priceStr);
       } else if (typeof price !== 'number') {
         price = Number(price ?? 0);
       }
@@ -75,13 +78,21 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
         return;
       }
       if (persistImmediately) {
-        await addServiceToProfessional(professionalId, {
+        const payload = {
           serviceId: selectedService.id,
           price,
-        });
+          description: serviceDescription,
+          duration: selectedService.duration,
+          schedule: serviceSchedule,
+        };
+        if (professionalId === 'me') {
+          await addServiceToMe(payload);
+        } else {
+          await addServiceToProfessional(professionalId, payload);
+        }
         toast.success("Serviço adicionado ao profissional com sucesso!");
       }
-      onAddService({ ...selectedService, price });
+      onAddService({ ...selectedService, price, duration: selectedService.duration });
       handleClose();
     } catch (error) {
       toast.error("Erro ao adicionar serviço ao profissional");
@@ -97,11 +108,10 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
 
   const handleAddNewService = async (newService: ServiceItem) => {
     try {
-      // Corrige para garantir que o valor enviado para o backend é sempre um número válido
       let price = newService.price;
       if (typeof price === 'string') {
-        price = price.replace(/\s/g, '').replace(',', '.');
-        price = Number(price);
+        const priceStr = (price as string).replace(/\s/g, '').replace(',', '.');
+        price = Number(priceStr);
       } else if (typeof price !== 'number') {
         price = Number(price ?? 0);
       }
@@ -119,14 +129,21 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
           ...(validImage(newService.image) && { image: validImage(newService.image) })
         };
         const createdService = await createService(payload);
-        await addServiceToProfessional(professionalId, {
+        // Collect schedule and description for the professional-service link
+        const profServicePayload = {
           serviceId: createdService.id,
           price,
-        });
+          description: newService.description || '',
+          schedule: serviceSchedule,
+        };
+        if (professionalId === 'me') {
+          await addServiceToMe(profServicePayload);
+        } else {
+          await addServiceToProfessional(professionalId, profServicePayload);
+        }
         toast.success("Serviço criado e adicionado ao profissional com sucesso!");
         onAddService({ ...newService, id: createdService.id, price });
       } else {
-        // Only return the new service, let parent handle persistence on save
         onAddService({ ...newService, price });
       }
       handleClose();
@@ -143,7 +160,7 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Adicionar Serviço</DialogTitle>
@@ -164,13 +181,125 @@ export const AddServiceDialog: React.FC<AddServiceDialogProps> = ({
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <ExistingServicesList 
-                services={mappedServices}
-                selectedService={selectedService}
-                onSelectService={setSelectedService}
-                servicePrice={servicePrice}
-                onPriceChange={setServicePrice}
-              />
+              <>
+                <ExistingServicesList 
+                  services={mappedServices}
+                  selectedService={selectedService}
+                  onSelectService={setSelectedService}
+                  servicePrice={servicePrice}
+                  onPriceChange={setServicePrice}
+                />
+                {selectedService && (
+                  <div className="mt-4">
+                    <label className="block font-medium mb-1">Descrição do serviço</label>
+                    <textarea
+                      className="w-full border rounded p-2"
+                      value={serviceDescription}
+                      onChange={e => setServiceDescription(e.target.value)}
+                      placeholder="Descrição personalizada para este profissional (opcional)"
+                      rows={2}
+                    />
+                  </div>
+                )}
+                {selectedService && (
+                  <div className="mt-4">
+                    <label className="block font-medium mb-1">Duração (minutos)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="w-full border rounded p-2"
+                      value={selectedService.duration ?? ''}
+                      onChange={e => {
+                        const value = Number(e.target.value);
+                        setSelectedService(prev => prev ? { ...prev, duration: value } : null);
+                      }}
+                      placeholder="Ex: 60"
+                    />
+                  </div>
+                )}
+                {selectedService && (
+                  <div className="mt-4">
+                    <label className="block font-medium mb-1">Horários do serviço</label>
+                    {serviceSchedule.map((slot, idx) => (
+                      <div key={idx} className="flex gap-2 mb-2 items-center">
+                        <select
+                          className="border rounded p-1"
+                          value={slot.dayOfWeek}
+                          onChange={e => {
+                            const newSchedule = [...serviceSchedule];
+                            newSchedule[idx].dayOfWeek = e.target.value;
+                            setServiceSchedule(newSchedule);
+                          }}
+                        >
+                          <option value="MONDAY">Segunda-feira</option>
+                          <option value="TUESDAY">Terça-feira</option>
+                          <option value="WEDNESDAY">Quarta-feira</option>
+                          <option value="THURSDAY">Quinta-feira</option>
+                          <option value="FRIDAY">Sexta-feira</option>
+                          <option value="SATURDAY">Sábado</option>
+                          <option value="SUNDAY">Domingo</option>
+                        </select>
+                        <input
+                          type="time"
+                          className="border rounded p-1"
+                          value={slot.startTime}
+                          onChange={e => {
+                            const newSchedule = [...serviceSchedule];
+                            newSchedule[idx].startTime = e.target.value;
+                            setServiceSchedule(newSchedule);
+                          }}
+                        />
+                        <span>-</span>
+                        <input
+                          type="time"
+                          className="border rounded p-1"
+                          value={slot.endTime}
+                          onChange={e => {
+                            const newSchedule = [...serviceSchedule];
+                            newSchedule[idx].endTime = e.target.value;
+                            setServiceSchedule(newSchedule);
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="ml-2 text-red-500"
+                          onClick={() => {
+                            setServiceSchedule(serviceSchedule.filter((_, i) => i !== idx));
+                          }}
+                        >Remover</button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="mt-2 px-3 py-1 bg-primary text-white rounded"
+                      onClick={() => {
+                        // List of all days
+                        const allDays = [
+                          "MONDAY",
+                          "TUESDAY",
+                          "WEDNESDAY",
+                          "THURSDAY",
+                          "FRIDAY",
+                          "SATURDAY",
+                          "SUNDAY"
+                        ];
+                        // Find next available day not already selected
+                        const usedDays = serviceSchedule.map(s => s.dayOfWeek);
+                        const nextDay = allDays.find(day => !usedDays.includes(day));
+                        setServiceSchedule([
+                          ...serviceSchedule,
+                          {
+                            dayOfWeek: nextDay || "MONDAY",
+                            startTime: "09:00",
+                            endTime: "17:00"
+                          }
+                        ]);
+                      }}
+                      disabled={serviceSchedule.length >= 7}
+                    >Adicionar horário</button>
+                  </div>
+                )}
+              </>
             )}
           </TabsContent>
           

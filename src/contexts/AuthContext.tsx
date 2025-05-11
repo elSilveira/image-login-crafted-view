@@ -12,10 +12,14 @@ type User = {
   avatar?: string;
   profilePicture?: string; // Added profile picture
   phone?: string; // Added phone
-  professionalProfileId?: string | null; // Added professional profile ID
+  // professionalProfileId?: string | null; // Removido conforme nova regra
+  professionalId?: string | null; // Compatibilidade com backend legado, mas não usado
   companyId?: string | null; // Added company ID
   role?: UserRole; // Adicionado para facilitar o controle de permissão
   admin?: boolean; // fallback para sistemas antigos
+  isAdmin?: boolean;
+  isProfessional?: boolean;
+  hasCompany?: boolean;
   // Add other relevant user fields from backend if needed (e.g., role)
 };
 
@@ -25,7 +29,8 @@ export function getEffectiveUserRole(user: User | null): UserRole {
   if (user.role) return user.role;
   if (user.admin) return 'admin';
   if (user.companyId) return 'company';
-  if (user.professionalProfileId) return 'professional';
+  // if (user.professionalProfileId) return 'professional'; // Removido
+  if (user.isProfessional) return 'professional';
   return 'user';
 }
 
@@ -75,7 +80,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRefreshToken(storedRefreshToken);
       }
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        // Novo: suporte a professionalId (backend pode retornar professionalId ou professionalProfileId)
+        const normalizedUser = {
+          ...parsedUser,
+          isAdmin: parsedUser.isAdmin ?? (parsedUser.role === 'ADMIN' || parsedUser.role === 'admin'),
+          isProfessional: parsedUser.isProfessional ?? (parsedUser.role === 'PROFESSIONAL' || parsedUser.role === 'professional'),
+          hasCompany: parsedUser.hasCompany ?? !!parsedUser.companyId,
+        };
+        setUser(normalizedUser);
       } catch (e) {
         console.error("Failed to parse stored user:", e);
         // Clear invalid stored data
@@ -89,10 +102,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Function to update auth state (used by login and potentially register)
   const updateAuthState = useCallback((loggedInUser: User, newAccessToken: string, newRefreshToken?: string) => {
+    // Ensure new fields are set for compatibility
+    const userWithFlags = {
+      ...loggedInUser,
+      // professionalProfileId removido
+      isAdmin: typeof loggedInUser.isAdmin === 'boolean' ? loggedInUser.isAdmin : (typeof loggedInUser.role === 'string' ? loggedInUser.role.toLowerCase() === 'admin' : false) || loggedInUser.admin === true,
+      isProfessional: typeof loggedInUser.isProfessional === 'boolean' ? loggedInUser.isProfessional : (typeof loggedInUser.role === 'string' ? loggedInUser.role.toLowerCase() === 'professional' : false),
+      hasCompany: typeof loggedInUser.hasCompany === 'boolean' ? loggedInUser.hasCompany : !!loggedInUser.companyId,
+    };
     localStorage.setItem(ACCESS_TOKEN_KEY, newAccessToken);
-    localStorage.setItem(USER_KEY, JSON.stringify(loggedInUser));
+    localStorage.setItem(USER_KEY, JSON.stringify(userWithFlags));
     setAccessToken(newAccessToken);
-    setUser(loggedInUser);
+    setUser(userWithFlags);
     if (newRefreshToken) {
       localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
       setRefreshToken(newRefreshToken);
@@ -103,26 +124,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await apiClient.post("/auth/login", { email, password });
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: loggedInUser } = response.data;
-
+      // The backend returns all fields at the top level, so destructure them
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, ...userPayload } = response.data;
+      // Normalize user fields
+      const loggedInUser = {
+        ...userPayload,
+        isAdmin: userPayload.isAdmin ?? (userPayload.role === 'ADMIN' || userPayload.role === 'admin'),
+        isProfessional: userPayload.isProfessional ?? (userPayload.role === 'PROFESSIONAL' || userPayload.role === 'professional'),
+        hasCompany: userPayload.hasCompany ?? !!userPayload.companyId,
+      };
       if (!newAccessToken || !loggedInUser) {
         throw new Error("Resposta de login inválida do servidor.");
       }
-
       updateAuthState(loggedInUser, newAccessToken, newRefreshToken);
-
       toast({
         title: "Login realizado com sucesso",
         description: `Bem-vindo, ${loggedInUser.name}!`,
       });
-
       navigate("/");
-      
       return Promise.resolve();
-
     } catch (error: any) {
       console.error("Login failed:", error);
-      const errorMessage = error.message || "Ocorreu um erro inesperado."; // Use error message processed by interceptor
+      const errorMessage = error.message || "Ocorreu um erro inesperado.";
       toast({
         title: "Erro de login",
         description: errorMessage,

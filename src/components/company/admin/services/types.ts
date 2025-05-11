@@ -7,6 +7,11 @@ export interface ServiceItem {
   categoryId?: string;
   categoryName?: string;
   image?: string;
+  schedule?: Array<{
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+  }>;
 }
 
 export interface Category {

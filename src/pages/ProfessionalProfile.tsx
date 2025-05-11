@@ -47,11 +47,19 @@ import { useAuth } from "@/contexts/AuthContext";
 
 // Define interfaces based on expected API response (adjust as needed)
 interface Service {
-  id: number;
+  id: string;
   name: string;
-  price: number;
-  duration: number;
   description: string;
+  price: string; // price as string per backend contract
+  duration: number | string; // duration in minutes or string
+  categoryId: string;
+  image?: string | null;
+  companyId: string;
+  schedule?: Array<{
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+  }>;
 }
 
 interface Experience {
@@ -134,13 +142,21 @@ const renderStars = (rating: number) => {
   return stars;
 };
 
-const formatPrice = (value?: number) => {
-  if (value === undefined || value === null) return "N/A";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+const formatPrice = (value?: string) => {
+  if (!value) return "N/A";
+  // Try to parse as number for formatting
+  const num = Number(value);
+  if (!isNaN(num)) {
+    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(num);
+  }
+  // If already formatted or not a number, return as is
+  return value;
 };
 
-const formatDuration = (minutes?: number) => {
-  if (minutes === undefined || minutes === null) return "N/A";
+const formatDuration = (duration?: number | string) => {
+  if (duration === undefined || duration === null) return "N/A";
+  let minutes = typeof duration === 'string' ? parseInt(duration, 10) : duration;
+  if (isNaN(minutes)) return String(duration);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}min` : ""}`.trim() || "N/A";
@@ -162,7 +178,7 @@ const ProfessionalProfile = () => {
   const [activeTab, setActiveTab] = useState("about");
 
   // Se não houver id na URL, buscar dados do próprio profissional logado
-  const isOwnProfile = !id || (user && id === user.professionalProfileId);
+  const isOwnProfile = !id && user?.isProfessional;
 
   const {
     data: professional,
@@ -368,17 +384,28 @@ const ProfessionalProfile = () => {
                         <h3 className="font-semibold text-lg">{service.name}</h3>
                         <span className="text-lg font-semibold text-iazi-primary">{formatPrice(service.price)}</span>
                       </div>
-                      
                       <div className="flex items-center text-gray-500 text-sm mb-3">
                         <Clock className="h-4 w-4 mr-1" />
                         <span>{formatDuration(service.duration)}</span>
                       </div>
-                      
                       <p className="text-gray-700 text-sm mb-4 line-clamp-2">{service.description}</p>
-                      
+                      {service.schedule && service.schedule.length > 0 && (
+                        <div className="mb-3">
+                          <div className="font-semibold text-xs text-gray-500 mb-1">Horários:</div>
+                          <ul className="text-xs text-gray-600 grid grid-cols-2 gap-1">
+                            {service.schedule.map((slot, idx) => (
+                              <li key={idx} className="flex items-center gap-2">
+                                <span className="font-mono bg-gray-100 rounded px-2 py-0.5">
+                                  {slot.dayOfWeek}: {slot.startTime} - {slot.endTime}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                       <div className="mt-4 flex gap-2">
-                         <Button variant="outline" className="flex-1" asChild>
-                           <Link to={`/service/${service.id}`}>Ver Detalhes</Link>
+                        <Button variant="outline" className="flex-1" asChild>
+                          <Link to={`/service/${service.id}`}>Ver Detalhes</Link>
                         </Button>
                         <Button className="flex-1 bg-iazi-primary hover:bg-iazi-primary-hover" asChild>
                           {/* Link to booking, potentially passing professional ID */}

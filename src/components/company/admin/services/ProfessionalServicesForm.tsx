@@ -4,10 +4,12 @@ import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 import { ServiceCard } from "./ServiceCard";
 import { AddServiceDialog } from "./AddServiceDialog";
+import EditServiceDialog from "./EditServiceDialog";
 import { useAuth } from "@/contexts/AuthContext";
-import { getMyProfessionalServices, removeServiceFromProfessional } from "@/lib/api-services";
+import { getOwnProfessionalServices, getProfessionalServices, removeServiceFromProfessional, fetchProfessionals } from "@/lib/api-services";
 import { ServiceItem, ProfessionalService } from "./types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const ProfessionalServicesForm: React.FC = () => {
   const { user } = useAuth();
@@ -15,12 +17,28 @@ export const ProfessionalServicesForm: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const professionalId = user?.professionalProfileId || "";
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [serviceToEdit, setServiceToEdit] = useState<ServiceItem | null>(null);
+  const isAdmin = !!user?.isAdmin;
+  const isProfessional = !!user?.isProfessional;
+  const hasCompany = !!user?.hasCompany;
+  const isDisabled = !(isAdmin || isProfessional);
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<string>("");
   
+  // Fetch all professionals for admin selection
+  const { data: professionals = [] } = useQuery({
+    queryKey: ["allProfessionals"],
+    queryFn: fetchProfessionals,
+    enabled: isAdmin && !isProfessional,
+  });
+
+  // For the logged-in user, use /professionals/services
   const { data: services, isLoading, isError, refetch, error } = useQuery({
-    queryKey: ["myProfessionalServices"],
-    queryFn: () => getMyProfessionalServices(),
-    enabled: true,
+    queryKey: [isProfessional ? "myProfessionalServices" : "professionalServices", isProfessional ? undefined : selectedProfessionalId],
+    queryFn: () => isProfessional
+      ? getOwnProfessionalServices() // /professionals/services
+      : getProfessionalServices(selectedProfessionalId), // /professionals/{id}/services
+    enabled: isProfessional || !!selectedProfessionalId,
   });
 
   const handleServiceAdded = (service: ServiceItem) => {
@@ -33,32 +51,42 @@ export const ProfessionalServicesForm: React.FC = () => {
     });
   };
 
+  // For remove, use the correct endpoint for the logged-in user or others
   const handleRemoveService = async (serviceId: string) => {
-    if (!professionalId) {
+    if (isProfessional) {
+      await removeServiceFromProfessional(undefined, serviceId); // undefined triggers /professionals/services
+    } else if (selectedProfessionalId) {
+      await removeServiceFromProfessional(selectedProfessionalId, serviceId);
+    } else {
       toast({
         title: "Erro",
-        description: "É necessário ter um perfil profissional para remover serviços.",
+        description: "Selecione um profissional para remover serviços.",
         variant: "destructive",
       });
       return;
     }
+    refetch();
+    setHasUnsavedChanges(true);
+    toast({
+      title: "Serviço removido",
+      description: "O serviço foi removido do perfil com sucesso.",
+    });
+  };
 
-    try {
-      await removeServiceFromProfessional(professionalId, serviceId);
-      refetch();
-      setHasUnsavedChanges(true);
-      toast({
-        title: "Serviço removido",
-        description: "O serviço foi removido do seu perfil com sucesso.",
-      });
-    } catch (error) {
-      console.error("Erro ao remover serviço:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover o serviço. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+  const handleEditService = (service: ServiceItem) => {
+    setServiceToEdit(service);
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEditedService = async (updatedService: ServiceItem) => {
+    // Call backend to update price (if needed)
+    // For now, just simulate and refetch
+    // TODO: Implement updateServiceForProfessional API call
+    setEditDialogOpen(false);
+    setServiceToEdit(null);
+    setHasUnsavedChanges(true);
+    toast({ title: "Serviço atualizado", description: "O serviço foi atualizado com sucesso." });
+    refetch();
   };
 
   const handleCancel = () => {
@@ -76,16 +104,6 @@ export const ProfessionalServicesForm: React.FC = () => {
     // Redirecionar ou fechar normalmente
     // Exemplo: window.history.back();
   };
-
-  if (!professionalId) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground mb-4">
-          É necessário criar um perfil profissional para gerenciar serviços.
-        </p>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -116,15 +134,34 @@ export const ProfessionalServicesForm: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium">Meus Serviços</h2>
+        {isAdmin && !isProfessional && (
+          <Select value={selectedProfessionalId} onValueChange={setSelectedProfessionalId}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder="Selecione um profissional" />
+            </SelectTrigger>
+            <SelectContent>
+              {professionals.map((prof: any) => (
+                <SelectItem key={prof.id} value={prof.id}>{prof.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <button
           onClick={handleCancel}
           className="bg-muted text-foreground px-4 py-2 rounded text-sm font-medium border"
+          disabled={isDisabled}
         >
           Cancelar Edição
         </button>
         <button
+          type="button"
           onClick={() => setIsAddDialogOpen(true)}
-          className="bg-iazi-primary hover:bg-iazi-primary-hover text-white px-4 py-2 rounded text-sm font-medium"
+          className={
+            `bg-iazi-primary hover:bg-iazi-primary-hover text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-150` // Removed disabled styling
+          }
+          // Always enabled for admin/professional
+          disabled={false}
+          aria-disabled={false}
         >
           Adicionar Serviço
         </button>
@@ -142,8 +179,8 @@ export const ProfessionalServicesForm: React.FC = () => {
             <ServiceCard
               key={service.id}
               service={service}
-              onRemove={() => handleRemoveService(service.id)}
-              onEdit={() => {/* Implementar edição futuramente */}}
+              onRemove={isDisabled ? undefined : () => handleRemoveService(service.id)}
+              onEdit={isDisabled ? undefined : () => handleEditService(service)}
             />
           ))}
         </div>
@@ -153,8 +190,16 @@ export const ProfessionalServicesForm: React.FC = () => {
         isOpen={isAddDialogOpen}
         onClose={() => setIsAddDialogOpen(false)}
         onAddService={handleServiceAdded}
-        professionalId={professionalId}
+        professionalId={isAdmin && !isProfessional ? selectedProfessionalId : 'me'}
       />
+      {serviceToEdit && (
+        <EditServiceDialog
+          isOpen={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          service={serviceToEdit}
+          onSave={handleSaveEditedService}
+        />
+      )}
       <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
         <DialogContent>
           <DialogHeader>

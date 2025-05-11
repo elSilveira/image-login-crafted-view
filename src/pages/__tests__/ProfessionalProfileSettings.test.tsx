@@ -8,13 +8,13 @@ import { AuthContext } from "@/contexts/AuthContext";
 // Mock Navigation and UserProfessionalInfo
 jest.mock("@/components/Navigation", () => () => <div data-testid="navigation" />);
 jest.mock("@/components/profile/UserProfessionalInfo", () => ({
-  UserProfessionalInfo: ({ professionalId }: { professionalId?: string }) => (
-    <div data-testid="user-professional-info">{professionalId ? `Editing ${professionalId}` : "Creating"}</div>
+  UserProfessionalInfo: () => (
+    <div data-testid="user-professional-info">UserProfessionalInfo Rendered</div>
   ),
 }));
 
 // Mock API
-const mockUser = { id: "user-1", name: "Test User" };
+const mockUser = { id: "user-1", name: "Test User", isProfessional: false };
 const mockProfessional = { id: "prof-1", name: "Prof User" };
 
 jest.spyOn(api, "fetchProfessionals").mockImplementation(async (params) => {
@@ -27,7 +27,7 @@ jest.spyOn(api, "fetchProfessionals").mockImplementation(async (params) => {
 jest.spyOn(api, "default").mockImplementation(() => ({
   get: async (url: string) => {
     if (url === "/users/me") {
-      return { data: { ...mockUser, professionalProfileId: undefined } };
+      return { data: { ...mockUser } };
     }
     return { data: {} };
   },
@@ -56,13 +56,13 @@ describe("ProfessionalProfileSettings", () => {
   it("shows creation form if user is not a professional", async () => {
     (api.fetchProfessionals as jest.Mock).mockResolvedValueOnce([]);
     renderWithAuthContext(<ProfessionalProfileSettings />, {
-      user: mockUser,
+      user: { ...mockUser, isProfessional: false },
       accessToken: "token",
       isLoading: false,
     });
     await waitFor(() => expect(screen.queryByText(/Loading/i)).not.toBeInTheDocument());
     expect(await screen.findByText(/Cadastro de Perfil Profissional/i)).toBeInTheDocument();
-    expect(screen.getByTestId("user-professional-info")).toHaveTextContent("Creating");
+    expect(screen.getByTestId("user-professional-info")).toHaveTextContent("UserProfessionalInfo Rendered");
   });
 
   it("shows fallback if user is not logged in", async () => {

@@ -13,6 +13,12 @@ export interface ServiceCreateData {
 export interface ProfessionalServiceData {
   serviceId: string;
   price?: number;
+  description?: string;
+  schedule?: Array<{
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+  }>;
 }
 
 // Criar um novo serviço
@@ -30,6 +36,28 @@ export const updateService = async (serviceId: string, serviceData: ServiceCreat
 // Adicionar um serviço a um profissional
 export const addServiceToProfessional = async (professionalId: string, serviceData: ProfessionalServiceData) => {
   const response = await apiClient.post(`/professionals/${professionalId}/services`, serviceData);
+  return response.data;
+};
+
+// Adicionar um serviço ao profissional autenticado (novo endpoint)
+export const addServiceToMe = async (serviceData: ProfessionalServiceData) => {
+  // Ensure price is string or null
+  const normalizedData = {
+    ...serviceData,
+    price: serviceData.price != null ? String(serviceData.price) : null,
+  };
+  const response = await apiClient.post(`/professionals/services`, normalizedData);
+  return response.data;
+};
+
+// Atualizar um serviço do profissional autenticado (novo endpoint)
+export const updateMyProfessionalService = async (serviceId: string, serviceData: ProfessionalServiceData) => {
+  // Ensure price is string or null
+  const normalizedData = {
+    ...serviceData,
+    price: serviceData.price != null ? String(serviceData.price) : null,
+  };
+  const response = await apiClient.put(`/professionals/services/${serviceId}`, normalizedData);
   return response.data;
 };
 
@@ -60,5 +88,17 @@ export const updateProfessionalServicePrice = async (professionalId: string, ser
 // Obter serviços do profissional autenticado
 export const getMyProfessionalServices = async () => {
   const response = await apiClient.get(`/professionals/me/services`);
+  return response.data;
+};
+
+// Obter serviços do profissional autenticado (novo endpoint)
+export const getOwnProfessionalServices = async () => {
+  const response = await apiClient.get(`/professionals/services`);
+  return response.data;
+};
+
+// Buscar todos os profissionais (para admin)
+export const fetchProfessionals = async () => {
+  const response = await apiClient.get("/professionals");
   return response.data;
 };

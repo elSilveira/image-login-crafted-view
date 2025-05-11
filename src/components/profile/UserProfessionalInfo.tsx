@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm, FormProvider } from "react-hook-form"; 
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { fetchProfessionalDetails, updateProfessionalProfile, createProfessionalProfile } from "@/lib/api"; 
+import { fetchProfessionalDetails, updateProfessionalProfile, createProfessionalProfile, fetchUserProfile } from "@/lib/api"; 
 import { Button } from "@/components/ui/button";
 import { ProfileImages } from "./professional/ProfileImages"; 
 import { ProfessionalInfo } from "./professional/ProfessionalInfo";
@@ -13,7 +13,8 @@ import { ExperienceSection } from "./professional/ExperienceSection";
 import { EducationSection } from "./professional/EducationSection";
 import { PortfolioSection } from "./professional/PortfolioSection";
 import { Loader2, AlertCircle } from "lucide-react"; 
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { useAuth } from "@/contexts/AuthContext"; 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; 
 import { useNavigate } from "react-router-dom"; 
@@ -182,23 +183,14 @@ function mapFormToBackend(data: ProfessionalProfileFormData) {
 }
 
 export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ professionalId, professionalData }) => {
+  console.log('[UserProfessionalInfo] professionalId:', professionalId, 'professionalData:', professionalData);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { user } = useAuth(); 
+  const { user, updateAuthState, accessToken } = useAuth(); 
 
   // --- NEW LOGIC: Determine edit mode for /me (logged-in user) or by ID (should not happen) ---
   // If professionalData exists and has an id, we are editing
   const isEditing = !!(professionalData && (professionalData.id || professionalData._id));
-
-  // Only allow editing by ID if it's the user's own profile (should not happen)
-  const isOwnProfile = !!user && professionalId === user?.professionalProfileId;
-  if (professionalId && !isOwnProfile) {
-    return (
-      <div className="p-8 text-center text-destructive">
-        <p>Erro: Não é permitido buscar perfil profissional por ID nesta página.</p>
-      </div>
-    );
-  }
 
   // Setup react-hook-form
   const methods = useForm<ProfessionalProfileFormData>({
@@ -217,16 +209,15 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
         },
   });
 
-  // Update form default values when data loads (for editing)
+  // Only reset when professionalData changes and is defined
   useEffect(() => {
-    if (isEditing && (professionalData || user)) {
-      const formData = mapBackendToForm(professionalData || user);
-      const imageFields = mapProfileImagesFromBackend(professionalData || user);
+    if (professionalData && professionalData.id) {
+      const formData = mapBackendToForm(professionalData);
+      const imageFields = mapProfileImagesFromBackend(professionalData);
       methods.reset({ ...formData, ...imageFields });
-    } else if (isEditing && !professionalData && !user) {
-      console.warn('[UserProfessionalInfo] isEditing but no data is available');
     }
-  }, [isEditing, professionalData, user, methods.reset]);
+    // Do not reset to user fallback here, only on first render via defaultValues
+  }, [professionalData, methods.reset]);
 
   // Mutation for creating or updating professional profile
   const mutation = useMutation({
@@ -247,20 +238,30 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
         return createProfessionalProfile(finalPayload);
       }
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (isEditing) {
         queryClient.invalidateQueries({ queryKey: ["professionalProfile", professionalId] });
-        toast.success(data.message || "Perfil profissional atualizado com sucesso!");
+        toast({ title: data.message || "Perfil profissional atualizado com sucesso!" });
         // Mantém na mesma página, apenas atualiza os dados
       } else {
-        toast.success(data.message || "Perfil profissional criado com sucesso!");
-        toast.info("Você será redirecionado para a seção de serviços em 3 segundos...");
+        toast({
+          title: "Criado com sucesso",
+          description: "Deseja adicionar serviços agora?",
+          action: (
+            <ToastAction altText="Adicionar Serviços" onClick={() => navigate("/servicos")}>Adicionar Serviços</ToastAction>
+          ),
+        });
         queryClient.invalidateQueries({ queryKey: ["userProfile"] });
-        
-        // Redirecionar para a página de serviços após criar o perfil
-        setTimeout(() => {
-          navigate("/company/my-company/services");
-        }, 3000);
+        // Fetch updated user profile and update context
+        try {
+          const updatedUser = await fetchUserProfile();
+          if (accessToken && updatedUser) {
+            updateAuthState(updatedUser, accessToken);
+          }
+        } catch (e) {
+          console.error("Falha ao atualizar contexto do usuário após criar perfil profissional", e);
+        }
+        // No auto-navigation; user must confirm in toast
       }
     },
     onError: (error: any) => {
@@ -273,9 +274,9 @@ export const UserProfessionalInfo: React.FC<UserProfessionalInfoProps> = ({ prof
              methods.setError(fieldName, { type: "manual", message: err.msg });
           }
         });
-        toast.error("Erro de validação. Verifique os campos marcados.");
+        toast({ title: "Erro de validação. Verifique os campos marcados.", variant: "destructive" });
       } else {
-        toast.error(error.response?.data?.message || `Erro ao ${isEditing ? "atualizar" : "criar"} perfil profissional.`);
+        toast({ title: error.response?.data?.message || `Erro ao ${isEditing ? "atualizar" : "criar"} perfil profissional.`, variant: "destructive" });
       }
     },
   });

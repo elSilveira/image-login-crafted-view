@@ -62,9 +62,9 @@ const NewPublication = () => {
 
   // Fetch professional details to get their services
   const { data: professionalData, isLoading: isLoadingProfessional } = useQuery({
-    queryKey: ["professional", user?.professionalProfileId],
-    queryFn: () => fetchProfessionalDetails(user?.professionalProfileId || ""),
-    enabled: !!user?.professionalProfileId,
+    queryKey: ["professional", user?.id],
+    queryFn: () => user?.isProfessional ? fetchProfessionalDetails(user?.id || "") : undefined,
+    enabled: !!user?.isProfessional && !!user?.id,
   });
 
   // Fetch services for the dropdown

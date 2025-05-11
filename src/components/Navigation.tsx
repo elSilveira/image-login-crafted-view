@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth, getEffectiveUserRole } from "@/contexts/AuthContext";
@@ -73,9 +72,9 @@ export default function Navigation() {
                     </Link>
                   </DropdownMenuItem>
                   {/* Conditionally render View Professional Profile link */}
-                  {user.professionalProfileId && (
+                  {user.isProfessional && (
                     <DropdownMenuItem asChild>
-                      <Link to={`/professional/${user.professionalProfileId}`} className="flex items-center">
+                      <Link to="/profile/professional/settings" className="flex items-center">
                         <Briefcase className="mr-2 h-4 w-4" /> 
                         Ver Meu Perfil Profissional
                       </Link>
@@ -89,13 +88,7 @@ export default function Navigation() {
                   </DropdownMenuItem>
                   {/* New menu items for services */}
                   <DropdownMenuItem asChild>
-                    <Link to="/company/my-company/services" className="flex items-center">
-                      <ClipboardList className="mr-2 h-4 w-4" />
-                      Serviços da Empresa
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/company/my-company/professional-services" className="flex items-center">
+                    <Link to="/servicos" className="flex items-center">
                       <Briefcase className="mr-2 h-4 w-4" />
                       Serviços Profissionais
                     </Link>

@@ -61,7 +61,8 @@ export const ServiceCard = ({ service, isHighlighted = false }: ServiceCardProps
   }
 
   const serviceId = service.id.toString();
-  const serviceName = typeof service.name === "string" ? service.name : "Serviço não informado";
+  const serviceName = service.name || "Serviço não informado";
+  const serviceDescription = service.description || "";
   const serviceCategory = typeof service.category === "string" ? service.category : "Categoria não informada";
   const serviceImage = typeof service.image === "string" ? service.image : ""; 
   const serviceRating = typeof service.rating === "number" ? parseFloat(service.rating.toFixed(1)) : 0;
@@ -105,64 +106,15 @@ export const ServiceCard = ({ service, isHighlighted = false }: ServiceCardProps
                 <Briefcase className="h-8 w-8" /> 
               </AvatarFallback>
             </Avatar>
-            {serviceRating > 0 && (
-              <div className="flex items-center gap-1 mb-1">
-                {renderStars(serviceRating)}
-              </div>
-            )}
-            <div className="text-sm text-center">
-              <span className="font-semibold">{serviceRating.toFixed(1)}</span>
-              <span className="text-gray-500"> ({serviceReviews} {serviceReviews === 1 ? "avaliação" : "avaliações"})</span>
-            </div>
           </div>
-          
-          <div className="md:w-3/4 p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-lg font-playfair font-semibold mb-1 text-iazi-text">{serviceName}</h3>
-                {serviceCategory && <p className="text-[#4664EA] text-sm font-inter mb-2">{serviceCategory}</p>}
-              </div>
-              <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">Serviço</Badge>
+          <div className="md:w-3/4 p-6 flex flex-col gap-2">
+            <h3 className="text-lg font-playfair font-semibold text-iazi-text mb-1">{serviceName}</h3>
+            {serviceDescription && (
+              <p className="text-gray-700 text-sm mb-2 line-clamp-2">{serviceDescription}</p>
+            )}
+            <div className="flex items-center gap-2 mb-2">
+              <span className="font-semibold text-iazi-primary text-base">{servicePrice}</span>
             </div>
-            
-            <div className="flex flex-wrap gap-2 mb-3">
-              {serviceDuration && serviceDuration !== "Duração não informada" && <Badge variant="outline" className="bg-gray-50">{serviceDuration}</Badge>}
-              {servicePrice && servicePrice !== "Preço não informado" && <Badge variant="outline" className="bg-gray-50">{servicePrice}</Badge>}
-            </div>
-            
-            {companyName !== "Empresa não informada" && companyId !== "#" ? (
-              <Link 
-                to={`/company/${companyId}/services`} 
-                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-1 block"
-              >
-                <span className="font-medium">Empresa:</span> {companyName}
-              </Link>
-            ) : companyName !== "Empresa não informada" ? (
-              <p className="text-sm text-gray-600 font-inter mb-1 block">
-                <span className="font-medium">Empresa:</span> {companyName}
-              </p>
-            ) : null}
-            
-            {professionalName !== "Profissional não informado" && professionalId !== "#" ? (
-              <Link
-                to={`/professional/${professionalId}`}
-                className="text-sm text-gray-600 hover:text-iazi-primary font-inter mb-3 block"
-              >
-                <span className="font-medium">Profissional:</span> {professionalName}
-              </Link>
-            ) : professionalName !== "Profissional não informado" ? (
-              <p className="text-sm text-gray-600 font-inter mb-3 block">
-                <span className="font-medium">Profissional:</span> {professionalName}
-              </p>
-            ) : null}
-            
-            {serviceAvailability && serviceAvailability !== "Disponibilidade não informada" && 
-              <div className="flex items-center text-sm text-gray-500 mb-4 font-inter">
-                <Calendar className="h-4 w-4 mr-1" />
-                <span>Disponível: {serviceAvailability}</span>
-              </div>
-            }
-            
             <div className="flex gap-2 mt-auto">
               <Button variant="outline" className="flex-1" asChild>
                 <Link to={`/service/${serviceId}`}>

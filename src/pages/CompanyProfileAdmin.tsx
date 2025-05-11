@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CompanyLayout } from "@/components/company/admin/CompanyLayout";
 import { CompanyProfileForm } from "@/components/company/admin/CompanyProfileForm";
@@ -11,8 +10,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const CompanyProfileAdmin: React.FC = () => {
   const { user } = useAuth();
-  const professionalId = user?.professionalProfileId;
-  const companyId = user?.companyProfileId;
+  // const professionalId = user?.professionalProfileId;
+  // const companyId = user?.companyProfileId;
   
   return (
     <CompanyLayout>
@@ -48,7 +47,7 @@ const CompanyProfileAdmin: React.FC = () => {
           
           <TabsContent value="profile">
             <div className="bg-white p-4 sm:p-6 rounded-lg border border-iazi-border">
-              {user?.companyProfileId ? (
+              {/* {user?.companyProfileId ? (
                 <CompanyProfileForm companyId={user.companyProfileId} />
               ) : (
                 <Alert>
@@ -57,7 +56,7 @@ const CompanyProfileAdmin: React.FC = () => {
                     É necessário criar um perfil de empresa para gerenciar seus dados.
                   </AlertDescription>
                 </Alert>
-              )}
+              )} */}
             </div>
           </TabsContent>
         </Tabs>
