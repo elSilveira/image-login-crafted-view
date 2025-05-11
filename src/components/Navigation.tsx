@@ -12,137 +12,187 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList } from "lucide-react";
+import { InviteModal } from "@/components/InviteModal";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
   const userRole = getEffectiveUserRole(user);
 
-  // Create a handler function for logout
+  // Invite modal state
+  const [inviteModalOpen, setInviteModalOpen] = React.useState(false);
+  const [inviteCode, setInviteCode] = React.useState<string | null>(null);
+  const [loadingInvite, setLoadingInvite] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
   const handleLogout = () => {
     logout();
   };
 
+  // Handler to request invite code
+  const handleInviteClick = async () => {
+    setLoadingInvite(true);
+    setInviteModalOpen(true);
+    setCopied(false);
+    try {
+      const res = await fetch("/auth/invites", { method: "POST", headers: { "Content-Type": "application/json" } });
+      if (!res.ok) throw new Error("Erro ao gerar convite");
+      const data = await res.json();
+      setInviteCode(data.code || data.inviteCode || data.invite || "");
+    } catch (e) {
+      setInviteCode("");
+    } finally {
+      setLoadingInvite(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (inviteCode) {
+      navigator.clipboard.writeText(`Use este código para se cadastrar: ${inviteCode}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center">
-            <span className="font-bold text-2xl text-[#4664EA]">iAzi</span>
-          </Link>
-          
-          <div className="hidden md:flex items-center space-x-6">
-            <Link to="/booking-history" className="text-sm font-medium transition-colors hover:text-primary">
-              Meus Agendamentos
+    <>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <nav className="container flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center">
+              <span className="font-bold text-2xl text-[#4664EA]">iAzi</span>
             </Link>
-            <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
-              Explorar
-            </Link>
-          </div>
-        </div>
-        
-        <div className="flex-1 mx-4 md:mx-8 max-w-md">
-          <SearchDropdown />
-        </div>
-        
-        <div className="flex items-center justify-end space-x-4">
-          {user ? (
-            <div className="flex items-center space-x-4">
-              <Link to="/notifications" className="text-sm font-medium transition-colors hover:text-primary">
-                <Bell className="h-5 w-5" />
+            
+            <div className="hidden md:flex items-center space-x-6">
+              <Link to="/booking-history" className="text-sm font-medium transition-colors hover:text-primary">
+                Meus Agendamentos
               </Link>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} />
-                      <AvatarFallback>{user.name?.[0]}</AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:inline">{user.name}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  {/* Exibe a role do usuário no topo do dropdown, como item não clicável */}
-                  <div className="px-3 py-2 text-xs text-muted-foreground font-mono bg-gray-100 rounded mb-1 cursor-default select-none">
-                    {userRole}
-                  </div>
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      Meu Perfil (Usuário)
-                    </Link>
-                  </DropdownMenuItem>
-                  {/* Conditionally render View Professional Profile link */}
-                  {user.isProfessional && (
+              <Link to="/search" className="text-sm font-medium transition-colors hover:text-primary">
+                Explorar
+              </Link>
+            </div>
+          </div>
+          
+          <div className="flex-1 mx-4 md:mx-8 max-w-md">
+            <SearchDropdown />
+          </div>
+          
+          <div className="flex items-center justify-end space-x-4">
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <Link to="/notifications" className="text-sm font-medium transition-colors hover:text-primary">
+                  <Bell className="h-5 w-5" />
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatar} />
+                        <AvatarFallback>{user.name?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <span className="hidden md:inline">{user.name}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    {/* Exibe a role do usuário no topo do dropdown, como item não clicável */}
+                    <div className="px-3 py-2 text-xs text-muted-foreground font-mono bg-gray-100 rounded mb-1 cursor-default select-none">
+                      {userRole}
+                    </div>
                     <DropdownMenuItem asChild>
-                      <Link to="/profile/professional/settings" className="flex items-center">
-                        <Briefcase className="mr-2 h-4 w-4" /> 
-                        Ver Meu Perfil Profissional
+                      <Link to="/profile" className="flex items-center">
+                        <User className="mr-2 h-4 w-4" />
+                        Meu Perfil (Usuário)
                       </Link>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile/professional/settings" className="flex items-center">
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      Editar Perfil Profissional
-                    </Link>
-                  </DropdownMenuItem>
-                  {/* New menu items for services */}
-                  <DropdownMenuItem asChild>
-                    <Link to="/servicos" className="flex items-center">
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      Serviços Profissionais
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="flex items-center">
-                      <Settings className="mr-2 h-4 w-4" />
-                      Configurações
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/company/register" className="flex items-center">
-                      <Building className="mr-2 h-4 w-4" />
-                      Cadastrar Empresa
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/company/my-company/dashboard" className="flex items-center">
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      Painel Admin
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/reviews" className="flex items-center">
-                      <Star className="mr-2 h-4 w-4" />
-                      Avaliações
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/gamification" className="flex items-center">
-                      <Award className="mr-2 h-4 w-4" />
-                      Conquistas
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sair
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <Link to="/login" className="text-sm font-medium transition-colors hover:text-primary">
-                Login
-              </Link>
-              <Link to="/register" className="text-sm font-medium transition-colors hover:text-primary">
-                Registrar
-              </Link>
-            </div>
-          )}
-        </div>
-      </nav>
-    </header>
+                    {/* Conditionally render View Professional Profile link */}
+                    {user.isProfessional && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/profile/professional/settings" className="flex items-center">
+                          <Briefcase className="mr-2 h-4 w-4" /> 
+                          Ver Meu Perfil Profissional
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile/professional/settings" className="flex items-center">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Editar Perfil Profissional
+                      </Link>
+                    </DropdownMenuItem>
+                    {/* Invite menu item for admin, company, and professional */}
+                    {user && (user.isAdmin || user.hasCompany || user.isProfessional) && (
+                      <DropdownMenuItem onClick={handleInviteClick} className="flex items-center cursor-pointer">
+                        <ClipboardList className="mr-2 h-4 w-4" />
+                        Enviar Convite
+                      </DropdownMenuItem>
+                    )}
+                    {/* New menu items for services */}
+                    <DropdownMenuItem asChild>
+                      <Link to="/servicos" className="flex items-center">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Serviços Profissionais
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings" className="flex items-center">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Configurações
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/company/register" className="flex items-center">
+                        <Building className="mr-2 h-4 w-4" />
+                        Cadastrar Empresa
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/company/my-company/dashboard" className="flex items-center">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Painel Admin
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/reviews" className="flex items-center">
+                        <Star className="mr-2 h-4 w-4" />
+                        Avaliações
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/gamification" className="flex items-center">
+                        <Award className="mr-2 h-4 w-4" />
+                        Conquistas
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Sair
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Link to="/login" className="text-sm font-medium transition-colors hover:text-primary">
+                  Login
+                </Link>
+                <Link to="/register" className="text-sm font-medium transition-colors hover:text-primary">
+                  Registrar
+                </Link>
+              </div>
+            )}
+          </div>
+        </nav>
+      </header>
+      {/* Invite Modal rendered outside header for correct overlay */}
+      <InviteModal
+        open={inviteModalOpen}
+        onOpenChange={open => setInviteModalOpen(open)}
+        inviteCode={inviteCode}
+        loading={loadingInvite}
+        onCopy={handleCopy}
+        copied={copied}
+        role={user ? (user.isAdmin ? 'admin' : user.hasCompany ? 'company' : user.isProfessional ? 'professional' : undefined) : undefined}
+      />
+    </>
   );
 }
