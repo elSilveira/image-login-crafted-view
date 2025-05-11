@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList } from "lucide-react";
 import { InviteModal } from "@/components/InviteModal";
+import apiClient from "@/lib/api";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
@@ -34,9 +35,8 @@ export default function Navigation() {
     setInviteModalOpen(true);
     setCopied(false);
     try {
-      const res = await fetch("/auth/invites", { method: "POST", headers: { "Content-Type": "application/json" } });
-      if (!res.ok) throw new Error("Erro ao gerar convite");
-      const data = await res.json();
+      const res = await apiClient.post("/auth/invites");
+      const data = res.data;
       setInviteCode(data.code || data.inviteCode || data.invite || "");
     } catch (e) {
       setInviteCode("");
@@ -118,8 +118,8 @@ export default function Navigation() {
                         Editar Perfil Profissional
                       </Link>
                     </DropdownMenuItem>
-                    {/* Invite menu item for admin, company, and professional */}
-                    {user && (user.isAdmin || user.hasCompany || user.isProfessional) && (
+                    {/* Invite menu item for all logged-in users */}
+                    {user && (
                       <DropdownMenuItem onClick={handleInviteClick} className="flex items-center cursor-pointer">
                         <ClipboardList className="mr-2 h-4 w-4" />
                         Enviar Convite
@@ -191,7 +191,7 @@ export default function Navigation() {
         loading={loadingInvite}
         onCopy={handleCopy}
         copied={copied}
-        role={user ? (user.isAdmin ? 'admin' : user.hasCompany ? 'company' : user.isProfessional ? 'professional' : undefined) : undefined}
+        role={undefined}
       />
     </>
   );
