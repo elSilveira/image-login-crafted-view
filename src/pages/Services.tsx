@@ -1,14 +1,13 @@
+
 // src/pages/Services.tsx
 import { useState, useEffect, useMemo } from "react";
 import Navigation from "@/components/Navigation";
 import { ServiceFilters } from "@/components/services/ServiceFilters";
 import { ServiceCard } from "@/components/services/ServiceCard";
 import { ServicePagination } from "@/components/services/ServicePagination";
-// Removed: import { services, specialties, availabilityOptions } from "@/lib/mock-services";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
-// Removed: import { Decimal } from "@prisma/client/runtime/library"; // Import Decimal type if needed for comparison
 
 // Define the structure of a Service object fetched from the API (based on schema.prisma)
 interface ApiService {
@@ -30,33 +29,32 @@ interface ApiService {
     name: string;
     // Add other company fields if needed
   };
-  // Add professional relation if needed/included
+  // Add other fields as needed based on actual API response
   reviews?: { rating: number }[]; // Assuming reviews might be included for average rating
   _count?: { // Assuming review count might be included
     reviews: number;
   };
-  // Add other fields as needed based on actual API response
 }
 
-// Define the structure expected by ServiceCard (based on mock-services)
+// Define the structure expected by ServiceCard
 interface ServiceCardData {
-  id: number | string; // Allow string ID from API
+  id: number | string;
   name: string;
   category: string;
   company: string;
-  professional?: string; // Optional, might not be directly available
+  professional?: string;
   image?: string | null;
   rating: number;
   reviews: number;
-  price: string; // Keep as string for display, but handle Decimal for sorting/filtering
+  price: string;
   duration: string;
-  availability?: string; // Optional, might not be directly available
+  availability?: string;
   company_id: string;
-  professional_id?: string; // Optional
+  professional_id?: string;
   description: string;
 }
 
-// Adapt API service data to the format needed by ServiceCard and filtering logic
+// Adapt API service data to the format needed by ServiceCard
 const adaptApiService = (apiService: ApiService): ServiceCardData => {
   const averageRating = Array.isArray(apiService.reviews) && apiService.reviews.length > 0
     ? apiService.reviews.reduce((sum, review) => sum + review.rating, 0) / apiService.reviews.length
@@ -83,13 +81,13 @@ const adaptApiService = (apiService: ApiService): ServiceCardData => {
 };
 
 const Services = () => {
-  const [allServices, setAllServices] = useState<ServiceCardData[]>([]); // Store adapted data
+  const [allServices, setAllServices] = useState<ServiceCardData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState("");
-  const [category, setCategory] = useState("Todas categorias"); // TODO: Fetch categories for filter
+  const [category, setCategory] = useState("Todas categorias");
   const [sortBy, setSortBy] = useState("rating");
   const [ratingFilter, setRatingFilter] = useState([0]);
   const [priceRange, setPriceRange] = useState("Qualquer preço");
@@ -203,6 +201,22 @@ const Services = () => {
   const indexOfFirstService = indexOfLastService - servicesPerPage;
   const currentServices = processedServices.slice(indexOfFirstService, indexOfLastService);
 
+  const handleDeleteService = (serviceId: string | number) => {
+    // Implementation would go here - API call to delete the service
+    console.log("Delete service:", serviceId);
+    // After successful deletion, refresh the services list
+  };
+
+  const handleEditService = (serviceId: string | number) => {
+    // Implementation would go here - navigate to edit page or open dialog
+    console.log("Edit service:", serviceId);
+  };
+
+  const handlePauseService = (serviceId: string | number) => {
+    // Implementation would go here - API call to pause the service
+    console.log("Pause service:", serviceId);
+  };
+
   // Render logic
   if (isLoading) {
     return (
@@ -255,8 +269,7 @@ const Services = () => {
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           category={category}
-          setCategory={setCategory} // TODO: Pass fetched categories here
-          // specialties={fetchedCategories} // Pass fetched categories
+          setCategory={setCategory}
           sortBy={sortBy}
           setSortBy={setSortBy}
           ratingFilter={ratingFilter}
@@ -279,10 +292,15 @@ const Services = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="space-y-4 mb-8">
               {currentServices.map((service) => (
-                // Ensure ServiceCard handles potential undefined/null values gracefully
-                <ServiceCard key={service.id} service={service} />
+                <ServiceCard 
+                  key={service.id} 
+                  service={service}
+                  onEdit={() => handleEditService(service.id)}
+                  onPause={() => handlePauseService(service.id)}
+                  onDelete={() => handleDeleteService(service.id)}
+                />
               ))}
             </div>
 
@@ -299,4 +317,3 @@ const Services = () => {
 };
 
 export default Services;
-
