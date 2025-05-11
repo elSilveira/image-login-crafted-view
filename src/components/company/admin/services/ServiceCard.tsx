@@ -1,9 +1,10 @@
 
 import React from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash } from "lucide-react";
+import { Pencil, Trash, Clock } from "lucide-react";
 import { ServiceItem } from "./types";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface ServiceCardProps {
   service: ServiceItem;
@@ -20,12 +21,12 @@ const formatPrice = (price: string | number | undefined): string => {
   }
   
   // If it's a string, try to convert to number if possible
-  const numPrice = parseFloat(price);
+  const numPrice = parseFloat(price.toString());
   if (!isNaN(numPrice)) {
     return `R$ ${numPrice.toFixed(2)}`;
   }
   
-  return price; // Just return the string if it's not a valid number
+  return price.toString(); // Just return the string if it's not a valid number
 };
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -33,46 +34,60 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   onRemove,
   onEdit
 }) => {
+  // Get service initials for avatar fallback
+  const serviceInitials = service.name ? service.name.substring(0, 2).toUpperCase() : "SV";
+  
   return (
     <Card className="overflow-hidden flex flex-col">
-      <CardHeader className="p-4 pb-2">
-        <CardTitle className="text-lg">{service.name}</CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 pt-2 flex-grow">
-        <div className="text-sm text-muted-foreground mb-2">
-          {service.description || "Sem descrição"}
-        </div>
-        <div className="mt-2">
-          <div className="flex justify-between text-sm">
-            <span>Preço:</span>
-            <span className="font-medium">
-              {formatPrice(service.price)}
-            </span>
+      <CardContent className="p-5">
+        <div className="flex gap-4">
+          <Avatar className="h-16 w-16 flex-shrink-0">
+            <AvatarImage src={service.image} alt={service.name} />
+            <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
+              {serviceInitials}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex flex-col flex-grow">
+            <h3 className="text-lg font-semibold mb-1">{service.name}</h3>
+            <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+              {service.description || "Sem descrição disponível"}
+            </p>
+            
+            <div className="flex flex-wrap items-center gap-3 mt-auto">
+              {service.duration && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Clock className="h-4 w-4 mr-1" /> 
+                  <span>{service.duration} min</span>
+                </div>
+              )}
+              {service.price !== undefined && (
+                <div className="text-sm font-medium text-iazi-primary">
+                  {formatPrice(service.price)}
+                </div>
+              )}
+              {service.categoryName && (
+                <div className="text-sm text-gray-600">
+                  {service.categoryName}
+                </div>
+              )}
+            </div>
           </div>
-          {service.duration && (
-            <div className="flex justify-between text-sm">
-              <span>Duração:</span>
-              <span className="font-medium">{service.duration} min</span>
-            </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2 mt-4 justify-end border-t pt-4">
+          {onEdit && (
+            <Button variant="outline" size="sm" onClick={onEdit}>
+              <Pencil className="h-4 w-4 mr-1" /> Editar
+            </Button>
           )}
-          {service.categoryName && (
-            <div className="flex justify-between text-sm">
-              <span>Categoria:</span>
-              <span className="font-medium">{service.categoryName}</span>
-            </div>
+          {onRemove && (
+            <Button variant="destructive" size="sm" onClick={onRemove}>
+              <Trash className="h-4 w-4 mr-1" /> Remover
+            </Button>
           )}
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-2 flex justify-between">
-        {onEdit && (
-          <Button variant="outline" size="sm" onClick={onEdit}>
-            <Pencil className="h-4 w-4 mr-1" /> Editar
-          </Button>
-        )}
-        <Button variant="destructive" size="sm" onClick={onRemove}>
-          <Trash className="h-4 w-4 mr-1" /> Remover
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

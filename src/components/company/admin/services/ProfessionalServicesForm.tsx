@@ -10,6 +10,7 @@ import { getOwnProfessionalServices, getProfessionalServices, removeServiceFromP
 import { ServiceItem, ProfessionalService } from "./types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 export const ProfessionalServicesForm: React.FC = () => {
   const { user } = useAuth();
@@ -146,25 +147,21 @@ export const ProfessionalServicesForm: React.FC = () => {
             </SelectContent>
           </Select>
         )}
-        <button
-          onClick={handleCancel}
-          className="bg-muted text-foreground px-4 py-2 rounded text-sm font-medium border"
-          disabled={isDisabled}
-        >
-          Cancelar Edição
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsAddDialogOpen(true)}
-          className={
-            `bg-iazi-primary hover:bg-iazi-primary-hover text-white px-4 py-2 rounded text-sm font-medium transition-colors duration-150` // Removed disabled styling
-          }
-          // Always enabled for admin/professional
-          disabled={false}
-          aria-disabled={false}
-        >
-          Adicionar Serviço
-        </button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCancel}
+            disabled={isDisabled}
+          >
+            Cancelar Edição
+          </Button>
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            disabled={isDisabled || (!selectedProfessionalId && !isProfessional)}
+          >
+            Adicionar Serviço
+          </Button>
+        </div>
       </div>
 
       {serviceItems.length === 0 ? (
@@ -179,8 +176,8 @@ export const ProfessionalServicesForm: React.FC = () => {
             <ServiceCard
               key={service.id}
               service={service}
-              onRemove={isDisabled ? undefined : () => handleRemoveService(service.id)}
-              onEdit={isDisabled ? undefined : () => handleEditService(service)}
+              onRemove={() => handleRemoveService(service.id)}
+              onEdit={() => handleEditService(service)}
             />
           ))}
         </div>
@@ -207,8 +204,8 @@ export const ProfessionalServicesForm: React.FC = () => {
           </DialogHeader>
           <p>Você fez alterações nos serviços. Se cancelar agora, perderá todas as mudanças não salvas.</p>
           <DialogFooter>
-            <button onClick={() => setShowCancelConfirm(false)} className="px-4 py-2 rounded border">Continuar editando</button>
-            <button onClick={confirmCancel} className="px-4 py-2 rounded bg-destructive text-white">Descartar alterações</button>
+            <Button variant="outline" onClick={() => setShowCancelConfirm(false)}>Continuar editando</Button>
+            <Button variant="destructive" onClick={confirmCancel}>Descartar alterações</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
