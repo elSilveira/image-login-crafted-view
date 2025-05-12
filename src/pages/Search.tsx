@@ -1,3 +1,4 @@
+
 "use client"; // Ensure client-side rendering for hooks
 
 import { useState, useEffect } from "react";
@@ -10,7 +11,7 @@ import { SearchCategories } from "@/components/search/SearchCategories";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { ServicePagination } from "@/components/services/ServicePagination";
 import { EmptyResults } from "@/components/search/EmptyResults";
-import { TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { fetchServices, fetchCompanies, fetchCategories, fetchSearchResults } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // For error state
@@ -58,8 +59,7 @@ const Search = () => {
 
   // --- Fetching Data with React Query ---
   const queryParams = { q: searchTerm, category: selectedCategory, sort: sortBy, page: currentPage, limit: ITEMS_PER_PAGE };
-  console.log("[Search Final QueryParams]:", queryParams);
-
+  
   // Fetch Categories
   const { data: categoriesApiResponse, isLoading: isLoadingCategories, isError: isErrorCategories, error: errorCategories } = useQuery<{ data: Category[], pagination?: any } | Category[], Error>({
     queryKey: ["categories"],
@@ -78,9 +78,7 @@ const Search = () => {
     return 'Categoria'; // Return a default name for invalid items
   });
   
-  console.log("[Search Final Categories Query]:", { isLoadingCategories, isErrorCategories, errorCategories: errorCategories?.message, dataLength: actualCategoriesArray.length });
-
-  // Fetch Services (now via professionals/all-services?tipo=only-linked)
+  // Fetch Search Results
   const { data: searchApiResponse, isLoading: isLoadingSearch, isError: isErrorSearch, error: errorSearch } = useQuery<any, Error>({
     queryKey: ["search-api", searchTerm, selectedCategory, sortBy, currentPage, viewType, professionalTipo],
     queryFn: async () => {
@@ -116,14 +114,19 @@ const Search = () => {
       (pro.services && pro.services.some((s: any) => s.service?.category?.name === selectedCategory));
     return matchesSearch && matchesCategory;
   });
+  
   const sortedProfessionals = [...filteredProfessionals].sort((a, b) => {
     if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
     return 0;
   });
+  
   const professionalsPerPage = ITEMS_PER_PAGE;
   const totalProfessionals = sortedProfessionals.length;
   const totalPagesProfessionals = Math.ceil(totalProfessionals / professionalsPerPage);
-  const paginatedProfessionals = sortedProfessionals.slice((currentPage - 1) * professionalsPerPage, currentPage * professionalsPerPage);
+  const paginatedProfessionals = sortedProfessionals.slice(
+    (currentPage - 1) * professionalsPerPage, 
+    currentPage * professionalsPerPage
+  );
 
   // Services tab
   const filteredServices = services.filter((service: any) => {
@@ -137,14 +140,19 @@ const Search = () => {
       (service.category && service.category.name === selectedCategory);
     return matchesSearch && matchesCategory;
   });
+  
   const sortedServices = [...filteredServices].sort((a, b) => {
     if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
     return 0;
   });
+  
   const servicesPerPage = ITEMS_PER_PAGE;
   const totalServices = sortedServices.length;
   const totalPagesServices = Math.ceil(totalServices / servicesPerPage);
-  const paginatedServices = sortedServices.slice((currentPage - 1) * servicesPerPage, currentPage * servicesPerPage);
+  const paginatedServices = sortedServices.slice(
+    (currentPage - 1) * servicesPerPage, 
+    currentPage * servicesPerPage
+  );
 
   // Companies tab
   const filteredCompanies = companies.filter((company: any) => {
@@ -156,14 +164,19 @@ const Search = () => {
       (company.categories && company.categories.includes(selectedCategory));
     return matchesSearch && matchesCategory;
   });
+  
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
     if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
     return 0;
   });
+  
   const companiesPerPage = ITEMS_PER_PAGE;
   const totalCompanies = sortedCompanies.length;
   const totalPagesCompanies = Math.ceil(totalCompanies / companiesPerPage);
-  const paginatedCompanies = sortedCompanies.slice((currentPage - 1) * companiesPerPage, currentPage * companiesPerPage);
+  const paginatedCompanies = sortedCompanies.slice(
+    (currentPage - 1) * companiesPerPage, 
+    currentPage * companiesPerPage
+  );
 
   // Combine loading and error states
   const isAnyLoading = isLoadingCategories || (isLoadingSearch && (viewType === 'all' || viewType === 'service' || viewType === 'professional' || viewType === 'company'));
@@ -172,14 +185,15 @@ const Search = () => {
       isErrorCategories ? `Categories: ${errorCategories?.message}` : null,
       isErrorSearch ? `Search: ${errorSearch?.message}` : null
   ].filter(Boolean).join("; ");
-  console.log("[Search Final Combined State]:", { isAnyLoading, isAnyError, combinedErrorMessages });
 
   // --- Data Processing (use fetched data) ---
-  const totalItems = viewType === "all" ? totalServices + totalCompanies :
-                     viewType === "service" ? totalServices : totalCompanies;
-  const totalPages = viewType === "all" ? Math.max(totalPagesServices, totalPagesCompanies) :
-                     viewType === "service" ? totalPagesServices : totalPagesCompanies;
-  console.log("[Search Final Pagination Info]:", { totalServices, totalCompanies, totalItems, totalPages });
+  const totalItems = viewType === "all" ? totalServices + totalCompanies + totalProfessionals :
+                     viewType === "service" ? totalServices : 
+                     viewType === "professional" ? totalProfessionals : totalCompanies;
+  
+  const totalPages = viewType === "all" ? Math.max(totalPagesServices, totalPagesCompanies, totalPagesProfessionals) :
+                     viewType === "service" ? totalPagesServices : 
+                     viewType === "professional" ? totalPagesProfessionals : totalPagesCompanies;
 
   const handleCategoryChange = (category: string) => {
     updateFilters({ category: category, page: "1" });
@@ -238,7 +252,7 @@ const Search = () => {
     
     if (type === 'company') {
       return (
-        <div className={`grid grid-cols-1 gap-4`}>
+        <div className={`grid grid-cols-1 gap-6`}>
           {data.map(item => (
             <CompanyCard key={item.id} company={item} isHighlighted={highlightId === item.id.toString()} />
           ))}
@@ -268,14 +282,12 @@ const Search = () => {
     return null;
   };
 
-  console.log("[Search Final] Rendering complete component...");
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
       <main className="container mx-auto px-4 pt-24 pb-12">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
           {searchTerm ? (
             <h1 className="text-3xl font-bold mb-2">Resultados para "{searchTerm}"</h1>
@@ -327,83 +339,102 @@ const Search = () => {
 
           {/* Tabs and Results - Only render if categories loaded successfully */}
           {!isErrorCategories && (
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-              <SearchTabs
-                viewType={viewType}
-                onTabChange={handleTabChange}
-                sortBy={sortBy}
-                onSortChange={handleSortChange}
-                serviceCount={totalServices} 
-                companyCount={totalCompanies}
-                professionalCount={totalProfessionals}
-              >
-                {/* Content Tabs */}
-                <TabsContent value="all">
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Serviços</h2>
-                    {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
-                  </div>
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Profissionais</h2>
-                    {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold mb-4">Empresas</h2>
-                    {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
-                  </div>
-                  {/* Combined Empty State for 'all' tab */}
-                  {!isAnyLoading && !isAnyError && paginatedServices.length === 0 && paginatedCompanies.length === 0 && paginatedProfessionals.length === 0 && <EmptyResults />}
-                </TabsContent>
+            <div>
+              <Tabs defaultValue={viewType} value={viewType} onValueChange={handleTabChange}>
+                <SearchTabs
+                  viewType={viewType}
+                  onTabChange={handleTabChange}
+                  sortBy={sortBy}
+                  onSortChange={handleSortChange}
+                  serviceCount={totalServices} 
+                  companyCount={totalCompanies}
+                  professionalCount={totalProfessionals}
+                >
+                  {/* Content Tabs */}
+                  <TabsContent value="all">
+                    <div className="space-y-10">
+                      <div className="bg-white rounded-lg p-6 shadow-sm">
+                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Serviços</h2>
+                        {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-6 shadow-sm">
+                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Profissionais</h2>
+                        {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-6 shadow-sm">
+                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Empresas</h2>
+                        {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
+                      </div>
+                    </div>
+                    {/* Combined Empty State for 'all' tab */}
+                    {!isAnyLoading && !isAnyError && 
+                      paginatedServices.length === 0 && 
+                      paginatedCompanies.length === 0 && 
+                      paginatedProfessionals.length === 0 && 
+                      <EmptyResults />}
+                  </TabsContent>
 
-                <TabsContent value="service">
-                  {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
-                </TabsContent>
-                
-                <TabsContent value="company">
-                  {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
-                </TabsContent>
-
-                <TabsContent value="professional">
-                  <div className="mb-4 flex items-center gap-4">
-                    <label className="font-medium text-sm">Profissionais:</label>
-                    <Select value={professionalTipo} onValueChange={v => setProfessionalTipo(v as any)}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue placeholder="Filtrar por vínculo de serviço" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        <SelectItem value="only-linked">Apenas com serviços</SelectItem>
-                        <SelectItem value="only-unlinked">Apenas sem serviços</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
+                  <TabsContent value="service">
+                    <div className="bg-white rounded-lg p-6 shadow-sm">
+                      {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
+                    </div>
+                  </TabsContent>
                   
-                  {/* Pagination for professionals */}
-                  {!isLoadingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
-                    <ServicePagination
-                      currentPage={currentPage}
-                      totalPages={totalPagesProfessionals}
-                      setCurrentPage={handlePageChange}
-                    />
-                  )}
-                </TabsContent>
-              </SearchTabs>
+                  <TabsContent value="company">
+                    <div className="bg-white rounded-lg p-6 shadow-sm">
+                      {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="professional">
+                    <div className="bg-white rounded-lg p-6 shadow-sm">
+                      <div className="mb-4 flex items-center gap-4">
+                        <label className="font-medium text-sm">Profissionais:</label>
+                        <Select value={professionalTipo} onValueChange={v => setProfessionalTipo(v as any)}>
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Filtrar por vínculo de serviço" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Todos</SelectItem>
+                            <SelectItem value="only-linked">Apenas com serviços</SelectItem>
+                            <SelectItem value="only-unlinked">Apenas sem serviços</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
+                    </div>
+                    
+                    {/* Pagination for professionals */}
+                    {!isLoadingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
+                      <div className="mt-6">
+                        <ServicePagination
+                          currentPage={currentPage}
+                          totalPages={totalPagesProfessionals}
+                          setCurrentPage={handlePageChange}
+                        />
+                      </div>
+                    )}
+                  </TabsContent>
+                </SearchTabs>
+              </Tabs>
             </div>
           )}
 
           {/* Pagination */}
           {!isAnyLoading && !isAnyError && totalPages > 0 && (
-            <ServicePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              setCurrentPage={handlePageChange}
-            />
+            <div className="mt-8">
+              <ServicePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                setCurrentPage={handlePageChange}
+              />
+            </div>
           )}
 
           {/* Final Check: If nothing rendered (e.g., category error blocked tabs), show generic empty/error */} 
           {isErrorCategories && <EmptyResults />} 
-          
         </div>
       </main>
     </div>

@@ -107,15 +107,18 @@ export const CompanyCard = ({ company, isHighlighted = false }: CompanyCardProps
   };
 
   return (
-    <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 border-l-4 border-l-[#4664EA] ${
-      isHighlighted ? "ring-2 ring-[#4664EA]" : ""
-    }`}>
+    <Card 
+      className={`overflow-hidden hover:shadow-lg transition-all duration-300 ${
+        isHighlighted ? "ring-2 ring-[#9b87f5]" : "border-0 shadow"
+      }`}
+    >
       <CardContent className="p-0">
         <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-[#f8f9ff]">
-            <Avatar className="h-24 w-24 mb-3 border-2 border-[#eef1ff] shadow-sm">
+          {/* Company Logo & Rating Section */}
+          <div className="md:w-1/4 p-6 flex flex-col items-center justify-center bg-gradient-to-b from-[#f1f0fb] to-white">
+            <Avatar className="h-24 w-24 mb-3 border-2 border-white shadow-sm">
               <AvatarImage src={companyImage} alt={companyName} />
-              <AvatarFallback className="bg-[#4664EA] text-white">
+              <AvatarFallback className="bg-[#9b87f5] text-white">
                 <Briefcase className="h-8 w-8" />
               </AvatarFallback>
             </Avatar>
@@ -128,16 +131,17 @@ export const CompanyCard = ({ company, isHighlighted = false }: CompanyCardProps
             </div>
           </div>
           
+          {/* Company Details Section */}
           <div className="md:w-3/4 p-6">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between mb-2">
               <div>
-                <h3 className="text-lg font-semibold mb-1 text-iazi-text">{companyName}</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge className="bg-[#eef1ff] text-[#4664EA] hover:bg-[#e5eaff]">
+                <h3 className="text-xl font-semibold mb-2 text-[#1A1F2C]">{companyName}</h3>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <Badge className="bg-[#9b87f5] text-white hover:bg-[#7E69AB]">
                     {companyType}
                   </Badge>
                   {companySpecialty && companySpecialty !== companyType && (
-                    <Badge variant="outline" className="bg-gray-50">
+                    <Badge variant="outline" className="bg-[#F1F0FB] text-[#7E69AB] border-[#D6BCFA]">
                       {companySpecialty}
                     </Badge>
                   )}
@@ -146,72 +150,86 @@ export const CompanyCard = ({ company, isHighlighted = false }: CompanyCardProps
             </div>
 
             {displayAddress !== "Endereço não informado" && (
-              <div className="flex items-center text-sm text-gray-500 mb-3 font-inter">
-                <MapPin className="h-4 w-4 mr-1 text-gray-400" />
+              <div className="flex items-center text-sm text-gray-600 mb-3">
+                <MapPin className="h-4 w-4 mr-2 text-[#8E9196]" />
                 <span>{displayAddress}</span>
                 {displayDistance && (
-                  <Badge variant="outline" className="ml-2 text-xs py-0 h-5">
+                  <Badge variant="outline" className="ml-2 text-xs py-0 h-5 bg-[#F1F0FB] text-[#7E69AB] border-[#D6BCFA]">
                     {displayDistance}
                   </Badge>
                 )}
               </div>
             )}
             
+            {/* Services Section */}
             {Array.isArray(company.services) && company.services.length > 0 && (
-              <div className="mb-3">
-                <p className="text-sm text-gray-600 font-medium mb-1">Serviços principais:</p>
+              <div className="mb-4">
+                <p className="text-sm font-medium text-[#1A1F2C] mb-2">Serviços principais:</p>
                 <div className="flex flex-wrap gap-2">
                   {company.services.slice(0, 3).map((service, i) => (
-                    <Badge key={`service-${i}`} variant="outline" className="bg-gray-50">
+                    <Badge key={`service-${i}`} variant="outline" className="bg-white border-[#D6BCFA] text-[#7E69AB]">
                       {getServiceName(service)}
                     </Badge>
                   ))}
+                  {company.services.length > 3 && (
+                    <Badge variant="outline" className="bg-white border-[#D6BCFA] text-[#7E69AB]">
+                      +{company.services.length - 3} mais
+                    </Badge>
+                  )}
                 </div>
               </div>
             )}
             
+            {/* Professionals Section */}
             {Array.isArray(company.professionals) && company.professionals.length > 0 && (
-              <div className="mb-3">
-                <p className="text-sm text-gray-600 font-medium mb-1">Profissionais:</p>
-                <div className="flex flex-wrap gap-1">
-                  {company.professionals.map((prof, index) => {
+              <div className="mb-4">
+                <p className="text-sm font-medium text-[#1A1F2C] mb-2">Profissionais:</p>
+                <div className="flex flex-wrap gap-2">
+                  {company.professionals.slice(0, 5).map((prof, index) => {
                     const profId = getProfessionalId(prof, index);
                     const profName = getProfessionalName(prof);
                     return profId !== "#" ? (
-                      <Badge key={`prof-${index}`} variant="secondary" className="bg-gray-100">
+                      <Badge key={`prof-${index}`} variant="secondary" className="bg-[#F1F0FB] text-[#7E69AB]">
                         <Link
                           to={`/professional/${profId}`}
-                          className="hover:text-iazi-primary"
+                          className="hover:text-[#9b87f5]"
                         >
                           {profName}
                         </Link>
                       </Badge>
                     ) : (
-                      <Badge key={`prof-${index}`} variant="secondary" className="bg-gray-100">
+                      <Badge key={`prof-${index}`} variant="secondary" className="bg-[#F1F0FB] text-[#7E69AB]">
                         {profName}
                       </Badge>
                     );
                   })}
+                  {company.professionals.length > 5 && (
+                    <Badge variant="secondary" className="bg-[#F1F0FB] text-[#7E69AB]">
+                      +{company.professionals.length - 5} mais
+                    </Badge>
+                  )}
                 </div>
               </div>
             )}
             
+            {/* Availability Info */}
             {companyAvailability && 
-              <div className="flex items-center text-sm text-gray-500 mb-4">
-                <Calendar className="h-4 w-4 mr-1" />
+              <div className="flex items-center text-sm text-gray-600 mb-4">
+                <Calendar className="h-4 w-4 mr-2 text-[#8E9196]" />
                 <span>Disponível: {companyAvailability}</span>
               </div>
             }
             
-            <div className="flex gap-2 mt-4 border-t pt-4">
-              <Button variant="outline" className="flex-1" asChild>
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-5 pt-4 border-t border-gray-100">
+              <Button variant="outline" className="flex-1 border-[#D6BCFA] text-[#7E69AB] hover:bg-[#F1F0FB] hover:text-[#7E69AB]" asChild>
                 <Link to={`/company/${companyId}`}>
                   Ver detalhes
                 </Link>
               </Button>
-              <Button className="flex-1 bg-[#4664EA] hover:bg-[#3a52c7]" asChild>
+              <Button className="flex-1 bg-[#9b87f5] hover:bg-[#7E69AB] text-white" asChild>
                 <Link to={`/booking/company/${companyId}`}> 
-                  <User className="h-4 w-4 mr-1" />
+                  <Calendar className="h-4 w-4 mr-2" />
                   Agendar
                 </Link>
               </Button>
