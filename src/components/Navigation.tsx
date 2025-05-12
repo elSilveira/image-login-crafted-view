@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList } from "lucide-react";
+import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList, FileText } from "lucide-react";
 import { InviteModal } from "@/components/InviteModal";
 import apiClient from "@/lib/api";
 
@@ -114,18 +114,11 @@ export default function Navigation() {
                         Meu Perfil (Usuário)
                       </Link>
                     </DropdownMenuItem>
-                    {/* Perfil Profissional */}
+                    {/* Profissional */}
                     <DropdownMenuItem asChild>
-                      <Link to="/profile/professional/settings" className="flex items-center">
+                      <Link to="/profile/professional" className="flex items-center">
                         <Briefcase className="mr-2 h-4 w-4" />
-                        Perfil Profissional
-                      </Link>
-                    </DropdownMenuItem>
-                    {/* Serviços Profissional */}
-                    <DropdownMenuItem asChild>
-                      <Link to="/servicos" className="flex items-center">
-                        <ClipboardList className="mr-2 h-4 w-4" />
-                        Serviços Profissional
+                        Profissional
                       </Link>
                     </DropdownMenuItem>
                     {/* Cadastrar Empresa */}

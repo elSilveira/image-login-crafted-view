@@ -8,20 +8,23 @@ import { Calendar, Clock, Search, Filter, Star, FileText, RefreshCw } from "luci
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import BookingHistoryList from "@/components/booking/BookingHistoryList";
 import BookingHistoryCalendar from "@/components/booking/BookingHistoryCalendar";
-import Navigation from "@/components/Navigation";
+import { useLocation } from "react-router-dom";
+// Header is provided by ProfessionalAreaLayout in professional area
 
 const BookingHistory = () => {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  // Remove Navigation usage here to avoid duplicate header in professional area
   const [filter, setFilter] = useState({
     status: "all",
     period: "all",
     serviceType: "all",
     search: "",
   });
+  const location = useLocation();
+  const showNav = !location.pathname.startsWith("/profile/professional");
 
   return (
     <>
-      <Navigation />
       <div className="container mx-auto px-4 py-8 mt-16">
         <h1 className="text-3xl font-bold mb-6 text-iazi-text font-playfair">Meus Agendamentos</h1>
 

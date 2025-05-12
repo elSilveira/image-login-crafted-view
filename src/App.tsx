@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
+import ProfessionalAreaLayout from "@/components/ProfessionalAreaLayout";
 
 // Routes
 const Home = lazy(() => import("./pages/Home"));
@@ -31,7 +32,7 @@ const CompanyBooking = lazy(() => import("./pages/CompanyBooking"));
 // Company Admin Routes
 const CompanyDashboard = lazy(() => import("./pages/CompanyDashboard"));
 const CompanyServicesAdmin = lazy(() => import("./pages/CompanyServicesAdmin"));
-const ProfessionalServicesAdmin = lazy(() => import("./pages/ProfessionalServicesAdmin")); // New import
+const ProfessionalServicesAdmin = lazy(() => import("./pages/ProfessionalServicesAdmin"));
 const CompanyProfileAdmin = lazy(() => import("./pages/CompanyProfileAdmin"));
 const CompanySettingsAdmin = lazy(() => import("./pages/CompanySettingsAdmin"));
 const CompanyReviewsAdmin = lazy(() => import("./pages/CompanyReviewsAdmin"));
@@ -40,6 +41,12 @@ const CompanyStaff = lazy(() => import("./pages/CompanyStaff"));
 const CompanyCalendar = lazy(() => import("./pages/CompanyCalendar"));
 const StaffCalendar = lazy(() => import("./pages/StaffCalendar"));
 const CompanyServices = lazy(() => import("./pages/CompanyServices"));
+
+// Professional pages
+const ProfessionalDashboard = lazy(() => import("./pages/ProfessionalDashboard"));
+const ProfessionalCalendar = lazy(() => import("./pages/ProfessionalCalendar"));
+const ProfessionalReports = lazy(() => import("./pages/ProfessionalReports"));
+const ProfessionalSettings = lazy(() => import("./pages/ProfessionalSettings"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,7 +72,6 @@ function App() {
               <Route path="/services" element={<Services />} />
               <Route path="/service/:id" element={<ServiceDetails />} />
               <Route path="/professional/:id" element={<ProfessionalProfile />} />
-              <Route path="/profile/professional/settings" element={<ProfessionalProfileSettings />} />
               <Route path="/booking-history" element={<BookingHistory />} />
               <Route path="/booking/:serviceId" element={<Booking />} />
               <Route path="/booking/company/:companyId" element={<CompanyBooking />} />
@@ -78,7 +84,28 @@ function App() {
               <Route path="/reviews" element={<Reviews />} />
               <Route path="/gamification" element={<Gamification />} />
               <Route path="/professionals" element={<Professionals />} />
-              <Route path="/servicos" element={<ProfessionalServicesAdmin />} />
+              
+              {/* Professional area submenu routes */}
+              <Route path="/profile/professional" element={<ProfessionalAreaLayout />}
+                >
+                {/* Perfil tab */}
+                <Route index element={<ProfessionalProfileSettings />} />
+                {/* Serviços tab */}
+                <Route path="services" element={<ProfessionalServicesAdmin />} />
+                {/* Dashboard tab */}
+                <Route path="dashboard" element={<ProfessionalDashboard />} />
+                {/* Agendamentos tab */}
+                <Route path="bookings" element={<ProfessionalCalendar />} />
+                {/* Avaliações tab */}
+                <Route path="reviews" element={<Reviews />} />
+                {/* Relatórios tab */}
+                <Route path="reports" element={<ProfessionalReports />} />
+                {/* Configurações tab */}
+                <Route path="settings" element={<ProfessionalSettings />} />
+                {/* Calendário tab */}
+                <Route path="calendar" element={<ProfessionalCalendar />} />
+              </Route>
+              {/* End professional area submenu */}
               
               {/* Company Admin Routes */}
               <Route path="/company/my-company/dashboard" element={<CompanyDashboard />} />

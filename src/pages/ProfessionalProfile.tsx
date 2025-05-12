@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProfessionalDetails, fetchProfessionalMe, fetchProfessionalAvailableDates, fetchAvailability } from "@/lib/api"; // Import API function
 import Navigation from "@/components/Navigation";
@@ -175,7 +175,14 @@ const ProfessionalProfile = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [activeTab, setActiveTab] = useState("about");
+  // Sync active tab with URL query param `tab`
+  const [searchParams, setSearchParams] = useSearchParams();
+  const defaultTab = searchParams.get('tab') || 'about';
+  const [activeTab, setActiveTab] = useState(defaultTab);
+  useEffect(() => {
+    // Sync activeTab to URL
+    setSearchParams({ tab: activeTab }, { replace: true });
+  }, [activeTab, setSearchParams]);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
   const [loadingDates, setLoadingDates] = useState(false);
@@ -207,17 +214,18 @@ const ProfessionalProfile = () => {
 
   // Fetch slots when date changes
   useEffect(() => {
-    if (!date || !professional?.id) {
+    const serviceId = professional?.services && professional.services.length > 0 ? professional.services[0].id : undefined;
+    if (!date || !professional?.id || !serviceId) {
       setSlots([]);
       return;
     }
     setLoadingSlots(true);
     const iso = date.toISOString().split('T')[0];
-    fetchAvailability(professional.id, iso)
+    fetchAvailability(professional.id, serviceId, iso)
       .then(data => setSlots(data))
       .catch(err => console.error(err))
       .finally(() => setLoadingSlots(false));
-  }, [date, professional?.id]);
+  }, [date, professional?.id, professional?.services]);
 
   // --- Loading State --- 
   if (isLoading) {
@@ -329,7 +337,7 @@ const ProfessionalProfile = () => {
         </div>
         
         {/* Tabs navigation */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="space-y-4">
           <TabsList className="bg-white w-full h-auto flex-wrap justify-start p-0 md:p-0 shadow-sm rounded-lg overflow-x-auto">
             <TabsTrigger value="about" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2 flex-shrink-0">
               <User className="h-4 w-4" />
