@@ -15,7 +15,7 @@ import { fetchServices, fetchCompanies, fetchCategories, fetchSearchResults } fr
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // For error state
 import { AlertCircle } from "lucide-react";
-import { ProfessionalCard } from "@/components/home/ProfessionalCard";
+import { ProfessionalQuickCard } from "@/components/home/ProfessionalQuickCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Interfaces
@@ -200,7 +200,7 @@ const Search = () => {
 
   // --- Rendering Logic ---
 
-  const renderLoadingSkeletons = (count: number, type: 'service' | 'company') => (
+  const renderLoadingSkeletons = (count: number, type: 'service' | 'company' | 'professional') => (
     Array.from({ length: count }).map((_, index) => (
       <div key={`skeleton-${type}-${index}`} className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
         <div className="flex space-x-4">
@@ -217,44 +217,26 @@ const Search = () => {
   );
 
   // Function to render content or empty state for a specific type
-  const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company') => {
+  const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company' | 'professional') => {
+    if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
+    if (isError) return null;
+    if (data.length === 0) return <EmptyResults />;
+
     if (type === 'service') {
-      if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
-      if (isError) return null;
-      if (data.length === 0) return <EmptyResults />;
       return (
         <div className={`grid grid-cols-1 gap-4`}>
           {data.map(service => (
-            <div key={service?.id ?? Math.random()}>
-              <ServiceCard service={service || {}} isHighlighted={highlightId === (service?.id?.toString?.() ?? "")} />
-              {/* Optionally, show professionals for this service */}
-              {Array.isArray(service?.professionals) && service.professionals.length > 0 && (
-                <div className="mt-2 ml-4">
-                  <div className="font-semibold text-xs text-gray-500 mb-1">Profissionais que oferecem este serviço:</div>
-                  <div className="flex flex-wrap gap-2">
-                    {service.professionals.map((link: any) => (
-                      link?.professional && link.professional.id ? (
-                        <ProfessionalCard
-                          key={link.professional.id}
-                          id={link.professional.id}
-                          name={link.professional.name ?? "Profissional não informado"}
-                          rating={link.professional.rating ?? 0}
-                          image={link.professional.image || null}
-                        />
-                      ) : null
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <ServiceCard 
+              key={service?.id ?? Math.random()} 
+              service={service || {}} 
+              isHighlighted={highlightId === (service?.id?.toString?.() ?? "")} 
+            />
           ))}
         </div>
       );
     }
+    
     if (type === 'company') {
-      if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
-      if (isError) return null;
-      if (data.length === 0) return <EmptyResults />;
       return (
         <div className={`grid grid-cols-1 gap-4`}>
           {data.map(item => (
@@ -263,6 +245,26 @@ const Search = () => {
         </div>
       );
     }
+    
+    if (type === 'professional') {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {data.map(pro => (
+            <ProfessionalQuickCard
+              key={pro.id}
+              id={pro.id}
+              name={pro.name || "Profissional"}
+              image={pro.image}
+              rating={pro.rating}
+              services={pro.services}
+              company={pro.company}
+              role={pro.role}
+            />
+          ))}
+        </div>
+      );
+    }
+    
     return null;
   };
 
@@ -333,6 +335,7 @@ const Search = () => {
                 onSortChange={handleSortChange}
                 serviceCount={totalServices} 
                 companyCount={totalCompanies}
+                professionalCount={totalProfessionals}
               >
                 {/* Content Tabs */}
                 <TabsContent value="all">
@@ -342,54 +345,7 @@ const Search = () => {
                   </div>
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">Profissionais</h2>
-                    {isLoadingSearch ? renderLoadingSkeletons(ITEMS_PER_PAGE, 'service') :
-                      isErrorSearch ? null :
-                      paginatedProfessionals.length === 0 ? <EmptyResults /> :
-                      <div className="space-y-6">
-                        {paginatedProfessionals.map((pro: any) => (
-                          pro?.id ? (
-                            <div key={pro.id} className="border rounded-lg bg-white shadow-sm p-5">
-                              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                                <ProfessionalCard
-                                  id={pro.id}
-                                  name={pro.name ?? "Profissional não informado"}
-                                  rating={pro.rating ?? 0}
-                                  image={pro.image || null}
-                                />
-                                <div className="flex-1">
-                                  {pro.company && pro.company.name && (
-                                    <div className="mb-2 text-sm text-gray-600">
-                                      <span className="font-semibold">Empresa:</span> {pro.company.name}
-                                    </div>
-                                  )}
-                                  {Array.isArray(pro.services) && pro.services.length > 0 ? (
-                                    <div>
-                                      <div className="font-semibold text-sm mb-1">Serviços vinculados:</div>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                        {pro.services.map((link: any) => (
-                                          link?.service && link.service.id ? (
-                                            <ServiceCard key={link.service.id} service={{
-                                              ...link.service,
-                                              price: link.price ?? link.service.price,
-                                              professional: pro,
-                                              company: link.service.company || pro.company,
-                                              schedule: link.schedule,
-                                              description: link.description ?? link.service.description,
-                                            }} />
-                                          ) : null
-                                        ))}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="italic text-gray-400 text-sm">Nenhum serviço vinculado.</div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ) : null
-                        ))}
-                      </div>
-                    }
+                    {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold mb-4">Empresas</h2>
@@ -421,65 +377,8 @@ const Search = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  {isLoadingSearch ? (
-                    renderLoadingSkeletons(ITEMS_PER_PAGE, "service")
-                  ) : isErrorSearch ? (
-                    <Alert variant="destructive" className="my-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Erro ao Carregar Profissionais</AlertTitle>
-                      <AlertDescription>
-                        Não foi possível buscar os profissionais. Tente novamente mais tarde.
-                        {errorSearch && <p className="text-xs mt-2">Detalhes: {errorSearch.message}</p>}
-                      </AlertDescription>
-                    </Alert>
-                  ) : paginatedProfessionals.length === 0 ? (
-                    <EmptyResults />
-                  ) : (
-                    <div className="space-y-6">
-                      {paginatedProfessionals.map((pro: any) => (
-                        pro?.id ? (
-                          <div key={pro.id} className="border rounded-lg bg-white shadow-sm p-5">
-                            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-                              <ProfessionalCard
-                                id={pro.id}
-                                name={pro.name ?? "Profissional não informado"}
-                                rating={pro.rating ?? 0}
-                                image={pro.image || null}
-                              />
-                              <div className="flex-1">
-                                {pro.company && pro.company.name && (
-                                  <div className="mb-2 text-sm text-gray-600">
-                                    <span className="font-semibold">Empresa:</span> {pro.company.name}
-                                  </div>
-                                )}
-                                {Array.isArray(pro.services) && pro.services.length > 0 ? (
-                                  <div>
-                                    <div className="font-semibold text-sm mb-1">Serviços vinculados:</div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                      {pro.services.map((link: any) => (
-                                        link?.service && link.service.id ? (
-                                          <ServiceCard key={link.service.id} service={{
-                                            ...link.service,
-                                            price: link.price ?? link.service.price,
-                                            professional: pro,
-                                            company: link.service.company || pro.company,
-                                            schedule: link.schedule,
-                                            description: link.description ?? link.service.description,
-                                          }} />
-                                        ) : null
-                                      ))}
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="italic text-gray-400 text-sm">Nenhum serviço vinculado.</div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ) : null
-                      ))}
-                    </div>
-                  )}
+                  {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
+                  
                   {/* Pagination for professionals */}
                   {!isLoadingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
                     <ServicePagination
