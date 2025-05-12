@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "@/lib/api";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -78,4 +79,3 @@ export const CategorySection = () => {
     </section>
   );
 };
-

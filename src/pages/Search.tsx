@@ -66,15 +66,16 @@ const Search = () => {
   const actualCategoriesArray = Array.isArray(categoriesApiResponse) 
     ? categoriesApiResponse 
     : categoriesApiResponse?.data || [];
+  // Fixed: Properly extract category names and handle invalid data
   const categoryNames = actualCategoriesArray.map(cat => {
     if (typeof cat === 'object' && cat !== null && typeof cat.name === 'string') {
       return cat.name;
     }
     console.warn('[Search.tsx] Unexpected category item format or missing name:', cat);
     return null; // Return null for invalid items
-  }).filter(name => name !== null) as string[]; // Filter out nulls and assert as string[]
+  }).filter(Boolean) as string[]; // Filter out nulls and assert as string[]
+  
   console.log("[Search Final Categories Query]:", { isLoadingCategories, isErrorCategories, errorCategories: errorCategories?.message, dataLength: actualCategoriesArray.length });
-
 
   // Fetch Services
   const { data: servicesApiResponse, isLoading: isLoadingServices, isError: isErrorServices, error: errorServices } = useQuery<{ data: Service[], pagination: any }, Error>({
@@ -287,4 +288,3 @@ const Search = () => {
 };
 
 export default Search;
-

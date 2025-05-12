@@ -204,4 +204,3 @@ export function SearchDropdown() {
     </Popover>
   );
 }
-

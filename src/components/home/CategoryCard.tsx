@@ -1,25 +1,34 @@
 
-import { Button } from "@/components/ui/button";
-import { LucideIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { LucideIcon } from 'lucide-react';
 
 interface CategoryCardProps {
   title: string;
-  icon: LucideIcon;
+  icon: LucideIcon; // Accept a Lucide icon component
   href: string;
+  className?: string;
 }
 
-export const CategoryCard = ({ title, icon: Icon, href }: CategoryCardProps) => {
+export const CategoryCard = ({
+  title,
+  icon: Icon, // Destructure as Icon for clearer usage
+  href,
+  className,
+}: CategoryCardProps) => {
   return (
-    <Button
-      variant="outline"
-      className="h-20 w-20 flex flex-col items-center justify-center gap-2 p-0 shrink-0 bg-white hover:bg-iazi-primary hover:text-white group shadow-sm border-iazi-border"
-      asChild
+    <Link
+      to={href}
+      className={cn(
+        'flex flex-col items-center p-4 bg-white border border-gray-200 rounded-lg text-center min-w-[120px] hover:border-primary hover:shadow-md transition-all',
+        className
+      )}
     >
-      <Link to={href}>
-        <Icon className="h-8 w-8 group-hover:text-white" />
-        <span className="text-xs font-medium font-inter">{title}</span>
-      </Link>
-    </Button>
+      <div className="p-3 bg-primary/10 rounded-full mb-3">
+        <Icon className="h-6 w-6 text-primary" />
+      </div>
+      <span className="text-sm font-medium">{title}</span>
+    </Link>
   );
 };
