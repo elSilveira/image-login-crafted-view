@@ -60,6 +60,9 @@ export function SearchTabs({
               </Badge>
             </TabsTrigger>
           </TabsList>
+          
+          {/* Move the TabsContent components inside the Tabs component */}
+          {children}
         </Tabs>
 
         <div className="w-full sm:w-auto">
@@ -78,9 +81,6 @@ export function SearchTabs({
           </Select>
         </div>
       </div>
-
-      {/* Tabs content */}
-      {children}
     </div>
   );
 }
