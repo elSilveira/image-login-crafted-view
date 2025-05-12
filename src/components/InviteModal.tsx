@@ -25,7 +25,19 @@ export const InviteModal: React.FC<InviteModalProps> = ({ open, onOpenChange, in
       case 'professional':
         return 'Este convite permite que um novo PROFISSIONAL cadastre-se na plataforma.';
       default:
-        return 'Compartilhe este código com o convidado. Ele poderá usá-lo para se cadastrar na plataforma.';
+        return 'Compartilhe este link com o convidado. Ele poderá usá-lo para se cadastrar na plataforma.';
+    }
+  };
+
+  // Link de convite
+  const inviteLink = inviteCode ? `https://iazi-be.vercel.app/register?inviteCode=${inviteCode}` : "";
+
+  // Novo onCopy: copia o link com mensagem
+  const handleCopyLink = () => {
+    if (inviteLink) {
+      const message = `Venha para a revolução do serviço no Brasil! ${inviteLink}`;
+      navigator.clipboard.writeText(message);
+      onCopy();
     }
   };
 
@@ -42,13 +54,13 @@ export const InviteModal: React.FC<InviteModalProps> = ({ open, onOpenChange, in
         ) : inviteCode ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Código do Convite</label>
-              <Input value={inviteCode} readOnly className="font-mono" />
+              <label className="block text-sm font-medium mb-1">Link de Convite</label>
+              <Input value={inviteLink} readOnly className="font-mono" />
             </div>
             <div className="flex gap-2">
-              <Button onClick={onCopy} variant="outline" className="flex-1">
+              <Button onClick={handleCopyLink} variant="outline" className="flex-1">
                 {copied ? <ClipboardCheck className="h-4 w-4 mr-2" /> : null}
-                {copied ? "Copiado!" : "Copiar Mensagem"}
+                {copied ? "Copiado!" : "Copiar Link"}
               </Button>
             </div>
             <div className="text-xs text-muted-foreground">

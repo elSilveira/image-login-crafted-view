@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, User, Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "../lib/api";
 
@@ -17,13 +16,19 @@ const Register = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { updateAuthState } = useAuth();
+  const location = useLocation();
+  // Captura o inviteCode da query string
+  const searchParams = new URLSearchParams(location.search);
+  const inviteCode = searchParams.get("inviteCode") || "";
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await apiClient.post("/auth/register", { name, email, password });
+      const payload: any = { name, email, password };
+      if (inviteCode) payload.inviteCode = inviteCode;
+      const response = await apiClient.post("/auth/register", payload);
       const { user: registeredUser, accessToken, refreshToken } = response.data;
 
       if (!registeredUser || !accessToken) {

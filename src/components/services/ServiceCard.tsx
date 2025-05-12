@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Link } from "react-router-dom";
@@ -12,7 +11,7 @@ interface ServiceCardProps {
   service: {
     id: number | string; 
     name?: string;
-    category?: string;
+    category?: string | { id?: string | number; name?: string }; 
     company?: string | { id?: string | number; name?: string }; 
     professional?: string | { id?: string | number; name?: string }; 
     image?: string;
@@ -31,6 +30,17 @@ interface ServiceCardProps {
   onEdit?: () => void;
   onPause?: () => void;
   onDelete?: () => void;
+}
+
+// Helper to safely extract a string label from category (string or object)
+function getCategoryLabel(category: any): string {
+  if (!category) return "Categoria não informada";
+  if (typeof category === "string") return category;
+  if (typeof category === "object" && category !== null) {
+    if (typeof category.name === "string" && category.name.trim() !== "") return category.name;
+    if (category.id !== undefined) return String(category.id);
+  }
+  return "Categoria não informada";
 }
 
 const renderStars = (rating?: number) => {
@@ -67,46 +77,45 @@ export const ServiceCard = ({
   }
 
   // Safely get service properties with fallbacks
-  const serviceId = service.id.toString();
+  const serviceId = service.id?.toString() ?? "";
   const serviceName = service.name || "Serviço não informado";
   const serviceDescription = service.description || "Sem descrição disponível";
-  const servicePrice = typeof service.price === "string" ? service.price : 
-                      typeof service.price === "number" ? `R$ ${service.price.toFixed(2)}` : 
-                      "Preço não informado";
+  const servicePrice = typeof service.price === "string" ? service.price :
+    typeof service.price === "number" ? `R$ ${service.price.toFixed(2)}` :
+    "Preço não informado";
   const serviceDuration = typeof service.duration === "string" ? service.duration : "Duração não informada";
-  const serviceCategory = service.category || "Categoria não informada";
+  const serviceCategory = getCategoryLabel(service.category);
   const serviceType = service.type || "Serviço";
-  
+
   // Company information
-  const companyName = typeof service.company === "string" ? service.company : 
-                      service.company?.name || "Empresa não informada";
-  const companyId = typeof service.company === "object" && service.company?.id ? 
-                    service.company.id : service.company_id;
-  
+  const companyName = typeof service.company === "string" ? service.company :
+    service.company?.name || "Empresa não informada";
+  const companyId = typeof service.company === "object" && service.company?.id ?
+    service.company.id : service.company_id;
+
   // Professional information
-  const professionalName = typeof service.professional === "string" ? service.professional : 
-                          service.professional?.name || null;
-  const professionalId = typeof service.professional === "object" && service.professional?.id ? 
-                        service.professional.id : service.professional_id;
-  
+  const professionalName = typeof service.professional === "string" ? service.professional :
+    service.professional?.name || null;
+  const professionalId = typeof service.professional === "object" && service.professional?.id ?
+    service.professional.id : service.professional_id;
+
   // Rating information
   const serviceRating = typeof service.rating === "number" ? service.rating : 0;
   const serviceReviews = typeof service.reviews === "number" ? service.reviews : 0;
-  
+
   // Address and distance
   let displayAddress = null;
   let displayDistance = null;
-  
   if (typeof service.address === "string") {
     displayAddress = service.address;
   } else if (typeof service.address === "object" && service.address !== null) {
     displayAddress = service.address.fullAddress || service.address.city;
-    displayDistance = service.address.distance !== undefined ? 
-                     (typeof service.address.distance === "number" ? 
-                     `${service.address.distance.toFixed(1)} km` : service.address.distance) : 
-                     null;
+    displayDistance = service.address.distance !== undefined ?
+      (typeof service.address.distance === "number" ?
+        `${service.address.distance.toFixed(1)} km` : service.address.distance) :
+      null;
   }
-  
+
   // Get service initials for avatar fallback (safely)
   const serviceInitials = serviceName ? serviceName.substring(0, 2).toUpperCase() : "SV";
 

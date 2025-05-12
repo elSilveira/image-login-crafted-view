@@ -13,10 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList } from "lucide-react";
 import { InviteModal } from "@/components/InviteModal";
+import apiClient from "@/lib/api";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
   const userRole = getEffectiveUserRole(user);
+
+  // Debug: Log user whenever it changes
+  React.useEffect(() => {
+    console.log('[Navigation] user context changed:', user);
+  }, [user]);
 
   // Invite modal state
   const [inviteModalOpen, setInviteModalOpen] = React.useState(false);
@@ -34,9 +40,8 @@ export default function Navigation() {
     setInviteModalOpen(true);
     setCopied(false);
     try {
-      const res = await fetch("/auth/invites", { method: "POST", headers: { "Content-Type": "application/json" } });
-      if (!res.ok) throw new Error("Erro ao gerar convite");
-      const data = await res.json();
+      const res = await apiClient.post("/auth/invites");
+      const data = res.data;
       setInviteCode(data.code || data.inviteCode || data.invite || "");
     } catch (e) {
       setInviteCode("");
@@ -97,65 +102,54 @@ export default function Navigation() {
                     <div className="px-3 py-2 text-xs text-muted-foreground font-mono bg-gray-100 rounded mb-1 cursor-default select-none">
                       {userRole}
                     </div>
+                    {/* Criar Convite */}
+                    <DropdownMenuItem onClick={handleInviteClick} className="flex items-center cursor-pointer">
+                      <ClipboardList className="mr-2 h-4 w-4" />
+                      Enviar Convite
+                    </DropdownMenuItem>
+                    {/* Meu Perfil (Usuário) */}
                     <DropdownMenuItem asChild>
                       <Link to="/profile" className="flex items-center">
                         <User className="mr-2 h-4 w-4" />
                         Meu Perfil (Usuário)
                       </Link>
                     </DropdownMenuItem>
-                    {/* Conditionally render View Professional Profile link */}
-                    {user.isProfessional && (
-                      <DropdownMenuItem asChild>
-                        <Link to="/profile/professional/settings" className="flex items-center">
-                          <Briefcase className="mr-2 h-4 w-4" /> 
-                          Ver Meu Perfil Profissional
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
+                    {/* Perfil Profissional */}
                     <DropdownMenuItem asChild>
                       <Link to="/profile/professional/settings" className="flex items-center">
                         <Briefcase className="mr-2 h-4 w-4" />
-                        Editar Perfil Profissional
+                        Perfil Profissional
                       </Link>
                     </DropdownMenuItem>
-                    {/* Invite menu item for admin, company, and professional */}
-                    {user && (user.isAdmin || user.hasCompany || user.isProfessional) && (
-                      <DropdownMenuItem onClick={handleInviteClick} className="flex items-center cursor-pointer">
-                        <ClipboardList className="mr-2 h-4 w-4" />
-                        Enviar Convite
-                      </DropdownMenuItem>
-                    )}
-                    {/* New menu items for services */}
+                    {/* Serviços Profissional */}
                     <DropdownMenuItem asChild>
                       <Link to="/servicos" className="flex items-center">
-                        <Briefcase className="mr-2 h-4 w-4" />
-                        Serviços Profissionais
+                        <ClipboardList className="mr-2 h-4 w-4" />
+                        Serviços Profissional
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/settings" className="flex items-center">
-                        <Settings className="mr-2 h-4 w-4" />
-                        Configurações
-                      </Link>
-                    </DropdownMenuItem>
+                    {/* Cadastrar Empresa */}
                     <DropdownMenuItem asChild>
                       <Link to="/company/register" className="flex items-center">
                         <Building className="mr-2 h-4 w-4" />
                         Cadastrar Empresa
                       </Link>
                     </DropdownMenuItem>
+                    {/* Painel Admin */}
                     <DropdownMenuItem asChild>
                       <Link to="/company/my-company/dashboard" className="flex items-center">
                         <LayoutDashboard className="mr-2 h-4 w-4" />
                         Painel Admin
                       </Link>
                     </DropdownMenuItem>
+                    {/* Avaliações */}
                     <DropdownMenuItem asChild>
                       <Link to="/reviews" className="flex items-center">
                         <Star className="mr-2 h-4 w-4" />
                         Avaliações
                       </Link>
                     </DropdownMenuItem>
+                    {/* Conquistas */}
                     <DropdownMenuItem asChild>
                       <Link to="/gamification" className="flex items-center">
                         <Award className="mr-2 h-4 w-4" />
@@ -191,7 +185,7 @@ export default function Navigation() {
         loading={loadingInvite}
         onCopy={handleCopy}
         copied={copied}
-        role={user ? (user.isAdmin ? 'admin' : user.hasCompany ? 'company' : user.isProfessional ? 'professional' : undefined) : undefined}
+        role={undefined}
       />
     </>
   );

@@ -124,18 +124,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const response = await apiClient.post("/auth/login", { email, password });
-      // The backend returns all fields at the top level, so destructure them
-      const { accessToken: newAccessToken, refreshToken: newRefreshToken, ...userPayload } = response.data;
-      // Normalize user fields
-      const loggedInUser = {
-        ...userPayload,
-        isAdmin: userPayload.isAdmin ?? (userPayload.role === 'ADMIN' || userPayload.role === 'admin'),
-        isProfessional: userPayload.isProfessional ?? (userPayload.role === 'PROFESSIONAL' || userPayload.role === 'professional'),
-        hasCompany: userPayload.hasCompany ?? !!userPayload.companyId,
-      };
-      if (!newAccessToken || !loggedInUser) {
+      // O backend retorna { message, accessToken, refreshToken, user }
+      const { accessToken: newAccessToken, refreshToken: newRefreshToken, user: userPayload } = response.data;
+      if (!newAccessToken || !userPayload) {
         throw new Error("Resposta de login inválida do servidor.");
       }
+      // Normaliza os campos do usuário para garantir compatibilidade
+      const loggedInUser = {
+        id: userPayload.id,
+        name: userPayload.name,
+        email: userPayload.email,
+        avatar: userPayload.avatar ?? undefined,
+        profilePicture: userPayload.profilePicture ?? undefined,
+        phone: userPayload.phone ?? undefined,
+        bio: userPayload.bio ?? undefined,
+        slug: userPayload.slug ?? undefined,
+        role: typeof userPayload.role === 'string' ? userPayload.role.toLowerCase() : undefined,
+        professionalId: userPayload.professionalId ?? null,
+        companyId: userPayload.companyId ?? null,
+        isProfessional: userPayload.isProfessional ?? (userPayload.role === 'PROFESSIONAL' || userPayload.role === 'professional'),
+        hasCompany: userPayload.hasCompany ?? !!userPayload.companyId,
+        isAdmin: userPayload.isAdmin ?? (userPayload.role === 'ADMIN' || userPayload.role === 'admin'),
+        admin: userPayload.admin ?? false,
+        createdAt: userPayload.createdAt,
+        updatedAt: userPayload.updatedAt,
+      };
       updateAuthState(loggedInUser, newAccessToken, newRefreshToken);
       toast({
         title: "Login realizado com sucesso",
