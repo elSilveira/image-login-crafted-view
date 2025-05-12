@@ -59,13 +59,17 @@ export const CategorySection = () => {
               categories.map((category) => {
                 // Get the corresponding Lucide icon, default to a generic one if not found
                 const IconComponent = category.icon ? iconMap[category.icon.toLowerCase()] || Wrench : Wrench;
+                
+                // Make sure to extract category.name as a string for display
+                const categoryName = typeof category.name === 'string' ? category.name : 'Categoria';
+                
                 return (
                   <CategoryCard 
                     key={category.id} 
-                    title={category.name} 
+                    title={categoryName} 
                     icon={IconComponent} // Pass the component itself
                     // Construct href based on category name or ID
-                    href={`/search?category=${encodeURIComponent(category.name.toLowerCase())}`}
+                    href={`/search?category=${encodeURIComponent(categoryName.toLowerCase())}`}
                   />
                 );
               })

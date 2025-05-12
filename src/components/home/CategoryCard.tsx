@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { LucideIcon } from 'lucide-react';
 
 interface CategoryCardProps {
-  title: string;
+  title: string; // Always expect a string for the title
   icon: LucideIcon; // Accept a Lucide icon component
   href: string;
   className?: string;
