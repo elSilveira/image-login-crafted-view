@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash, Clock } from "lucide-react";
 import { ServiceItem } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 interface ServiceCardProps {
   service: ServiceItem;
@@ -27,6 +27,17 @@ const formatPrice = (price: string | number | undefined): string => {
   }
   
   return price.toString(); // Just return the string if it's not a valid number
+};
+
+// Helper function to get a safe category label
+const getCategoryLabel = (category: any): string => {
+  if (!category) return 'Categoria';
+  if (typeof category === 'string') return category;
+  if (typeof category === 'object') {
+    if (typeof category.name === 'string' && category.name.trim() !== '') return category.name;
+    if (category.id !== undefined) return String(category.id);
+  }
+  return 'Categoria';
 };
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -57,8 +68,12 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
             <div className="flex flex-wrap items-center gap-3 mt-auto">
               {service.duration && (
                 <div className="flex items-center text-sm text-gray-600">
-                  <Clock className="h-4 w-4 mr-1" /> 
-                  <span>{service.duration} min</span>
+                  <Clock className="h-4 w-4 mr-1" />
+                  <span>
+                    {typeof service.duration === 'number'
+                      ? `${service.duration} min`
+                      : service.duration}
+                  </span>
                 </div>
               )}
               {service.price !== undefined && (
@@ -66,10 +81,11 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
                   {formatPrice(service.price)}
                 </div>
               )}
+              {/* Category badge: robustly support backend contract */}
               {service.categoryName && (
-                <div className="text-sm text-gray-600">
-                  {service.categoryName}
-                </div>
+                <Badge variant="outline" className="text-xs">
+                  {getCategoryLabel(service.categoryName)}
+                </Badge>
               )}
             </div>
           </div>
