@@ -1,7 +1,8 @@
+
 "use client";
 
 import { Link } from "react-router-dom";
-import { Clock, Trash, PauseCircle, Pencil, Star, MapPin, User } from "lucide-react"; 
+import { Clock, Trash, PauseCircle, Pencil, Star, MapPin, User, Calendar } from "lucide-react"; 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,11 +26,13 @@ interface ServiceCardProps {
     description?: string;
     type?: string;
     address?: string | { fullAddress?: string; city?: string; distance?: number | string };
+    canBookDirect?: boolean; // Flag for services that can be booked directly
   };
   isHighlighted?: boolean;
   onEdit?: () => void;
   onPause?: () => void;
   onDelete?: () => void;
+  compact?: boolean; // Option for a more compact display
 }
 
 // Helper to safely extract a string label from category (string or object)
@@ -66,7 +69,8 @@ export const ServiceCard = ({
   isHighlighted = false, 
   onEdit,
   onPause,
-  onDelete
+  onDelete,
+  compact = false
 }: ServiceCardProps) => {
   if (!service || typeof service.id === "undefined") {
     return (
@@ -118,6 +122,38 @@ export const ServiceCard = ({
 
   // Get service initials for avatar fallback (safely)
   const serviceInitials = serviceName ? serviceName.substring(0, 2).toUpperCase() : "SV";
+
+  // For compact mode
+  if (compact) {
+    return (
+      <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${
+        isHighlighted ? "border-l-4 border-l-[#4664EA] ring-1 ring-[#4664EA]" : ""
+      }`}>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={service.image} alt={serviceName} />
+              <AvatarFallback className="bg-sky-100 text-sky-700">{serviceInitials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold truncate">{serviceName}</h4>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span>{servicePrice}</span>
+                <span>•</span>
+                <span>{serviceDuration}</span>
+              </div>
+            </div>
+            <Button size="sm" variant="default" className="h-8" asChild>
+              <Link to={`/booking/service/${serviceId}`}>
+                <Calendar className="h-3.5 w-3.5 mr-1" />
+                Agendar
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 border-l-4 ${
@@ -230,7 +266,10 @@ export const ServiceCard = ({
                     <Link to={`/service/${serviceId}`}>Ver detalhes</Link>
                   </Button>
                   <Button size="sm" className="flex-1" asChild>
-                    <Link to={`/booking/service/${serviceId}`}>Agendar</Link>
+                    <Link to={`/booking/service/${serviceId}`}>
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Agendar agora
+                    </Link>
                   </Button>
                 </>
               )}

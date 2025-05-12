@@ -278,7 +278,26 @@ export const fetchSearchResults = async (params: any = {}) => {
   return response.data;
 };
 
+// --- Quick Actions API ---
+export const fetchQuickBookingOptions = async (query: string) => {
+  const response = await apiClient.get("/search/quick-booking", { 
+    params: { q: query, limit: 5 } 
+  });
+  return response.data;
+};
+
+// --- Direct Booking API Functions ---
+export const checkDirectBookingEligibility = async (serviceId: string) => {
+  const response = await apiClient.get(`/services/${serviceId}/direct-booking-eligibility`);
+  return response.data;
+};
+
+// --- Direct Professional Service Booking ---
+export const bookProfessionalService = async (professionalId: string, serviceId: string, bookingData: any) => {
+  const response = await apiClient.post(`/professionals/${professionalId}/services/${serviceId}/book`, bookingData);
+  return response.data;
+};
+
 // Adicione outras funções de API conforme necessário
 
 export default apiClient;
-

@@ -2,7 +2,7 @@
 // src/components/SearchDropdown.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Loader2 } from "lucide-react"; // Added Loader2
+import { Search, Loader2 } from "lucide-react"; 
 import { Input } from "./ui/input";
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "./ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -11,16 +11,15 @@ import { debounce } from "lodash"; // Using lodash for debouncing
 
 // Interface for combined search results from API
 export interface SearchResult {
-  id: string; // Use string IDs from DB
+  id: string; 
   title: string;
-  type: "service" | "company" | "professional"; // Added professional type
-  subtitle?: string; // Make subtitle optional
+  type: "service" | "company" | "professional"; 
+  subtitle?: string; 
   category?: string;
-  // Add other relevant fields if needed, e.g., image
+  directBooking?: boolean; // Flag for services that can be booked directly
 }
 
-// Categorias populares (assuming static for now)
-// TODO: Consider fetching categories from API if dynamic
+// Popular categories (assuming static for now)
 export const popularCategories = [
   { id: 1, name: "Tratamento Facial", type: "service" },
   { id: 2, name: "Fisioterapia", type: "service" },
@@ -79,20 +78,17 @@ export function SearchDropdown() {
 
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
-    // Navigate based on result type
-    let path = "/search";
-    if (result.type === "service") {
-      path = `/service/${result.id}`;
-    } else if (result.type === "company") {
-      path = `/company/${result.id}`; // Assuming company profile page exists
+    // Navigate based on result type with optimized paths for booking
+    if (result.type === "service" && result.directBooking) {
+      navigate(`/booking/service/${result.id}`); // Direct booking for eligible services
+    } else if (result.type === "service") {
+      navigate(`/service/${result.id}`);
     } else if (result.type === "professional") {
-      path = `/professional/${result.id}`; // Assuming professional profile page exists
-    }
-    // Fallback to search page if specific page doesn't exist or type is unknown
-    if (path === "/search") {
-        navigate(`/search?q=${encodeURIComponent(result.title)}&type=${result.type}&highlight=${result.id}`);
+      navigate(`/professional/${result.id}`);
+    } else if (result.type === "company") {
+      navigate(`/company/${result.id}`);
     } else {
-        navigate(path);
+      navigate(`/search?q=${encodeURIComponent(result.title)}&type=${result.type}&highlight=${result.id}`);
     }
   };
 
@@ -119,7 +115,7 @@ export function SearchDropdown() {
              <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 animate-spin z-10" />
           )}
           <Input
-            placeholder="Buscar serviços, empresas..."
+            placeholder="Buscar serviços, profissionais..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10 pr-10 w-full bg-gray-50 border-gray-200 focus:bg-white h-9 text-sm"
@@ -155,11 +151,18 @@ export function SearchDropdown() {
                   >
                     <div className="flex items-center w-full">
                       <span className="font-medium truncate" title={result.title}>{result.title}</span>
-                      <Badge variant="outline" className="ml-2 text-xs flex-shrink-0">
-                        {result.type === "company" ? "Empresa" :
-                         result.type === "professional" ? "Profissional" :
-                         "Serviço"}
-                      </Badge>
+                      <div className="ml-auto flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs flex-shrink-0">
+                          {result.type === "company" ? "Empresa" :
+                           result.type === "professional" ? "Profissional" :
+                           "Serviço"}
+                        </Badge>
+                        {result.directBooking && (
+                          <Badge variant="default" className="bg-green-600 text-xs">
+                            Agendar
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     {result.subtitle && (
                       <span className="text-sm text-gray-500 truncate" title={result.subtitle}>{result.subtitle}</span>
