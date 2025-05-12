@@ -1,3 +1,4 @@
+
 "use client"; // Ensure client-side rendering for hooks
 
 import { useState, useEffect } from "react";
@@ -66,14 +67,14 @@ const Search = () => {
   const actualCategoriesArray = Array.isArray(categoriesApiResponse) 
     ? categoriesApiResponse 
     : categoriesApiResponse?.data || [];
-  // Fixed: Properly extract category names and handle invalid data
+  // Extract category names and handle invalid data
   const categoryNames = actualCategoriesArray.map(cat => {
-    if (typeof cat === 'object' && cat !== null && typeof cat.name === 'string') {
+    if (typeof cat === 'object' && cat !== null && 'name' in cat && typeof cat.name === 'string') {
       return cat.name;
     }
     console.warn('[Search.tsx] Unexpected category item format or missing name:', cat);
-    return null; // Return null for invalid items
-  }).filter(Boolean) as string[]; // Filter out nulls and assert as string[]
+    return 'Categoria'; // Return a default name for invalid items
+  });
   
   console.log("[Search Final Categories Query]:", { isLoadingCategories, isErrorCategories, errorCategories: errorCategories?.message, dataLength: actualCategoriesArray.length });
 
@@ -255,7 +256,8 @@ const Search = () => {
                     <h2 className="text-xl font-semibold mb-4">Empresas</h2>
                     {renderTypedContent(isLoadingCompanies, isErrorCompanies, companies, 'company')}
                   </div>
-                  {/* Combined Empty State for 'all' tab */}                  {!isAnyLoading && !isAnyError && services.length === 0 && companies.length === 0 && <EmptyResults />}
+                  {/* Combined Empty State for 'all' tab */}                  
+                  {!isAnyLoading && !isAnyError && services.length === 0 && companies.length === 0 && <EmptyResults />}
                 </TabsContent>
 
                 <TabsContent value="service">
