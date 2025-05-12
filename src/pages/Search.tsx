@@ -1,4 +1,3 @@
-
 "use client"; // Ensure client-side rendering for hooks
 
 import { useState, useEffect } from "react";
@@ -12,10 +11,12 @@ import { SearchTabs } from "@/components/search/SearchTabs";
 import { ServicePagination } from "@/components/services/ServicePagination";
 import { EmptyResults } from "@/components/search/EmptyResults";
 import { TabsContent } from "@/components/ui/tabs";
-import { fetchServices, fetchCompanies, fetchCategories } from "@/lib/api"; // Import API functions
+import { fetchServices, fetchCompanies, fetchCategories, fetchSearchResults } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // For error state
 import { AlertCircle } from "lucide-react";
+import { ProfessionalCard } from "@/components/home/ProfessionalCard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // Interfaces
 interface Service { id: string; name: string; category: string; company: { id: string; name: string }; rating: number; price: string; /* Add other fields ServiceCard expects */ image?: string; reviews?: number; duration?: string; availability?: string; company_id?: string; professional_id?: string; professional?: string; }
@@ -36,6 +37,7 @@ const Search = () => {
   const [viewType, setViewType] = useState<string>(typeFilter);
   const [sortBy, setSortBy] = useState("rating"); // Default sort
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFilter);
+  const [professionalTipo, setProfessionalTipo] = useState<"all" | "only-linked" | "only-unlinked">("all");
 
   useEffect(() => {
     console.log("[Search Final Effect] Updating state from URL params:", { typeFilter, categoryFilter, pageParam });
@@ -78,43 +80,103 @@ const Search = () => {
   
   console.log("[Search Final Categories Query]:", { isLoadingCategories, isErrorCategories, errorCategories: errorCategories?.message, dataLength: actualCategoriesArray.length });
 
-  // Fetch Services
-  const { data: servicesApiResponse, isLoading: isLoadingServices, isError: isErrorServices, error: errorServices } = useQuery<{ data: Service[], pagination: any }, Error>({
-    queryKey: ["services", queryParams],
-    queryFn: () => fetchServices(queryParams),
-    enabled: viewType === "all" || viewType === "service",
+  // Fetch Services (now via professionals/all-services?tipo=only-linked)
+  const { data: searchApiResponse, isLoading: isLoadingSearch, isError: isErrorSearch, error: errorSearch } = useQuery<any, Error>({
+    queryKey: ["search-api", searchTerm, selectedCategory, sortBy, currentPage, viewType, professionalTipo],
+    queryFn: async () => {
+      if (viewType !== "all" && viewType !== "service" && viewType !== "professional" && viewType !== "company") return {};
+      const params: any = {
+        q: searchTerm,
+        category: selectedCategory,
+        sort: sortBy,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        type: viewType,
+        professionalTipo,
+      };
+      return await fetchSearchResults(params);
+    },
+    enabled: viewType === "all" || viewType === "service" || viewType === "professional" || viewType === "company",
   });
-  const services = servicesApiResponse?.data || [];
-  const servicesPagination = servicesApiResponse?.pagination;
-  console.log("[Search Final Services Query]:", { isLoadingServices, isErrorServices, errorServices: errorServices?.message, dataLength: services.length });
 
-  // Fetch Companies
-  const { data: companiesApiResponse, isLoading: isLoadingCompanies, isError: isErrorCompanies, error: errorCompanies } = useQuery<{ data: Company[], pagination: any }, Error>({
-    queryKey: ["companies", queryParams],
-    queryFn: () => fetchCompanies(queryParams),
-    enabled: viewType === "all" || viewType === "company",
+  // Use the new structure directly
+  const professionals = searchApiResponse?.professionals || [];
+  const services = searchApiResponse?.services || [];
+  const companies = searchApiResponse?.companies || [];
+
+  // --- Filtering, Sorting, and Pagination ---
+  // Professionals tab
+  const filteredProfessionals = professionals.filter((pro: any) => {
+    const matchesSearch =
+      !searchTerm ||
+      (pro.name && pro.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (pro.role && pro.role.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory =
+      !selectedCategory || selectedCategory === "Todas categorias" ||
+      (pro.services && pro.services.some((s: any) => s.service?.category?.name === selectedCategory));
+    return matchesSearch && matchesCategory;
   });
-  const companies = companiesApiResponse?.data || [];
-  const companiesPagination = companiesApiResponse?.pagination;
-  console.log("[Search Final Companies Query]:", { isLoadingCompanies, isErrorCompanies, errorCompanies: errorCompanies?.message, dataLength: companies.length });
+  const sortedProfessionals = [...filteredProfessionals].sort((a, b) => {
+    if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+    return 0;
+  });
+  const professionalsPerPage = ITEMS_PER_PAGE;
+  const totalProfessionals = sortedProfessionals.length;
+  const totalPagesProfessionals = Math.ceil(totalProfessionals / professionalsPerPage);
+  const paginatedProfessionals = sortedProfessionals.slice((currentPage - 1) * professionalsPerPage, currentPage * professionalsPerPage);
+
+  // Services tab
+  const filteredServices = services.filter((service: any) => {
+    const matchesSearch =
+      !searchTerm ||
+      (service.name && service.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.category && service.category.name && service.category.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.company && service.company.name && service.company.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory =
+      !selectedCategory || selectedCategory === "Todas categorias" ||
+      (service.category && service.category.name === selectedCategory);
+    return matchesSearch && matchesCategory;
+  });
+  const sortedServices = [...filteredServices].sort((a, b) => {
+    if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+    return 0;
+  });
+  const servicesPerPage = ITEMS_PER_PAGE;
+  const totalServices = sortedServices.length;
+  const totalPagesServices = Math.ceil(totalServices / servicesPerPage);
+  const paginatedServices = sortedServices.slice((currentPage - 1) * servicesPerPage, currentPage * servicesPerPage);
+
+  // Companies tab
+  const filteredCompanies = companies.filter((company: any) => {
+    const matchesSearch =
+      !searchTerm ||
+      (company.name && company.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesCategory =
+      !selectedCategory || selectedCategory === "Todas categorias" ||
+      (company.categories && company.categories.includes(selectedCategory));
+    return matchesSearch && matchesCategory;
+  });
+  const sortedCompanies = [...filteredCompanies].sort((a, b) => {
+    if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+    return 0;
+  });
+  const companiesPerPage = ITEMS_PER_PAGE;
+  const totalCompanies = sortedCompanies.length;
+  const totalPagesCompanies = Math.ceil(totalCompanies / companiesPerPage);
+  const paginatedCompanies = sortedCompanies.slice((currentPage - 1) * companiesPerPage, currentPage * companiesPerPage);
 
   // Combine loading and error states
-  const isAnyLoading = isLoadingCategories || (isLoadingServices && (viewType === 'all' || viewType === 'service')) || (isLoadingCompanies && (viewType === 'all' || viewType === 'company'));
-  const isAnyError = isErrorCategories || (isErrorServices && (viewType === 'all' || viewType === 'service')) || (isErrorCompanies && (viewType === 'all' || viewType === 'company'));
+  const isAnyLoading = isLoadingCategories || (isLoadingSearch && (viewType === 'all' || viewType === 'service' || viewType === 'professional' || viewType === 'company'));
+  const isAnyError = isErrorCategories || (isErrorSearch && (viewType === 'all' || viewType === 'service' || viewType === 'professional' || viewType === 'company'));
   const combinedErrorMessages = [
       isErrorCategories ? `Categories: ${errorCategories?.message}` : null,
-      isErrorServices ? `Services: ${errorServices?.message}` : null,
-      isErrorCompanies ? `Companies: ${errorCompanies?.message}` : null
+      isErrorSearch ? `Search: ${errorSearch?.message}` : null
   ].filter(Boolean).join("; ");
   console.log("[Search Final Combined State]:", { isAnyLoading, isAnyError, combinedErrorMessages });
 
   // --- Data Processing (use fetched data) ---
-  const totalServices = servicesPagination?.totalItems ?? 0;
-  const totalCompanies = companiesPagination?.totalItems ?? 0;
   const totalItems = viewType === "all" ? totalServices + totalCompanies :
                      viewType === "service" ? totalServices : totalCompanies;
-  const totalPagesServices = servicesPagination?.totalPages ?? Math.ceil(totalServices / ITEMS_PER_PAGE);
-  const totalPagesCompanies = companiesPagination?.totalPages ?? Math.ceil(totalCompanies / ITEMS_PER_PAGE);
   const totalPages = viewType === "all" ? Math.max(totalPagesServices, totalPagesCompanies) :
                      viewType === "service" ? totalPagesServices : totalPagesCompanies;
   console.log("[Search Final Pagination Info]:", { totalServices, totalCompanies, totalItems, totalPages });
@@ -156,26 +218,52 @@ const Search = () => {
 
   // Function to render content or empty state for a specific type
   const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company') => {
-    console.log(`[Search Final renderTypedContent - ${type}]:`, { isLoading, isError, dataLength: data.length });
-    if (isLoading) {
-      return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
+    if (type === 'service') {
+      if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
+      if (isError) return null;
+      if (data.length === 0) return <EmptyResults />;
+      return (
+        <div className={`grid grid-cols-1 gap-4`}>
+          {data.map(service => (
+            <div key={service?.id ?? Math.random()}>
+              <ServiceCard service={service || {}} isHighlighted={highlightId === (service?.id?.toString?.() ?? "")} />
+              {/* Optionally, show professionals for this service */}
+              {Array.isArray(service?.professionals) && service.professionals.length > 0 && (
+                <div className="mt-2 ml-4">
+                  <div className="font-semibold text-xs text-gray-500 mb-1">Profissionais que oferecem este serviço:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {service.professionals.map((link: any) => (
+                      link?.professional && link.professional.id ? (
+                        <ProfessionalCard
+                          key={link.professional.id}
+                          id={link.professional.id}
+                          name={link.professional.name ?? "Profissional não informado"}
+                          rating={link.professional.rating ?? 0}
+                          image={link.professional.image || null}
+                        />
+                      ) : null
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      );
     }
-    if (isError) {
-        return null; // Global error alert will be shown
+    if (type === 'company') {
+      if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
+      if (isError) return null;
+      if (data.length === 0) return <EmptyResults />;
+      return (
+        <div className={`grid grid-cols-1 gap-4`}>
+          {data.map(item => (
+            <CompanyCard key={item.id} company={item} isHighlighted={highlightId === item.id.toString()} />
+          ))}
+        </div>
+      );
     }
-    if (data.length === 0) {
-      return <EmptyResults />; 
-    }
-    return (
-      <div className={`grid grid-cols-1 gap-4`}>
-        {type === 'service' && data.map(item => (
-          <ServiceCard key={item.id} service={item as Service} isHighlighted={highlightId === item.id.toString()} />
-        ))}
-        {type === 'company' && data.map(item => (
-          <CompanyCard key={item.id} company={item as Company} isHighlighted={highlightId === item.id.toString()} />
-        ))}
-      </div>
-    );
+    return null;
   };
 
   console.log("[Search Final] Rendering complete component...");
@@ -250,22 +338,156 @@ const Search = () => {
                 <TabsContent value="all">
                   <div className="mb-8">
                     <h2 className="text-xl font-semibold mb-4">Serviços</h2>
-                    {renderTypedContent(isLoadingServices, isErrorServices, services, 'service')}
+                    {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
+                  </div>
+                  <div className="mb-8">
+                    <h2 className="text-xl font-semibold mb-4">Profissionais</h2>
+                    {isLoadingSearch ? renderLoadingSkeletons(ITEMS_PER_PAGE, 'service') :
+                      isErrorSearch ? null :
+                      paginatedProfessionals.length === 0 ? <EmptyResults /> :
+                      <div className="space-y-6">
+                        {paginatedProfessionals.map((pro: any) => (
+                          pro?.id ? (
+                            <div key={pro.id} className="border rounded-lg bg-white shadow-sm p-5">
+                              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                                <ProfessionalCard
+                                  id={pro.id}
+                                  name={pro.name ?? "Profissional não informado"}
+                                  rating={pro.rating ?? 0}
+                                  image={pro.image || null}
+                                />
+                                <div className="flex-1">
+                                  {pro.company && pro.company.name && (
+                                    <div className="mb-2 text-sm text-gray-600">
+                                      <span className="font-semibold">Empresa:</span> {pro.company.name}
+                                    </div>
+                                  )}
+                                  {Array.isArray(pro.services) && pro.services.length > 0 ? (
+                                    <div>
+                                      <div className="font-semibold text-sm mb-1">Serviços vinculados:</div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {pro.services.map((link: any) => (
+                                          link?.service && link.service.id ? (
+                                            <ServiceCard key={link.service.id} service={{
+                                              ...link.service,
+                                              price: link.price ?? link.service.price,
+                                              professional: pro,
+                                              company: link.service.company || pro.company,
+                                              schedule: link.schedule,
+                                              description: link.description ?? link.service.description,
+                                            }} />
+                                          ) : null
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="italic text-gray-400 text-sm">Nenhum serviço vinculado.</div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ) : null
+                        ))}
+                      </div>
+                    }
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold mb-4">Empresas</h2>
-                    {renderTypedContent(isLoadingCompanies, isErrorCompanies, companies, 'company')}
+                    {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
                   </div>
-                  {/* Combined Empty State for 'all' tab */}                  
-                  {!isAnyLoading && !isAnyError && services.length === 0 && companies.length === 0 && <EmptyResults />}
+                  {/* Combined Empty State for 'all' tab */}
+                  {!isAnyLoading && !isAnyError && paginatedServices.length === 0 && paginatedCompanies.length === 0 && paginatedProfessionals.length === 0 && <EmptyResults />}
                 </TabsContent>
 
                 <TabsContent value="service">
-                  {renderTypedContent(isLoadingServices, isErrorServices, services, 'service')}
+                  {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
                 </TabsContent>
                 
                 <TabsContent value="company">
-                  {renderTypedContent(isLoadingCompanies, isErrorCompanies, companies, 'company')}
+                  {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
+                </TabsContent>
+
+                <TabsContent value="professional">
+                  <div className="mb-4 flex items-center gap-4">
+                    <label className="font-medium text-sm">Profissionais:</label>
+                    <Select value={professionalTipo} onValueChange={v => setProfessionalTipo(v as any)}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue placeholder="Filtrar por vínculo de serviço" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="only-linked">Apenas com serviços</SelectItem>
+                        <SelectItem value="only-unlinked">Apenas sem serviços</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {isLoadingSearch ? (
+                    renderLoadingSkeletons(ITEMS_PER_PAGE, "service")
+                  ) : isErrorSearch ? (
+                    <Alert variant="destructive" className="my-4">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertTitle>Erro ao Carregar Profissionais</AlertTitle>
+                      <AlertDescription>
+                        Não foi possível buscar os profissionais. Tente novamente mais tarde.
+                        {errorSearch && <p className="text-xs mt-2">Detalhes: {errorSearch.message}</p>}
+                      </AlertDescription>
+                    </Alert>
+                  ) : paginatedProfessionals.length === 0 ? (
+                    <EmptyResults />
+                  ) : (
+                    <div className="space-y-6">
+                      {paginatedProfessionals.map((pro: any) => (
+                        pro?.id ? (
+                          <div key={pro.id} className="border rounded-lg bg-white shadow-sm p-5">
+                            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+                              <ProfessionalCard
+                                id={pro.id}
+                                name={pro.name ?? "Profissional não informado"}
+                                rating={pro.rating ?? 0}
+                                image={pro.image || null}
+                              />
+                              <div className="flex-1">
+                                {pro.company && pro.company.name && (
+                                  <div className="mb-2 text-sm text-gray-600">
+                                    <span className="font-semibold">Empresa:</span> {pro.company.name}
+                                  </div>
+                                )}
+                                {Array.isArray(pro.services) && pro.services.length > 0 ? (
+                                  <div>
+                                    <div className="font-semibold text-sm mb-1">Serviços vinculados:</div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                      {pro.services.map((link: any) => (
+                                        link?.service && link.service.id ? (
+                                          <ServiceCard key={link.service.id} service={{
+                                            ...link.service,
+                                            price: link.price ?? link.service.price,
+                                            professional: pro,
+                                            company: link.service.company || pro.company,
+                                            schedule: link.schedule,
+                                            description: link.description ?? link.service.description,
+                                          }} />
+                                        ) : null
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="italic text-gray-400 text-sm">Nenhum serviço vinculado.</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ) : null
+                      ))}
+                    </div>
+                  )}
+                  {/* Pagination for professionals */}
+                  {!isLoadingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
+                    <ServicePagination
+                      currentPage={currentPage}
+                      totalPages={totalPagesProfessionals}
+                      setCurrentPage={handlePageChange}
+                    />
+                  )}
                 </TabsContent>
               </SearchTabs>
             </div>

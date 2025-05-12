@@ -254,6 +254,11 @@ export const fetchProfessionalMe = async () => {
   const response = await apiClient.get("/professionals/me");
   return response.data;
 };
+// --- New: Fetch all professionals with services (for search) ---
+export const fetchAllProfessionalsWithServices = async (tipo: "all" | "only-linked" | "only-unlinked" = "all") => {
+  const response = await apiClient.get("/professionals/all-services", { params: { tipo } });
+  return response.data;
+};
 
 // --- Notifications API Function (Example) ---
 export const fetchNotifications = async (params: any = {}) => {
@@ -266,6 +271,12 @@ export const fetchPromotions = async (params: any = {}) => {
     const response = await apiClient.get("/promotions", { params }); // Assuming endpoint exists
     return response.data;
 }
+
+// --- New: Search API Function ---
+export const fetchSearchResults = async (params: any = {}) => {
+  const response = await apiClient.get("/search", { params });
+  return response.data;
+};
 
 // Adicione outras funções de API conforme necessário
 
