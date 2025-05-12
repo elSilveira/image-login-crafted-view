@@ -38,34 +38,8 @@ const Home = () => {
         <HeroSection />
         
         {/* --- Category Section --- */}
-        {isLoading ? (
-          <section className="py-8 px-4 sm:px-6 lg:px-8">
-            <Skeleton className="h-8 w-1/4 mb-4" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <Skeleton className="h-24 w-full rounded-lg" />
-                  <Skeleton className="h-4 w-3/4 mx-auto" />
-                </div>
-              ))}
-            </div>
-          </section>
-        ) : isError ? (
-          <div className="py-8 px-4 sm:px-6 lg:px-8">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erro</AlertTitle>
-              <AlertDescription>
-                Não foi possível carregar as categorias. {error?.message}
-              </AlertDescription>
-            </Alert>
-          </div>
-        ) : categories && categories.length > 0 ? (
-          // Pass fetched categories to the component
-          <CategorySection title="Categorias Populares" categories={categories} />
-        ) : (
-          <div className="py-8 px-4 text-center text-muted-foreground">Nenhuma categoria encontrada.</div>
-        )}
+        {/* Notice we removed the title and category props as they should be handled inside CategorySection */}
+        <CategorySection />
         {/* --- End Category Section --- */}
 
         <div className="grid md:grid-cols-12 gap-8 mt-8 px-4"> {/* Add padding back */} 
@@ -89,4 +63,3 @@ const Home = () => {
 };
 
 export default Home;
-

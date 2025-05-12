@@ -1,3 +1,4 @@
+
 // src/components/SearchDropdown.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -7,10 +8,6 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from ".
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Badge } from "./ui/badge";
 import { debounce } from "lodash"; // Using lodash for debouncing
-
-// Removed mock imports:
-// import { professionals } from "@/pages/Professionals";
-// import { services } from "@/lib/mock-services";
 
 // Interface for combined search results from API
 export interface SearchResult {
@@ -108,7 +105,9 @@ export function SearchDropdown() {
 
   const handleCategorySelect = (category: typeof popularCategories[0]) => {
     setOpen(false);
-    navigate(`/search?category=${encodeURIComponent(category.name)}&type=${category.type}`);
+    // Make sure to extract the name as a string
+    const categoryName = typeof category.name === 'string' ? category.name : '';
+    navigate(`/search?category=${encodeURIComponent(categoryName)}&type=${category.type}`);
   };
 
   return (
@@ -182,19 +181,24 @@ export function SearchDropdown() {
             {!searchQuery.trim() && (
               <CommandGroup heading="Categorias populares">
                 <div className="flex flex-wrap gap-2 p-3">
-                  {popularCategories.map((category) => (
-                    <Badge
-                      key={category.id}
-                      variant="outline"
-                      className="hover:bg-gray-100 cursor-pointer px-3 py-1.5"
-                      onClick={() => handleCategorySelect(category)}
-                    >
-                      {category.name}
-                      <span className="ml-1.5 text-xs text-gray-500">
-                        {category.type === "company" ? "Empresa" : "Serviço"}
-                      </span>
-                    </Badge>
-                  ))}
+                  {popularCategories.map((category) => {
+                    // Make sure to extract name as a string
+                    const categoryName = typeof category.name === 'string' ? category.name : 'Categoria';
+                    
+                    return (
+                      <Badge
+                        key={category.id}
+                        variant="outline"
+                        className="hover:bg-gray-100 cursor-pointer px-3 py-1.5"
+                        onClick={() => handleCategorySelect(category)}
+                      >
+                        {categoryName}
+                        <span className="ml-1.5 text-xs text-gray-500">
+                          {category.type === "company" ? "Empresa" : "Serviço"}
+                        </span>
+                      </Badge>
+                    );
+                  })}
                 </div>
               </CommandGroup>
             )}
@@ -204,4 +208,3 @@ export function SearchDropdown() {
     </Popover>
   );
 }
-

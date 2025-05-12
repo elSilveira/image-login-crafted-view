@@ -1,39 +1,60 @@
 
-import { Badge } from "@/components/ui/badge";
+// src/components/search/SearchCategories.tsx
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { cn } from '@/lib/utils';
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface SearchCategoriesProps {
   selectedCategory: string;
-  allCategories: string[];
+  allCategories: string[]; // This should be an array of strings, not category objects
   onCategoryChange: (category: string) => void;
 }
 
-export const SearchCategories = ({ 
-  selectedCategory, 
-  allCategories, 
-  onCategoryChange 
+export const SearchCategories = ({
+  selectedCategory,
+  allCategories,
+  onCategoryChange,
 }: SearchCategoriesProps) => {
+  const handleCategoryClick = (category: string) => {
+    onCategoryChange(category === selectedCategory ? "" : category);
+  };
+
   return (
     <div className="mb-6">
-      <h2 className="font-medium mb-3">Categorias populares</h2>
-      <div className="flex flex-wrap gap-2">
-        <Badge 
-          variant={!selectedCategory ? "default" : "outline"} 
-          className="px-3 py-1.5 cursor-pointer"
-          onClick={() => onCategoryChange("")}
-        >
-          Todas
-        </Badge>
-        {allCategories.map((category, index) => (
-          <Badge 
-            key={index}
-            variant={selectedCategory === category ? "default" : "outline"} 
-            className="px-3 py-1.5 cursor-pointer"
-            onClick={() => onCategoryChange(category)}
+      <ScrollArea className="w-full">
+        <div className="flex space-x-2 pb-3">
+          <Button
+            variant={selectedCategory === "" ? "default" : "outline"}
+            size="sm"
+            className="rounded-full"
+            onClick={() => onCategoryChange("")}
           >
-            {category}
-          </Badge>
-        ))}
-      </div>
+            Todas
+          </Button>
+          
+          {allCategories.map((categoryName, index) => {
+            // Ensure categoryName is a string
+            const displayName = typeof categoryName === 'string' ? categoryName : 'Categoria';
+            
+            return (
+              <Button
+                key={index}
+                variant={selectedCategory === displayName ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "rounded-full",
+                  selectedCategory === displayName ? "bg-iazi-primary hover:bg-iazi-primary/90" : ""
+                )}
+                onClick={() => handleCategoryClick(displayName)}
+              >
+                {displayName}
+              </Button>
+            );
+          })}
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   );
 };
