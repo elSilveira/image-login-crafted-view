@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,6 +8,8 @@ import BookingCalendar from "@/components/booking/BookingCalendar";
 import BookingTimeSlots from "@/components/booking/BookingTimeSlots";
 import BookingConfirmation from "@/components/booking/BookingConfirmation";
 import Navigation from "@/components/Navigation";
+import { useQuery } from '@tanstack/react-query';
+import { fetchServiceDetails, fetchProfessionalDetails } from '@/lib/api';
 
 const STEPS = [
   { id: 1, title: "Selecionar Profissional" },
@@ -19,30 +20,40 @@ const STEPS = [
 const Booking = () => {
   const { serviceId } = useParams();
   const location = useLocation();
+  // Extract professional ID from URL or state
+  const searchParams = new URLSearchParams(location.search);
+  const professionalParam = searchParams.get('professional') || undefined;
   const isCompanyBooking = location.search.includes('company=true');
   const [currentStep, setCurrentStep] = React.useState(isCompanyBooking ? 1 : 2);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = React.useState<string>();
-  const [selectedProfessional, setSelectedProfessional] = React.useState<string>();
+  const [selectedProfessional, setSelectedProfessional] = React.useState<string | undefined>();
   const navigate = useNavigate();
 
-  // Mock data - In a real app, this would come from an API
-  const service = {
-    id: serviceId || "1",
-    name: "Corte de Cabelo Masculino",
-    price: 80,
-    duration: 45,
-  };
+  // Fetch service details
+  const { data: serviceData, isLoading: loadingService, isError: errorServiceFlag, error: errorService } = useQuery<any, Error>({
+    queryKey: ['service', serviceId],
+    queryFn: () => fetchServiceDetails(serviceId!),
+    enabled: !!serviceId,
+  });
 
-  const professional = selectedProfessional ? {
-    id: selectedProfessional,
-    name: "João Silva",
-    avatar: "https://source.unsplash.com/random/100x100/?portrait",
-  } : {
-    id: "1",
-    name: "João Silva",
-    avatar: "https://source.unsplash.com/random/100x100/?portrait",
-  };
+  // Determine which professional to use: URL param or selected
+  const professionalIdUsed = professionalParam || selectedProfessional;
+  const { data: professionalData, isLoading: loadingProfessional, isError: errorProfessionalFlag, error: errorProfessional } = useQuery<any, Error>({
+    queryKey: ['professional', professionalIdUsed],
+    queryFn: () => fetchProfessionalDetails(professionalIdUsed!),
+    enabled: !!professionalIdUsed,
+  });
+
+  // Handle loading and error states
+  if (loadingService || loadingProfessional) {
+    return <div className="min-h-screen bg-gray-50 flex justify-center items-center"><Progress value={0} /></div>;
+  }
+  if (errorServiceFlag || errorProfessionalFlag) {
+    return <div className="min-h-screen bg-gray-50 flex justify-center items-center text-red-500">Erro ao carregar dados.</div>;
+  }
+  const service = serviceData!;
+  const professional = professionalData!;
 
   const progress = (currentStep / STEPS.length) * 100;
 
@@ -82,15 +93,21 @@ const Booking = () => {
                 selectedDate={selectedDate}
                 onDateSelect={setSelectedDate}
                 onNext={() => {}}
+                professionalId={professional.id}
+                serviceSchedule={professional.services?.find((s: any) => s.id === service.id)?.schedule}
               />
             </div>
             <div>
               {selectedDate && (
                 <BookingTimeSlots
                   date={selectedDate}
-                  onTimeSelect={setSelectedTime}
                   selectedTime={selectedTime}
+                  onTimeSelect={setSelectedTime}
                   onNext={() => selectedDate && selectedTime && setCurrentStep(3)}
+                  professionalId={professional.id}
+                  serviceId={service.id}
+                  // Pass schedule for the selected service
+                  serviceSchedule={professional.services?.find((s: any) => s.id === service.id)?.schedule}
                 />
               )}
             </div>
@@ -104,7 +121,7 @@ const Booking = () => {
             date={selectedDate!}
             time={selectedTime!}
             onBack={() => setCurrentStep(2)}
-            onSubmit={handleFinishBooking}
+            onSuccess={handleFinishBooking}
           />
         );
       default:

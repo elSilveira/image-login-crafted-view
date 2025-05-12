@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchProfessionalDetails, fetchProfessionalMe } from "@/lib/api"; // Import API function
+import { fetchProfessionalDetails, fetchProfessionalMe, fetchProfessionalAvailableDates, fetchAvailability } from "@/lib/api"; // Import API function
 import Navigation from "@/components/Navigation";
 import { 
   Calendar as CalendarIcon, 
@@ -96,7 +96,7 @@ interface Review {
   };
 }
 
-interface Professional {
+export interface Professional {
   id: string;
   name: string;
   title?: string | null; // e.g., "Dermatologista"
@@ -176,6 +176,10 @@ const ProfessionalProfile = () => {
   const { user } = useAuth();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [activeTab, setActiveTab] = useState("about");
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [slots, setSlots] = useState<string[]>([]);
+  const [loadingDates, setLoadingDates] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   // Se não houver id na URL, buscar dados do próprio profissional logado
   const isOwnProfile = !id && user?.isProfessional;
@@ -190,6 +194,30 @@ const ProfessionalProfile = () => {
     queryFn: () => isOwnProfile ? fetchProfessionalMe() : fetchProfessionalDetails(id!),
     enabled: isOwnProfile || !!id,
   });
+
+  // Fetch available dates when professional loads
+  useEffect(() => {
+    if (!professional?.id) return;
+    setLoadingDates(true);
+    fetchProfessionalAvailableDates(professional.id)
+      .then(dates => setAvailableDates(dates))
+      .catch(err => console.error(err))
+      .finally(() => setLoadingDates(false));
+  }, [professional?.id]);
+
+  // Fetch slots when date changes
+  useEffect(() => {
+    if (!date || !professional?.id) {
+      setSlots([]);
+      return;
+    }
+    setLoadingSlots(true);
+    const iso = date.toISOString().split('T')[0];
+    fetchAvailability(professional.id, iso)
+      .then(data => setSlots(data))
+      .catch(err => console.error(err))
+      .finally(() => setLoadingSlots(false));
+  }, [date, professional?.id]);
 
   // --- Loading State --- 
   if (isLoading) {
@@ -462,7 +490,6 @@ const ProfessionalProfile = () => {
           
           <TabsContent value="availability" className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-6">Verificar Disponibilidade</h2>
-            {/* TODO: Implement actual availability logic based on API data */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="col-span-1">
                 <Calendar
@@ -471,7 +498,11 @@ const ProfessionalProfile = () => {
                   onSelect={setDate}
                   className="border rounded-md"
                   locale={pt}
-                  disabled={(date) => date < new Date(new Date().setHours(0,0,0,0))} // Disable past dates
+                  disabled={dateItem => {
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const iso = dateItem.toISOString().split('T')[0];
+                    return loadingDates || dateItem < today || !availableDates.includes(iso);
+                  }}
                 />
               </div>
               
@@ -479,21 +510,25 @@ const ProfessionalProfile = () => {
                 <h3 className="font-medium text-lg mb-4">
                   {date ? `Horários disponíveis para ${format(date, 'dd/MM/yyyy', { locale: pt })}` : 'Selecione uma data'}
                 </h3>
-                
-                {date && (
-                  <div className="border rounded-md p-6 text-center text-gray-500 italic">
-                    Funcionalidade de agenda ainda não implementada.
-                    {/* Placeholder for time slots */}
-                    {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {["09:00", "10:00", "11:30", "14:00", "15:30", "17:00"].map((time, i) => (
-                        <Button key={i} variant="outline" className="justify-start">
-                          <Clock className="mr-2 h-4 w-4" />
-                          {time}
-                        </Button>
-                      ))}
-                    </div> */}
-                  </div>
-                )}
+                <div>
+                  {date ? (
+                    loadingSlots ? (
+                      <div className="text-center">Carregando horários...</div>
+                    ) : slots.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {slots.map((time, idx) => (
+                          <Button key={idx} variant="outline" className="justify-start">
+                            <Clock className="mr-2 h-4 w-4" />{time}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-500 italic">Nenhum horário disponível.</div>
+                    )
+                  ) : (
+                    <div className="text-center text-gray-500 italic">Selecione uma data</div>
+                  )}
+                </div>
               </div>
             </div>
           </TabsContent>

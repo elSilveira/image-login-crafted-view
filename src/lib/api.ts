@@ -1,4 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { Professional } from "@/pages/ProfessionalProfile";
 
 // Define a interface para o payload do token JWT (ajuste conforme necessário)
 interface JwtPayload {
@@ -13,7 +14,7 @@ const USER_KEY = "user";
 
 // Cria uma instância do Axios com a URL base da API
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3002/api", // CORRIGIDO: Fallback para porta 3002
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3003/api", // CORRIGIDO: Fallback para porta 3003
 });
 
 console.log("API URL Base:", apiClient.defaults.baseURL);
@@ -246,10 +247,14 @@ export const updateProfessionalProfile = async (data: any) => {
   const response = await apiClient.put(`/professionals/me`, data);
   return response.data;
 }
-export const fetchAvailability = async (professionalId:string, date:string) => {
-  const response = await apiClient.get(`/professionals/${professionalId}/availability`, { params: { date } });
+export const fetchAvailability = async (professionalId: string, serviceId: string, date: string) => {
+  // Fetch available slots for a professional by service and date
+  const response = await apiClient.get(
+    `/professionals/${professionalId}/availability`,
+    { params: { serviceId, date } }
+  );
   return response.data;
-}
+};
 export const fetchProfessionalMe = async () => {
   const response = await apiClient.get("/professionals/me");
   return response.data;
@@ -297,6 +302,58 @@ export const bookProfessionalService = async (professionalId: string, serviceId:
   const response = await apiClient.post(`/professionals/${professionalId}/services/${serviceId}/book`, bookingData);
   return response.data;
 };
+
+export async function fetchProfessionalById(professionalId: string): Promise<Professional> {
+  const response = await fetch(`/api/professionals/${professionalId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch professional');
+  }
+  return response.json();
+}
+
+export async function fetchProfessionalAvailableDates(professionalId: string): Promise<string[]> {
+  // TODO: Replace with actual API call once the endpoint is available
+  // const response = await fetch(`/api/professionals/${professionalId}/available-dates`);
+  // if (!response.ok) {
+  //   throw new Error('Failed to fetch available dates');
+  // }
+  // return response.json();
+
+  // Mock data for now
+  console.log("Fetching available dates for professional: ", professionalId);
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+  // Simulate some available dates for May 2025, excluding weekends and some specific dates
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-indexed
+
+  // For testing, let's assume current month is May 2025
+  // In a real scenario, the API would return dates based on the professional's actual availability.
+  const availableDates: string[] = [];
+  if (currentYear === 2025 && currentMonth === 4) { // May is month 4 (0-indexed)
+    for (let day = 1; day <= 31; day++) {
+      const date = new Date(2025, 4, day);
+      const dayOfWeek = date.getDay(); // 0 (Sunday) to 6 (Saturday)
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Exclude weekends
+        if (![15, 16, 22, 23].includes(day)) { // Exclude some specific dates
+          availableDates.push(date.toISOString().split('T')[0]);
+        }
+      }
+    }
+  } else {
+    // If not May 2025, return a few dynamic dates for testing
+     const tomorrow = new Date(today);
+     tomorrow.setDate(today.getDate() + 1);
+     const dayAfterTomorrow = new Date(today);
+     dayAfterTomorrow.setDate(today.getDate() + 2);
+     const fiveDaysLater = new Date(today);
+     fiveDaysLater.setDate(today.getDate() + 5);
+     availableDates.push(tomorrow.toISOString().split('T')[0]);
+     availableDates.push(dayAfterTomorrow.toISOString().split('T')[0]);
+     availableDates.push(fiveDaysLater.toISOString().split('T')[0]);
+  }
+  return availableDates;
+}
 
 // Adicione outras funções de API conforme necessário
 
