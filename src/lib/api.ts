@@ -247,11 +247,11 @@ export const updateProfessionalProfile = async (data: any) => {
   const response = await apiClient.put(`/professionals/me`, data);
   return response.data;
 }
-export const fetchAvailability = async (professionalId: string, serviceId: string, date: string) => {
-  // Fetch available slots for a professional by service and date
+export const fetchAvailability = async (professionalId: string, _serviceId: string | undefined, date: string) => {
+  // For disponibilidade tab: do not send serviceId, only professionalId and date
   const response = await apiClient.get(
     `/professionals/${professionalId}/availability`,
-    { params: { serviceId, date } }
+    { params: { date } }
   );
   return response.data;
 };
@@ -356,5 +356,20 @@ export async function fetchProfessionalAvailableDates(professionalId: string): P
 }
 
 // Adicione outras funções de API conforme necessário
+
+export const fetchProfessionalAppointments = async (professionalId: string, dateFrom: string, dateTo: string) => {
+  // Fetch all appointments for a professional in a date range, including user and service
+  const response = await apiClient.get(`/appointments`, {
+    params: {
+      professionalId,
+      dateFrom,
+      dateTo,
+      include: 'user,service',
+      limit: 500,
+      sort: 'startTime_asc',
+    },
+  });
+  return response.data;
+};
 
 export default apiClient;

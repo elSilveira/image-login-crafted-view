@@ -9,6 +9,7 @@ import PublicationForm from "./social/PublicationForm";
 import { useQuery } from "@tanstack/react-query";
 import { getProfessionalServices } from "@/lib/api-services";
 import { getEffectiveUserRole } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 
 const SocialFeed = () => {
   const { user } = useAuth();
@@ -91,23 +92,19 @@ const SocialFeed = () => {
         )}
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Only show the PublicationForm if requested */}
-        {canPublish && showPublicationForm && (
-          <div className="border rounded-lg p-4 mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold">Nova Publicação</span>
-              <Button size="icon" variant="ghost" onClick={() => setShowPublicationForm(false)} title="Fechar">
-                ×
-              </Button>
-            </div>
+        {/* Modal for PublicationForm */}
+        <Dialog open={showPublicationForm} onOpenChange={setShowPublicationForm}>
+          <DialogContent className="max-w-lg w-full">
+            <DialogHeader>
+              <DialogTitle>Nova Publicação</DialogTitle>
+            </DialogHeader>
             <PublicationForm 
               services={formattedServices}
               onSubmit={handlePublicationSubmit}
               isLoading={false}
             />
-          </div>
-        )}
-
+          </DialogContent>
+        </Dialog>
         {/* Existing posts */}
         {posts.map((post) => (
           <div key={post.id} className="border-b pb-6 last:border-0">

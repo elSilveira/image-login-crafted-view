@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { fetchProfessionalDetails, fetchProfessionalMe, fetchProfessionalAvailableDates, fetchAvailability } from "@/lib/api"; // Import API function
+import { fetchProfessionalDetails, fetchProfessionalMe, fetchProfessionalAvailableDates, fetchAvailability, fetchProfessionalAppointments } from "@/lib/api"; // Import API function
 import Navigation from "@/components/Navigation";
 import { 
   Calendar as CalendarIcon, 
@@ -187,6 +187,7 @@ const ProfessionalProfile = () => {
   const [coverError, setCoverError] = useState(false);
   // Track avatar image error state
   const [avatarError, setAvatarError] = useState(false);
+  const [appointments, setAppointments] = useState<any[]>([]);
 
   // Se não houver id na URL, buscar dados do próprio profissional logado
   const isOwnProfile = !id && user?.isProfessional;
@@ -218,18 +219,35 @@ const ProfessionalProfile = () => {
 
   // Fetch slots when date changes
   useEffect(() => {
-    const serviceId = professional?.services && professional.services.length > 0 ? professional.services[0].id : undefined;
-    if (!date || !professional?.id || !serviceId) {
-      setSlots([]);
+    if (!date || !professional?.id) {
+      setAppointments([]);
       return;
     }
     setLoadingSlots(true);
     const iso = date.toISOString().split('T')[0];
-    fetchAvailability(professional.id, serviceId, iso)
-      .then(data => setSlots(data))
+    // Fetch all appointments for the selected day
+    fetchProfessionalAppointments(professional.id, iso, iso)
+      .then(data => setAppointments(data?.data || []))
       .catch(err => console.error(err))
       .finally(() => setLoadingSlots(false));
-  }, [date, professional?.id, professional?.services]);
+  }, [date, professional?.id]);
+
+  // Debug: log professional.services and availableDates
+  useEffect(() => {
+    if (professional) {
+      console.log('[DEBUG] professional.services:', professional.services);
+    }
+  }, [professional]);
+  useEffect(() => {
+    console.log('[DEBUG] availableDates:', availableDates);
+  }, [availableDates]);
+  useEffect(() => {
+    if (date && professional?.id && professional?.services && professional.services.length > 0) {
+      const serviceId = professional.services[0].id;
+      const iso = date.toISOString().split('T')[0];
+      console.log('[DEBUG] fetchAvailability params:', { professionalId: professional.id, serviceId, iso });
+    }
+  }, [date, professional]);
 
   // --- Loading State --- 
   if (isLoading) {
@@ -536,25 +554,83 @@ const ProfessionalProfile = () => {
                   }}
                 />
               </div>
-              
               <div className="col-span-1 md:col-span-2">
                 <h3 className="font-medium text-lg mb-4">
                   {date ? `Horários disponíveis para ${format(date, 'dd/MM/yyyy', { locale: pt })}` : 'Selecione uma data'}
                 </h3>
+                {/* Legend */}
+                <div className="flex gap-4 mb-4">
+                  <div className="flex items-center gap-2"><Button size="sm" className="w-6 h-6 p-0" /> <span>Disponível</span></div>
+                  <div className="flex items-center gap-2"><Button size="sm" variant="destructive" className="w-6 h-6 p-0" disabled /> <span>Indisponível</span></div>
+                </div>
                 <div>
                   {date ? (
                     loadingSlots ? (
                       <div className="text-center">Carregando horários...</div>
-                    ) : slots.length > 0 ? (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {slots.map((time, idx) => (
-                          <Button key={idx} variant="outline" className="justify-start">
-                            <Clock className="mr-2 h-4 w-4" />{time}
-                          </Button>
-                        ))}
-                      </div>
                     ) : (
-                      <div className="text-center text-gray-500 italic">Nenhum horário disponível.</div>
+                      (() => {
+                        const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+                        const dayKey = days[date.getDay()];
+                        const servicesForDay = (professional.services || []).filter(service =>
+                          service.schedule && service.schedule.some(s => s.dayOfWeek === dayKey)
+                        );
+                        if (servicesForDay.length === 0) {
+                          return <div className="text-center text-gray-500 italic">Nenhum serviço disponível para este dia da semana.</div>;
+                        }
+                        return (
+                          <div className="space-y-8">
+                            {servicesForDay.map(service => {
+                              const slotDef = service.schedule.find(s => s.dayOfWeek === dayKey);
+                              let allSlots: string[] = [];
+                              if (slotDef) {
+                                const generateTimeSlots = (start: string, end: string, interval: number) => {
+                                  const times: string[] = [];
+                                  let [sh, sm] = start.split(':').map(Number);
+                                  let [eh, em] = end.split(':').map(Number);
+                                  const current = new Date(date); current.setHours(sh, sm, 0, 0);
+                                  const endDate = new Date(date); endDate.setHours(eh, em, 0, 0);
+                                  while (current <= endDate) {
+                                    times.push(format(current, 'HH:mm'));
+                                    current.setMinutes(current.getMinutes() + interval);
+                                  }
+                                  return times;
+                                };
+                                allSlots = generateTimeSlots(slotDef.startTime, slotDef.endTime, 30);
+                              }
+                              return (
+                                <div key={service.id}>
+                                  <div className="font-semibold mb-2 flex items-center gap-2">
+                                    <span className="text-iazi-primary">{service.name}</span>
+                                    <span className="text-xs text-gray-500">{service.duration} min</span>
+                                  </div>
+                                  {allSlots.length > 0 ? (
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                      {allSlots.map((time, idx) => {
+                                        // Check if there is an appointment for this service at this time
+                                        const slotTaken = appointments.some(a => {
+                                          if (a.serviceId !== service.id) return false;
+                                          // Parse startTime to local time string
+                                          const apptDate = new Date(a.startTime);
+                                          const apptTime = format(apptDate, 'HH:mm');
+                                          return apptTime === time;
+                                        });
+                                        const available = !slotTaken;
+                                        return (
+                                          <Button key={idx} variant={available ? 'outline' : 'destructive'} className="justify-start" disabled={!available}>
+                                            <Clock className="mr-2 h-4 w-4" />{time}
+                                          </Button>
+                                        );
+                                      })}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center text-gray-500 italic">Nenhum horário cadastrado para este serviço neste dia.</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()
                     )
                   ) : (
                     <div className="text-center text-gray-500 italic">Selecione uma data</div>

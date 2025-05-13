@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocation } from "react-router-dom";
-import { fetchAvailability } from "@/lib/api"; // API: fetchAvailability(professionalId, date)
+import { fetchProfessionalAppointments } from "@/lib/api"; // API: fetchProfessionalAppointments(professionalId, date)
 import { format } from "date-fns";
 import { Loader2, AlertCircle } from "lucide-react"; // Import icons
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
@@ -54,15 +54,14 @@ const BookingTimeSlots = ({
   // Format date for API query (YYYY-MM-DD)
   const formattedDate = date ? format(date, "yyyy-MM-dd") : undefined;
 
-  // Fetch available time slots using React Query
-  const { data: availabilityData, isLoading, isError, error } = useQuery<AvailabilityData, Error>({
-    queryKey: ["availability", professionalId, serviceId, formattedDate],
-    queryFn: () => fetchAvailability(professionalId, serviceId, formattedDate!),
-    enabled: !!formattedDate && !!professionalId && !!serviceId,
+  // Fetch all appointments for the selected professional and date
+  const { data: appointmentsData, isLoading, isError, error } = useQuery<any, Error>({
+    queryKey: ["appointments", professionalId, formattedDate],
+    queryFn: () => fetchProfessionalAppointments(professionalId, formattedDate!, formattedDate!),
+    enabled: !!formattedDate && !!professionalId,
     staleTime: 5 * 60 * 1000,
   });
-  // Extract array of slots
-  const slots: string[] = availabilityData?.availableSlots || [];
+  const appointments = appointmentsData?.data || [];
 
   // Determine schedule for the selected date based on serviceSchedule
   let allSlots: string[] = [];
@@ -74,6 +73,22 @@ const BookingTimeSlots = ({
       allSlots = generateTimeSlots(slotDef.startTime, slotDef.endTime, 30);
     }
   }
+
+  // Mark slots as unavailable if an appointment exists at that time for the selected service
+  const slots = allSlots.filter(time => {
+    // Check if there is an appointment for this service at this time
+    const slotTaken = appointments.some((a: any) => {
+      if (a.serviceId !== serviceId) return false;
+      const apptDate = new Date(a.startTime);
+      const apptTime = format(apptDate, 'HH:mm');
+      return apptTime === time;
+    });
+    return !slotTaken;
+  });
+
+  // Get current time for comparison
+  const now = new Date();
+  const isToday = date && now.toDateString() === date.toDateString();
 
   return (
     <div className="space-y-6">
@@ -103,15 +118,46 @@ const BookingTimeSlots = ({
         {!isLoading && !isError && (
           <div className="grid grid-cols-3 gap-2">
             {allSlots.map((time) => {
-              // If slots is empty, all times are available; otherwise, only those in slots
-              const available = slots.length === 0 ? true : slots.includes(time);
+              const available = slots.includes(time);
+              const isSelected = selectedTime === time;
+              // Determine if slot is scheduled (booked by someone else)
+              const isScheduled = !available && appointments.some((a: any) => {
+                if (a.serviceId !== serviceId) return false;
+                const apptDate = new Date(a.startTime);
+                const apptTime = format(apptDate, 'HH:mm');
+                return apptTime === time;
+              });
+              // Disable if not available or if time is before now (for today)
+              let disabled = !available;
+              if (isToday) {
+                const [h, m] = time.split(":").map(Number);
+                const slotDate = new Date(date);
+                slotDate.setHours(h, m, 0, 0);
+                if (slotDate < now) {
+                  disabled = true;
+                }
+              }
+              let variant: any = 'outline';
+              let extraClass = '';
+              if (disabled && isScheduled) {
+                // Scheduled (booked) slot: outlined red border
+                variant = 'outline';
+                extraClass = 'border border-red-500 text-red-500 bg-red-50 opacity-80 cursor-not-allowed';
+              } else if (disabled) {
+                // Disabled (past or blocked): gray/destructive
+                variant = 'destructive';
+                extraClass = 'opacity-60 cursor-not-allowed';
+              } else if (isSelected) {
+                variant = 'default';
+                extraClass = 'ring-2 ring-primary ring-offset-2 bg-primary text-white';
+              }
               return (
                 <Button
                   key={time}
-                  variant={available ? 'default' : 'destructive'}
-                  onClick={() => available && onTimeSelect(time)}
-                  className="w-full"
-                  disabled={!date}
+                  variant={variant}
+                  onClick={() => !disabled && onTimeSelect(time)}
+                  className={`w-full ${extraClass}`}
+                  disabled={disabled}
                 >
                   {time}
                 </Button>

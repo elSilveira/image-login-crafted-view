@@ -30,6 +30,13 @@ const Booking = () => {
   const [selectedProfessional, setSelectedProfessional] = React.useState<string | undefined>();
   const navigate = useNavigate();
 
+  // On page load, select today's date and show slots
+  React.useEffect(() => {
+    if (!selectedDate) {
+      setSelectedDate(new Date());
+    }
+  }, []);
+
   // Fetch service details
   const { data: serviceData, isLoading: loadingService, isError: errorServiceFlag, error: errorService } = useQuery<any, Error>({
     queryKey: ['service', serviceId],
