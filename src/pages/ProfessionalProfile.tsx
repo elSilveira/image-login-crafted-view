@@ -179,14 +179,14 @@ const ProfessionalProfile = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'about';
   const [activeTab, setActiveTab] = useState(defaultTab);
-  useEffect(() => {
-    // Sync activeTab to URL
-    setSearchParams({ tab: activeTab }, { replace: true });
-  }, [activeTab, setSearchParams]);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
   const [loadingDates, setLoadingDates] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  // Track cover image error state
+  const [coverError, setCoverError] = useState(false);
+  // Track avatar image error state
+  const [avatarError, setAvatarError] = useState(false);
 
   // Se não houver id na URL, buscar dados do próprio profissional logado
   const isOwnProfile = !id && user?.isProfessional;
@@ -201,6 +201,10 @@ const ProfessionalProfile = () => {
     queryFn: () => isOwnProfile ? fetchProfessionalMe() : fetchProfessionalDetails(id!),
     enabled: isOwnProfile || !!id,
   });
+
+  useEffect(() => {
+    setSearchParams({ tab: activeTab }, { replace: true });
+  }, [activeTab, setSearchParams]);
 
   // Fetch available dates when professional loads
   useEffect(() => {
@@ -268,10 +272,6 @@ const ProfessionalProfile = () => {
   const coverImage = professional.coverImageUrl || "https://via.placeholder.com/1200x300?text=Sem+Imagem+de+Capa";
   const avatarImage = professional.avatarUrl;
   const avatarFallback = professional.name.substring(0, 2).toUpperCase();
-  // Track cover image error state
-  const [coverError, setCoverError] = useState(false);
-  // Track avatar image error state
-  const [avatarError, setAvatarError] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
