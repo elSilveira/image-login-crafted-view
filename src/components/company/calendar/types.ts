@@ -1,4 +1,3 @@
-
 export type ViewType = "day" | "week" | "month" | "list";
 
 export type AppointmentStatus = "confirmed" | "pending" | "in-progress" | "completed" | "cancelled";
@@ -6,6 +5,7 @@ export type AppointmentStatus = "confirmed" | "pending" | "in-progress" | "compl
 export type FilterType = {
   status: string;
   service: string;
+  serviceId: string;
   staff: string;
 };
 
@@ -16,6 +16,8 @@ export type StaffMember = {
   image?: string;
   email?: string;
   phone?: string;
+  bio?: string;
+  imageUrl?: string;
 };
 
 export type Resource = {

@@ -103,7 +103,8 @@ const BookingTimeSlots = ({
         {!isLoading && !isError && (
           <div className="grid grid-cols-3 gap-2">
             {allSlots.map((time) => {
-              const available = slots?.includes(time);
+              // If slots is empty, all times are available; otherwise, only those in slots
+              const available = slots.length === 0 ? true : slots.includes(time);
               return (
                 <Button
                   key={time}

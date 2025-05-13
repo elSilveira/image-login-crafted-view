@@ -16,6 +16,7 @@ import { Calendar, LayoutGrid, List } from "lucide-react";
 interface StaffCalendarSelectorProps {
   selectedView: ViewType;
   onViewChange: (view: ViewType) => void;
+  companyId: string;
   // Resource filter props removed as the feature seems unimplemented
   // selectedResource: string;
   // onResourceChange: (resourceId: string) => void;

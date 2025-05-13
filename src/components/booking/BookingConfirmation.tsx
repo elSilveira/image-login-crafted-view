@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext"; // Import useAuth to get user 
 import { toast } from "sonner"; // Import toast for notifications
 import { Loader2 } from "lucide-react"; // Import Loader icon
 import { formatISO, parse } from "date-fns"; // Import date-fns functions
+import { v4 as uuidv4 } from 'uuid'; // Import uuid
 
 // Define Zod schema for form validation
 const formSchema = z.object({
@@ -74,7 +75,7 @@ const BookingConfirmation = ({
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",
-      phone: user?.phone || "", // Assuming phone is available in user object
+      phone: user?.phone || "", // Autofill phone from user
       notes: "",
     },
   });
@@ -101,34 +102,74 @@ const BookingConfirmation = ({
       return;
     }
 
-    try {
-      // Combine date and time into an ISO string
-      // Parse time string "HH:mm" and combine with the date object
-      const [hours, minutes] = time.split(":").map(Number);
-      const startDateTime = new Date(date);
-      startDateTime.setHours(hours, minutes, 0, 0); // Set hours and minutes
-      
-      // Format to ISO 8601 string (UTC is often preferred for backend)
-      const startTimeISO = formatISO(startDateTime); 
+    // Validate date and time
+    if (!date || !time) {
+      toast.error("Data e hora do agendamento são obrigatórias.");
+      return;
+    }
+    if (typeof time !== 'string' || !/^\d{2}:\d{2}$/.test(time)) {
+      toast.error("Horário inválido. Selecione um horário válido.");
+      return;
+    }
+    // Ensure date is a Date object
+    let bookingDate: Date;
+    if (date instanceof Date && !isNaN(date.getTime())) {
+      bookingDate = new Date(date.getTime()); // clone
+    } else if (typeof date === 'string' || typeof date === 'number') {
+      bookingDate = new Date(date);
+    } else {
+      toast.error("Data do agendamento inválida.");
+      return;
+    }
+    if (isNaN(bookingDate.getTime())) {
+      toast.error("Data do agendamento inválida.");
+      return;
+    }
+    // Debug log
+    console.log('BookingConfirmation: bookingDate', bookingDate, 'time', time);
 
-      const appointmentData = {
+    try {
+      // Parse hours and minutes safely
+      const [hoursStr, minutesStr] = time.split(":");
+      const hours = Number(hoursStr);
+      const minutes = Number(minutesStr);
+      if (
+        isNaN(hours) || isNaN(minutes) ||
+        hours < 0 || hours > 23 ||
+        minutes < 0 || minutes > 59
+      ) {
+        toast.error("Horário inválido. Selecione um horário válido.");
+        return;
+      }
+      // Always treat bookingDate as local time
+      const startDateTime = new Date(bookingDate.getTime());
+      startDateTime.setHours(hours, minutes, 0, 0);
+      if (isNaN(startDateTime.getTime())) {
+        toast.error("Data e hora do agendamento inválidas.");
+        return;
+      }
+      // Format date as YYYY-MM-DD
+      const dateStr = startDateTime.toISOString().slice(0, 10);
+      // Format time as HH:MM
+      const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+      // Build payload according to new contract
+      const appointmentData: any = {
         serviceId: service.id,
-        professionalId: professional?.id, // Include if available
-        companyId: company?.id, // Include if available
-        userId: user.id,
-        startTime: startTimeISO,
-        // Include notes if provided
+        date: dateStr,
+        time: timeStr,
         notes: formData.notes || undefined,
-        // Backend might also need user details from formData if not linked via userId
-        // userName: formData.name, 
-        // userEmail: formData.email,
-        // userPhone: formData.phone,
       };
+      if (professional?.id) {
+        appointmentData.professionalId = professional.id;
+      } else if (company?.id) {
+        appointmentData.companyId = company.id;
+      }
 
       mutation.mutate(appointmentData);
 
     } catch (e) {
-      console.error("Error formatting date/time:", e);
+      console.error("Error formatting date/time:", e, { date, time });
       toast.error("Erro ao formatar data/hora do agendamento.");
     }
   };

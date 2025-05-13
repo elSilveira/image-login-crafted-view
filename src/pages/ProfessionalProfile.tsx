@@ -268,24 +268,47 @@ const ProfessionalProfile = () => {
   const coverImage = professional.coverImageUrl || "https://via.placeholder.com/1200x300?text=Sem+Imagem+de+Capa";
   const avatarImage = professional.avatarUrl;
   const avatarFallback = professional.name.substring(0, 2).toUpperCase();
+  // Track cover image error state
+  const [coverError, setCoverError] = useState(false);
+  // Track avatar image error state
+  const [avatarError, setAvatarError] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
       {/* Header with cover image */}
-      <div className="relative h-48 md:h-64 w-full bg-cover bg-center bg-muted" style={{ backgroundImage: `url(${coverImage})` }}>
+      <div className="relative h-48 md:h-64 w-full bg-cover bg-center bg-muted">
+        {!coverError ? (
+          <img
+            src={coverImage}
+            alt="Imagem de Capa"
+            className="absolute inset-0 w-full h-full object-cover"
+            onError={() => setCoverError(true)}
+            style={{ zIndex: 0 }}
+          />
+        ) : (
+          <div className="absolute inset-0 w-full h-full bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-400">Imagem de capa indisponível</span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
       </div>
-      
       <main className="container mx-auto px-4 -mt-16 md:-mt-20 relative z-10 mb-12">
         {/* Profile header */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             {/* Avatar */}
             <Avatar className="h-24 w-24 md:h-32 md:w-32 border-4 border-white shadow-md flex-shrink-0">
-              <AvatarImage src={avatarImage || undefined} alt={professional.name} />
-              <AvatarFallback>{avatarFallback}</AvatarFallback>
+              {!avatarError && avatarImage ? (
+                <img
+                  src={avatarImage}
+                  alt={professional.name}
+                  className="h-full w-full object-cover rounded-full"
+                  onError={() => setAvatarError(true)}
+                />
+              ) : (
+                <AvatarFallback>{avatarFallback}</AvatarFallback>
+              )}
             </Avatar>
             
             {/* Profile info */}
@@ -587,9 +610,9 @@ const ProfessionalProfile = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {professional.portfolioItems.map((item) => (
                   <Card key={item.id} className="overflow-hidden group relative">
-                    <img 
-                      src={item.imageUrl} 
-                      alt={item.description || "Portfolio Item"} 
+                    <img
+                      src={item.imageUrl}
+                      alt={item.description || "Portfolio Item"}
                       className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/300?text=Imagem+Indisponível"; }}
                     />

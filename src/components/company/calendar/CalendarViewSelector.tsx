@@ -59,8 +59,7 @@ export const CalendarViewSelector: React.FC<CalendarViewSelectorProps> = ({
     const fetchStaff = async () => {
       setIsLoadingStaff(true);
       setErrorStaff(null);
-      try {
-        const response = await fetch(`/api/professionals?companyId=${companyId}&select=id,name&limit=100`);
+      try {        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/professionals?companyId=${companyId}&select=id,name&limit=100`);
         if (!response.ok) {
           throw new Error("Falha ao buscar profissionais");
         }

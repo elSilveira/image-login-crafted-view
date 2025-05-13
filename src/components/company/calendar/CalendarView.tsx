@@ -11,6 +11,7 @@ import { WeekCalendarView } from "./WeekCalendarView";
 import { MonthCalendarView } from "./MonthCalendarView";
 import { ListCalendarView } from "./ListCalendarView";
 import { ViewType, FilterType, AppointmentStatus } from "./types";
+import apiClient from "@/lib/api";
 // Removed: import { mockAppointments } from "./mock-data";
 
 // Re-use API and Display types (ideally share)
@@ -133,9 +134,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         }
         // if (resourceFilter !== "all") { // Add resource filter if implemented
         //   queryParams.append("resourceId", resourceFilter);
-        // }
-
-        const response = await fetch(`/api/appointments?${queryParams.toString()}`);
+        // }        // Use the correct API URL
+        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/appointments?${queryParams.toString()}`);
         if (!response.ok) {
           throw new Error(`Erro HTTP ${response.status}: Falha ao buscar agendamentos`);
         }
