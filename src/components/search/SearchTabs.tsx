@@ -1,4 +1,3 @@
-
 import React, { ReactNode } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -66,25 +65,8 @@ export function SearchTabs({
             </Badge>
           </TabsTrigger>
         </TabsList>
-
-        <div className="w-full sm:w-auto">
-          <Select value={sortBy} onValueChange={onSortChange}>
-            <SelectTrigger className="w-full sm:w-[200px] text-sm border-gray-200 bg-white">
-              <SelectValue placeholder="Ordenar por" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rating">Melhor avaliados</SelectItem>
-              <SelectItem value="reviews">Mais avaliados</SelectItem>
-              <SelectItem value="price-asc">Preço: Menor para maior</SelectItem>
-              <SelectItem value="price-desc">Preço: Maior para menor</SelectItem>
-              <SelectItem value="duration-asc">Duração: Mais rápido</SelectItem>
-              <SelectItem value="availability">Disponibilidade</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
       </div>
-      
-      {/* Render the tab contents */}
+      {/* Render the tab contents and filtros avançados abaixo das abas */}
       {children}
     </div>
   );

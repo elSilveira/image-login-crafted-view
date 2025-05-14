@@ -45,6 +45,20 @@ function getCategoryLabel(category: any): string {
   return "Categoria não informada";
 }
 
+// Helper to format price as BRL
+function formatPriceBRL(price: string | number | undefined): string {
+  if (typeof price === "number") {
+    return price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }
+  if (typeof price === "string") {
+    const parsed = parseFloat(price.replace(/[^0-9,\.]/g, '').replace(',', '.'));
+    if (!isNaN(parsed)) {
+      return parsed.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+  }
+  return "Preço não informado";
+}
+
 const renderStars = (rating?: number) => {
   if (typeof rating !== "number" || rating < 0 || rating > 5) {
     return null;
@@ -83,9 +97,7 @@ export const ServiceCard = ({
   const serviceId = service.id?.toString() ?? "";
   const serviceName = service.name || "Serviço não informado";
   const serviceDescription = service.description || "Sem descrição disponível";
-  const servicePrice = typeof service.price === "string" ? service.price :
-    typeof service.price === "number" ? `R$ ${service.price.toFixed(2)}` :
-    "Preço não informado";
+  const servicePrice = formatPriceBRL(service.price);
   const serviceDuration = typeof service.duration === "string" ? service.duration : "Duração não informada";
   const serviceCategory = getCategoryLabel(service.category);
   const serviceType = service.type || "Serviço";
@@ -98,7 +110,7 @@ export const ServiceCard = ({
 
   // Professional information
   const professionalName = typeof service.professional === "string" ? service.professional :
-    service.professional?.name || null;
+    service.professional?.name || (service.professional_id ? undefined : null);
   const professionalId = typeof service.professional === "object" && service.professional?.id ?
     service.professional.id : service.professional_id;
 
@@ -106,17 +118,22 @@ export const ServiceCard = ({
   const serviceRating = typeof service.rating === "number" ? service.rating : 0;
   const serviceReviews = typeof service.reviews === "number" ? service.reviews : 0;
 
-  // Address and distance
+  // Address and distance (try to get from service.address, or fallback to company.address if not present)
   let displayAddress = null;
   let displayDistance = null;
-  if (typeof service.address === "string") {
-    displayAddress = service.address;
-  } else if (typeof service.address === "object" && service.address !== null) {
-    displayAddress = service.address.fullAddress || service.address.city;
-    displayDistance = service.address.distance !== undefined ?
-      (typeof service.address.distance === "number" ?
-        `${service.address.distance.toFixed(1)} km` : service.address.distance) :
-      null;
+  if (service.address) {
+    if (typeof service.address === "string") {
+      displayAddress = service.address;
+    } else if (typeof service.address === "object" && service.address !== null) {
+      displayAddress = service.address.fullAddress || service.address.city;
+      displayDistance = service.address.distance !== undefined ?
+        (typeof service.address.distance === "number" ?
+          `${service.address.distance.toFixed(1)} km` : service.address.distance) :
+        null;
+    }
+  } else if (service.company && typeof service.company === "object" && 'address' in service.company && service.company.address) {
+    const compAddr = service.company.address as any;
+    displayAddress = compAddr.fullAddress || compAddr.city;
   }
 
   // Get service initials for avatar fallback (safely)

@@ -1,44 +1,94 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query"; // Added useQueryClient
-import { fetchAppointments } from "@/lib/api";
-import { CalendarDays, Clock, Loader2, AlertCircle } from "lucide-react";
+import { fetchAppointments, fetchCompanies } from "@/lib/api";
+import { CalendarDays, Clock, Loader2, AlertCircle, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
+import { useState } from "react";
+import { CompanyCard } from "@/components/search/CompanyCard";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Input } from "@/components/ui/input";
 
-// Define interface for Appointment data (adjust based on actual API response)
+// Define interface for Appointment data (alinhado ao backend)
 interface Appointment {
-  id: string; // Assuming ID is string
-  dateTime: string; // Assuming ISO string format
-  status: string; // e.g., "SCHEDULED", "COMPLETED", "CANCELLED"
+  id: string;
+  startTime: string; // ISO string
+  endTime: string;   // ISO string
+  status: string;    // "confirmed", "pending", "completed", etc.
   service: {
-    id: number;
+    id: string;
     name: string;
   };
   professional: {
     id: string;
     name: string;
   };
-  // Add other relevant fields like company, user, etc. if needed
+  user?: {
+    id: string;
+    name: string;
+  };
 }
 
-const AppointmentSection = () => {
-  const queryClient = useQueryClient(); // Initialize queryClient
+const specialties = [
+  "Todas especialidades",
+  "Clínica Dermatológica",
+  "Centro de Fisioterapia",
+  "Salão de Beleza",
+  "Academia e Personal Training",
+  "Consultório Nutricional",
+  "Clínica Odontológica",
+  "Consultório Psicológico",
+  "Centro de Massagem",
+  "Estúdio de Manicure",
+];
+const availabilityOptions = [
+  "Qualquer data",
+  "Hoje",
+  "Amanhã",
+  "Esta semana",
+  "Próxima semana",
+];
 
-  // Fetch appointments using React Query
-  // Assuming the API filters appointments for the logged-in user
-  const { data: appointments, isLoading, isError, error } = useQuery<Appointment[], Error>({
+const AppointmentSection = () => {
+  const queryClient = useQueryClient();
+
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [specialty, setSpecialty] = useState("Todas especialidades");
+  const [sortBy, setSortBy] = useState("rating");
+  const [ratingFilter, setRatingFilter] = useState([0]);
+  const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
+
+  // Fetch companies with filters
+  const { data: companies = [], isLoading, isError, error } = useQuery<any[], Error>({
+    queryKey: ["companies", searchTerm, specialty, sortBy, ratingFilter, availabilityFilter],
+    queryFn: () => fetchCompanies({
+      q: searchTerm,
+      specialty: specialty !== "Todas especialidades" ? specialty : undefined,
+      sort: sortBy,
+      rating: ratingFilter[0] > 0 ? ratingFilter[0] : undefined,
+      availability: availabilityFilter !== "Qualquer data" ? availabilityFilter : undefined,
+      limit: 8,
+    }),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Busca agendamentos do usuário logado (futuros, status relevante)
+  const { data: appointments, isLoading: isLoadingAppointments, isError: isErrorAppointments, error: errorAppointments } = useQuery<Appointment[], Error>({
     queryKey: ["userAppointments"],
-    queryFn: fetchAppointments,
-    // Filter for upcoming appointments (status might be SCHEDULED or CONFIRMED)
-    // This filtering might be better done on the backend if possible
-    select: (data) => data.filter(appt => 
-      (appt.status === "SCHEDULED" || appt.status === "CONFIRMED") && 
-      new Date(appt.dateTime) >= new Date()
-    ).sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()), // Sort by date
-    staleTime: 5 * 60 * 1000, // Refetch every 5 minutes
+    queryFn: () => fetchAppointments({ include: "service,professional", limit: 10, sort: "startTime_asc" }),
+    select: (data) =>
+      data
+        .filter(appt =>
+          ["confirmed", "pending", "in-progress"].includes(appt.status) &&
+          new Date(appt.startTime) >= new Date()
+        )
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
+    staleTime: 5 * 60 * 1000,
   });
 
   const formatDate = (dateString: string) => {
@@ -66,24 +116,20 @@ const AppointmentSection = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading && (
+        {isLoadingAppointments ? (
           <div className="flex justify-center items-center h-24">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        )}
-        {isError && (
+        ) : isErrorAppointments ? (
           <Alert variant="destructive" className="my-4">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Erro</AlertTitle>
             <AlertDescription>
               Não foi possível carregar os próximos agendamentos.
-              {error?.message && <p className="text-xs mt-2">Detalhes: {error.message}</p>}
+              {errorAppointments?.message && <p className="text-xs mt-2">Detalhes: {errorAppointments.message}</p>}
             </AlertDescription>
-            {/* Optional: Add a retry button */}
-            {/* <Button variant="destructive" size="sm" onClick={() => queryClient.refetchQueries({ queryKey: ["userAppointments"] })} className="mt-4">Tentar Novamente</Button> */}
           </Alert>
-        )}
-        {!isLoading && !isError && (
+        ) : (
           <div className="space-y-3">
             {appointments && appointments.length > 0 ? (
               appointments.map((appointment) => (
@@ -94,14 +140,14 @@ const AppointmentSection = () => {
                   <div className="flex flex-col gap-2">
                     <div>
                       {/* Link to service details */}
-                      <Link 
+                      <Link
                         to={`/service/${appointment.service.id}`}
                         className="block font-playfair font-semibold text-base hover:text-iazi-primary"
                       >
                         {appointment.service.name}
                       </Link>
                       {/* Link to professional profile */}
-                      <Link 
+                      <Link
                         to={`/professional/${appointment.professional.id}`}
                         className="text-sm text-gray-600 hover:text-iazi-primary font-inter"
                       >
@@ -110,19 +156,18 @@ const AppointmentSection = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-600 font-inter flex items-center gap-1">
-                        <CalendarDays className="h-3.5 w-3.5"/>
-                        {formatDate(appointment.dateTime)} às {formatTime(appointment.dateTime)}
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {formatDate(appointment.startTime)} às {formatTime(appointment.startTime)}
                       </p>
-                      {/* Link to reschedule page (ensure route exists and handles ID) */}
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      {/* Botão para explorar empresas */}
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="hover:bg-[#4664EA] hover:text-white font-inter"
                         asChild
                       >
-                        {/* Adjust route as needed */}
-                        <Link to={`/booking/${appointment.id}/reschedule`}>
-                          Reagendar
+                        <Link to="/search?type=company">
+                          Encontrar Empresas
                         </Link>
                       </Button>
                     </div>
@@ -130,9 +175,16 @@ const AppointmentSection = () => {
                 </div>
               ))
             ) : (
-              <p className="text-center text-sm text-gray-500 py-4 italic">
-                Você não tem agendamentos futuros.
-              </p>
+              <div className="flex flex-col items-center gap-4 py-8">
+                <p className="text-center text-sm text-gray-500 italic">
+                  Você não tem agendamentos futuros.
+                </p>
+                <Button asChild variant="outline" className="font-inter">
+                  <Link to="/search?type=company">
+                    Encontrar Empresas
+                  </Link>
+                </Button>
+              </div>
             )}
           </div>
         )}

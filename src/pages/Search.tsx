@@ -1,4 +1,3 @@
-
 "use client"; // Ensure client-side rendering for hooks
 
 import { useState, useEffect } from "react";
@@ -18,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // 
 import { AlertCircle } from "lucide-react";
 import { ProfessionalQuickCard } from "@/components/home/ProfessionalQuickCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ServiceFilters } from "@/components/services/ServiceFilters";
 
 // Interfaces
 interface Service { id: string; name: string; category: string; company: { id: string; name: string }; rating: number; price: string; /* Add other fields ServiceCard expects */ image?: string; reviews?: number; duration?: string; availability?: string; company_id?: string; professional_id?: string; professional?: string; }
@@ -25,6 +25,14 @@ interface Company { id: string; name: string; specialty: string; rating: number;
 interface Category { id: number; name: string; icon: string; createdAt: string; updatedAt: string; }
 
 const ITEMS_PER_PAGE = 4;
+
+const priceRanges = [
+  "Qualquer preço",
+  "Até R$100",
+  "R$100 a R$200",
+  "R$200 a R$300",
+  "Acima de R$300",
+];
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,6 +47,9 @@ const Search = () => {
   const [sortBy, setSortBy] = useState("rating"); // Default sort
   const [selectedCategory, setSelectedCategory] = useState<string>(categoryFilter);
   const [professionalTipo, setProfessionalTipo] = useState<"all" | "only-linked" | "only-unlinked">("all");
+  const [priceRange, setPriceRange] = useState("Qualquer preço");
+  const [ratingFilter, setRatingFilter] = useState([0]);
+  const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
 
   useEffect(() => {
     console.log("[Search Final Effect] Updating state from URL params:", { typeFilter, categoryFilter, pageParam });
@@ -112,7 +123,8 @@ const Search = () => {
     const matchesCategory =
       !selectedCategory || selectedCategory === "Todas categorias" ||
       (pro.services && pro.services.some((s: any) => s.service?.category?.name === selectedCategory));
-    return matchesSearch && matchesCategory;
+    const matchesRating = (pro.rating ?? 0) >= ratingFilter[0];
+    return matchesSearch && matchesCategory && matchesRating;
   });
   
   const sortedProfessionals = [...filteredProfessionals].sort((a, b) => {
@@ -138,7 +150,16 @@ const Search = () => {
     const matchesCategory =
       !selectedCategory || selectedCategory === "Todas categorias" ||
       (service.category && service.category.name === selectedCategory);
-    return matchesSearch && matchesCategory;
+    const matchesRating = (service.rating ?? 0) >= ratingFilter[0];
+    const priceValue = service.price ? parseFloat(service.price.replace(/[^0-9,]/g, ".").replace(",", ".")) : 0;
+    const matchesPriceRange =
+      priceRange === "Qualquer preço" ||
+      (priceRange === "Até R$100" && priceValue <= 100) ||
+      (priceRange === "R$100 a R$200" && priceValue >= 100 && priceValue <= 200) ||
+      (priceRange === "R$200 a R$300" && priceValue >= 200 && priceValue <= 300) ||
+      (priceRange === "Acima de R$300" && priceValue > 300);
+    // Availability filter can be implemented if service.availability exists
+    return matchesSearch && matchesCategory && matchesRating && matchesPriceRange;
   });
   
   const sortedServices = [...filteredServices].sort((a, b) => {
@@ -162,7 +183,8 @@ const Search = () => {
     const matchesCategory =
       !selectedCategory || selectedCategory === "Todas categorias" ||
       (company.categories && company.categories.includes(selectedCategory));
-    return matchesSearch && matchesCategory;
+    const matchesRating = (company.rating ?? 0) >= ratingFilter[0];
+    return matchesSearch && matchesCategory && matchesRating;
   });
   
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
@@ -234,7 +256,7 @@ const Search = () => {
   const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company' | 'professional') => {
     if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
     if (isError) return null;
-    if (data.length === 0) return <EmptyResults />;
+    if (data.length === 0) return null; // Não renderiza a área se não houver resultados
 
     if (type === 'service') {
       return (
@@ -249,7 +271,6 @@ const Search = () => {
         </div>
       );
     }
-    
     if (type === 'company') {
       return (
         <div className={`grid grid-cols-1 gap-6`}>
@@ -259,7 +280,6 @@ const Search = () => {
         </div>
       );
     }
-    
     if (type === 'professional') {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,7 +298,6 @@ const Search = () => {
         </div>
       );
     }
-    
     return null;
   };
 
@@ -303,27 +322,6 @@ const Search = () => {
               `Encontramos ${totalItems} resultados` : 
               'Explore empresas e serviços disponíveis'}
           </p>
-
-          {/* Categories */}
-          {isLoadingCategories ? <Skeleton className="h-8 w-full mb-6" /> : 
-           isErrorCategories ? 
-            <Alert variant="destructive" className="mb-6">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erro ao Carregar Categorias</AlertTitle>
-                <AlertDescription>
-                    Não foi possível buscar as categorias. Tente novamente mais tarde.
-                    {errorCategories && <p className="text-xs mt-2">Detalhes: {errorCategories.message}</p>}
-                </AlertDescription>
-            </Alert> : 
-           categoryNames.length > 0 ? (
-            <SearchCategories 
-              selectedCategory={selectedCategory}
-              allCategories={categoryNames} 
-              onCategoryChange={handleCategoryChange}
-            />
-          ) : (
-            <p className="text-gray-500 mb-6">Nenhuma categoria encontrada.</p>
-          )}
 
           {/* Global Error Display (if not category error) */}
           {isAnyError && !isErrorCategories && (
@@ -350,30 +348,50 @@ const Search = () => {
                   companyCount={totalCompanies}
                   professionalCount={totalProfessionals}
                 >
-                  {/* Content Tabs */}
+                  {/* Filtros avançados abaixo das abas */}
+                  <div className="mb-6">
+                    <ServiceFilters
+                      searchTerm={searchTerm}
+                      setSearchTerm={v => updateFilters({ q: v })}
+                      category={selectedCategory}
+                      setCategory={v => updateFilters({ category: v })}
+                      sortBy={sortBy}
+                      setSortBy={v => handleSortChange(v)}
+                      ratingFilter={ratingFilter}
+                      setRatingFilter={setRatingFilter}
+                      priceRange={priceRange}
+                      setPriceRange={setPriceRange}
+                      availabilityFilter={availabilityFilter}
+                      setAvailabilityFilter={setAvailabilityFilter}
+                    />
+                  </div>
                   <TabsContent value="all">
                     <div className="space-y-10">
-                      <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Serviços</h2>
-                        {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
-                      </div>
-                      
-                      <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Profissionais</h2>
-                        {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
-                      </div>
-                      
-                      <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Empresas</h2>
-                        {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
-                      </div>
+                      {paginatedServices.length > 0 && (
+                        <div className="bg-white rounded-lg p-6 shadow-sm">
+                          <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Serviços</h2>
+                          {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedServices, 'service')}
+                        </div>
+                      )}
+                      {paginatedProfessionals.length > 0 && (
+                        <div className="bg-white rounded-lg p-6 shadow-sm">
+                          <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Profissionais</h2>
+                          {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedProfessionals, 'professional')}
+                        </div>
+                      )}
+                      {paginatedCompanies.length > 0 && (
+                        <div className="bg-white rounded-lg p-6 shadow-sm">
+                          <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Empresas</h2>
+                          {renderTypedContent(isLoadingSearch, isErrorSearch, paginatedCompanies, 'company')}
+                        </div>
+                      )}
+                      {/* Empty state se todas as áreas estiverem vazias */}
+                      {!isAnyLoading && !isAnyError &&
+                        paginatedServices.length === 0 &&
+                        paginatedCompanies.length === 0 &&
+                        paginatedProfessionals.length === 0 &&
+                        <EmptyResults />}
                     </div>
-                    {/* Combined Empty State for 'all' tab */}
-                    {!isAnyLoading && !isAnyError && 
-                      paginatedServices.length === 0 && 
-                      paginatedCompanies.length === 0 && 
-                      paginatedProfessionals.length === 0 && 
-                      <EmptyResults />}
                   </TabsContent>
 
                   <TabsContent value="service">
