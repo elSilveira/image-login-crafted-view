@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Link } from "react-router-dom";
@@ -266,7 +265,7 @@ export const ServiceCard = ({
                     <Link to={`/service/${serviceId}`}>Ver detalhes</Link>
                   </Button>
                   <Button size="sm" className="flex-1" asChild>
-                    <Link to={`/booking/service/${serviceId}`}>
+                    <Link to={professionalId ? `/booking/${serviceId}?professional=${professionalId}` : `/booking/${serviceId}`}>
                       <Calendar className="h-4 w-4 mr-1" />
                       Agendar agora
                     </Link>

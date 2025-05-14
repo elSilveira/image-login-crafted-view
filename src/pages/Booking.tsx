@@ -20,15 +20,30 @@ const STEPS = [
 const Booking = () => {
   const { serviceId } = useParams();
   const location = useLocation();
-  // Extract professional ID from URL or state
   const searchParams = new URLSearchParams(location.search);
   const professionalParam = searchParams.get('professional') || undefined;
+  const dateParam = searchParams.get('date');
+  const timeParam = searchParams.get('time');
   const isCompanyBooking = location.search.includes('company=true');
   const [currentStep, setCurrentStep] = React.useState(isCompanyBooking ? 1 : 2);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = React.useState<string>();
   const [selectedProfessional, setSelectedProfessional] = React.useState<string | undefined>();
   const navigate = useNavigate();
+
+  // Direct navigation to confirmation step if all params are present
+  React.useEffect(() => {
+    if (serviceId && professionalParam && dateParam && timeParam) {
+      // Parse date (YYYY-MM-DD)
+      const parsedDate = new Date(dateParam);
+      if (!isNaN(parsedDate.getTime())) {
+        setSelectedDate(parsedDate);
+        setSelectedTime(timeParam);
+        setSelectedProfessional(professionalParam);
+        setCurrentStep(3);
+      }
+    }
+  }, [serviceId, professionalParam, dateParam, timeParam]);
 
   // On page load, select today's date and show slots
   React.useEffect(() => {

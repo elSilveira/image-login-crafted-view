@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -96,7 +95,7 @@ export const ProfessionalQuickCard = ({
               
               {hasServices && (
                 <Button size="sm" className="flex-1 text-sm" asChild>
-                  <Link to={`/professional/${id}`}>
+                  <Link to={`/professional/${id}?tab=availability`}>
                     <Calendar className="h-4 w-4 mr-1.5" />
                     Agendar
                   </Link>

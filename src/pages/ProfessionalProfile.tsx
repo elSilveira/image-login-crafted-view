@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, Link, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProfessionalDetails, fetchProfessionalMe, fetchProfessionalAvailableDates, fetchAvailability, fetchProfessionalAppointments } from "@/lib/api"; // Import API function
 import Navigation from "@/components/Navigation";
@@ -42,6 +42,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { pt } from 'date-fns/locale';
 import { useAuth } from "@/contexts/AuthContext";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 // Removed mock data
 
@@ -159,7 +160,15 @@ const formatDuration = (duration?: number | string) => {
   if (isNaN(minutes)) return String(duration);
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return `${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}min` : ""}`.trim() || "N/A";
+  if (h > 0 && m > 0) {
+    return `${h}h ${m}min`;
+  } else if (h > 0) {
+    return `${h}h`;
+  } else if (m > 0) {
+    return `${m}min`;
+  } else {
+    return "N/A";
+  }
 };
 
 const formatDate = (dateString?: string | null, dateFormat = "dd/MM/yyyy") => {
@@ -174,6 +183,7 @@ const formatDate = (dateString?: string | null, dateFormat = "dd/MM/yyyy") => {
 const ProfessionalProfile = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [date, setDate] = useState<Date | undefined>(new Date());
   // Sync active tab with URL query param `tab`
   const [searchParams, setSearchParams] = useSearchParams();
@@ -188,6 +198,11 @@ const ProfessionalProfile = () => {
   // Track avatar image error state
   const [avatarError, setAvatarError] = useState(false);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
+  const [selectedServiceForSlot, setSelectedServiceForSlot] = useState<string | null>(null);
+  const [serviceFilter, setServiceFilter] = useState<string>("");
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   // Se não houver id na URL, buscar dados do próprio profissional logado
   const isOwnProfile = !id && user?.isProfessional;
@@ -248,6 +263,20 @@ const ProfessionalProfile = () => {
       console.log('[DEBUG] fetchAvailability params:', { professionalId: professional.id, serviceId, iso });
     }
   }, [date, professional]);
+
+  // Fecha o dropdown de seleção de serviço ao clicar fora
+  useEffect(() => {
+    if (!expandedSlot) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setExpandedSlot(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [expandedSlot]);
 
   // --- Loading State --- 
   if (isLoading) {
@@ -539,8 +568,33 @@ const ProfessionalProfile = () => {
           
           <TabsContent value="availability" className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-6">Verificar Disponibilidade</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="col-span-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start"> {/* Adiciona items-start para alinhar o calendário */}
+              <div className="col-span-1 flex flex-col items-start w-full"> {/* Garante alinhamento à esquerda */}
+                {/* Filtro de serviço com Select do design system */}
+                {professional.services && professional.services.length > 1 && (
+                  <div className="mb-4 w-full">
+                    <label className="block text-sm font-medium mb-1">Filtrar por serviço</label>
+                    <Select
+                      value={serviceFilter || "all"}
+                      onValueChange={value => {
+                        setServiceFilter(value === "all" ? "" : value);
+                        setSelectedSlot(null);
+                        setExpandedSlot(null);
+                        setSelectedServiceForSlot(null);
+                      }}
+                    >
+                      <SelectTrigger className="w-full h-10 border-gray-200 bg-white">
+                        <SelectValue placeholder="Todos os serviços" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos os serviços</SelectItem>
+                        {professional.services.map(service => (
+                          <SelectItem key={service.id} value={service.id}>{service.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <Calendar
                   mode="single"
                   selected={date}
@@ -558,6 +612,33 @@ const ProfessionalProfile = () => {
                 <h3 className="font-medium text-lg mb-4">
                   {date ? `Horários disponíveis para ${format(date, 'dd/MM/yyyy', { locale: pt })}` : 'Selecione uma data'}
                 </h3>
+                {/* Serviços selecionados acima dos horários */}
+                {selectedSlot && selectedServiceForSlot && (
+                  <div className="mb-4 flex flex-col md:flex-row md:items-center md:gap-4 p-4 bg-muted/40 rounded border">
+                    <div className="font-medium">
+                      Horário selecionado: <span className="text-iazi-primary">{selectedSlot}</span>
+                    </div>
+                    <div className="font-medium">
+                      Serviço: <span className="text-iazi-primary">{(professional.services || []).find(s => s.id === selectedServiceForSlot)?.name}</span>
+                      {(() => {
+                        const serv = (professional.services || []).find(s => s.id === selectedServiceForSlot);
+                        return serv ? <span className="ml-2 text-xs text-gray-500">{serv.duration} min</span> : null;
+                      })()}
+                    </div>
+                    <Button
+                      className="mt-2 md:mt-0 md:ml-auto"
+                      onClick={() => {
+                        if (!selectedServiceForSlot || !selectedSlot || !professional?.id || !date) return;
+                        // Monta a URL: /booking/{serviceId}?professional={professionalId}&date=YYYY-MM-DD&time=HH:mm
+                        const dateStr = date.toISOString().split('T')[0];
+                        navigate(`/booking/${selectedServiceForSlot}?professional=${professional.id}&date=${dateStr}&time=${selectedSlot}`);
+                      }}
+                      disabled={!selectedSlot || !selectedServiceForSlot}
+                    >
+                      Agendar
+                    </Button>
+                  </div>
+                )}
                 {/* Legend */}
                 <div className="flex gap-4 mb-4">
                   <div className="flex items-center gap-2"><Button size="sm" className="w-6 h-6 p-0" /> <span>Disponível</span></div>
@@ -569,65 +650,153 @@ const ProfessionalProfile = () => {
                       <div className="text-center">Carregando horários...</div>
                     ) : (
                       (() => {
+                        // Variáveis de escopo para todo o bloco
                         const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
                         const dayKey = days[date.getDay()];
+                        // Aplica filtro de serviço se selecionado
                         const servicesForDay = (professional.services || []).filter(service =>
+                          ((!serviceFilter || serviceFilter === "all") || service.id === serviceFilter) &&
                           service.schedule && service.schedule.some(s => s.dayOfWeek === dayKey)
                         );
                         if (servicesForDay.length === 0) {
                           return <div className="text-center text-gray-500 italic">Nenhum serviço disponível para este dia da semana.</div>;
                         }
-                        return (
-                          <div className="space-y-8">
-                            {servicesForDay.map(service => {
-                              const slotDef = service.schedule.find(s => s.dayOfWeek === dayKey);
-                              let allSlots: string[] = [];
-                              if (slotDef) {
-                                const generateTimeSlots = (start: string, end: string, interval: number) => {
-                                  const times: string[] = [];
-                                  let [sh, sm] = start.split(':').map(Number);
-                                  let [eh, em] = end.split(':').map(Number);
-                                  const current = new Date(date); current.setHours(sh, sm, 0, 0);
-                                  const endDate = new Date(date); endDate.setHours(eh, em, 0, 0);
-                                  while (current <= endDate) {
-                                    times.push(format(current, 'HH:mm'));
-                                    current.setMinutes(current.getMinutes() + interval);
-                                  }
-                                  return times;
-                                };
-                                allSlots = generateTimeSlots(slotDef.startTime, slotDef.endTime, 30);
+                        // Gather all slots for all services, then deduplicate
+                        let slotSet = new Set<string>();
+                        servicesForDay.forEach(service => {
+                          const slotDef = service.schedule.find(s => s.dayOfWeek === dayKey);
+                          if (slotDef) {
+                            const generateTimeSlots = (start: string, end: string, interval: number) => {
+                              const times: string[] = [];
+                              let [sh, sm] = start.split(':').map(Number);
+                              let [eh, em] = end.split(':').map(Number);
+                              const current = new Date(date); current.setHours(sh, sm, 0, 0);
+                              const endDate = new Date(date); endDate.setHours(eh, em, 0, 0);
+                              while (current <= endDate) {
+                                times.push(format(current, 'HH:mm'));
+                                current.setMinutes(current.getMinutes() + interval);
                               }
-                              return (
-                                <div key={service.id}>
-                                  <div className="font-semibold mb-2 flex items-center gap-2">
-                                    <span className="text-iazi-primary">{service.name}</span>
-                                    <span className="text-xs text-gray-500">{service.duration} min</span>
+                              return times;
+                            };
+                            generateTimeSlots(slotDef.startTime, slotDef.endTime, 30).forEach(t => slotSet.add(t));
+                          }
+                        });
+                        const allSlots = Array.from(slotSet).sort();
+                        // 2. For each slot, determine if at least one service is available (not booked)
+                        return (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                              {allSlots.map((time, idx) => {
+                                // Find services available at this slot
+                                let availableServices: Service[] = [];
+                                if (!serviceFilter || serviceFilter === "all") {
+                                  // No filter: a slot is unavailable if any service is booked at this time
+                                  // Only include services for which the slot is not booked
+                                  const slotTaken = appointments.some(a => {
+                                    const apptDate = new Date(a.startTime);
+                                    const apptTime = format(apptDate, 'HH:mm');
+                                    return apptTime === time;
+                                  });
+                                  if (!slotTaken) {
+                                    availableServices = servicesForDay.filter(service => {
+                                      const slotDef = service.schedule.find(s => s.dayOfWeek === dayKey);
+                                      if (!slotDef) return false;
+                                      // Is this slot in the service's schedule?
+                                      const serviceSlots = (() => {
+                                        const times: string[] = [];
+                                        let [sh, sm] = slotDef.startTime.split(':').map(Number);
+                                        let [eh, em] = slotDef.endTime.split(':').map(Number);
+                                        const current = new Date(date); current.setHours(sh, sm, 0, 0);
+                                        const endDate = new Date(date); endDate.setHours(eh, em, 0, 0);
+                                        while (current <= endDate) {
+                                          times.push(format(current, 'HH:mm'));
+                                          current.setMinutes(current.getMinutes() + 30);
+                                        }
+                                        return times;
+                                      })();
+                                      return serviceSlots.includes(time);
+                                    });
+                                  }
+                                } else {
+                                  // Filtered: only mark as unavailable if booked for this service
+                                  availableServices = servicesForDay.filter(service => {
+                                    if (service.id !== serviceFilter) return false;
+                                    const slotDef = service.schedule.find(s => s.dayOfWeek === dayKey);
+                                    if (!slotDef) return false;
+                                    // Is this slot in the service's schedule?
+                                    const serviceSlots = (() => {
+                                      const times: string[] = [];
+                                      let [sh, sm] = slotDef.startTime.split(':').map(Number);
+                                      let [eh, em] = slotDef.endTime.split(':').map(Number);
+                                      const current = new Date(date); current.setHours(sh, sm, 0, 0);
+                                      const endDate = new Date(date); endDate.setHours(eh, em, 0, 0);
+                                      while (current <= endDate) {
+                                        times.push(format(current, 'HH:mm'));
+                                        current.setMinutes(current.getMinutes() + 30);
+                                      }
+                                      return times;
+                                    })();
+                                    if (!serviceSlots.includes(time)) return false;
+                                    // Is there an appointment for this service at this time?
+                                    const slotTaken = appointments.some(a => {
+                                      if (a.serviceId !== service.id) return false;
+                                      const apptDate = new Date(a.startTime);
+                                      const apptTime = format(apptDate, 'HH:mm');
+                                      return apptTime === time;
+                                    });
+                                    return !slotTaken;
+                                  });
+                                }
+                                const isAvailable = availableServices.length > 0;
+                                return (
+                                  <div key={time} className="relative flex flex-col items-start">
+                                    <Button
+                                      variant={isAvailable ? 'outline' : 'destructive'}
+                                      className={`justify-start w-full ${selectedSlot === time ? 'ring-2 ring-primary ring-offset-2' : ''}`}
+                                      disabled={!isAvailable}
+                                      onClick={() => {
+                                        if (!isAvailable) return;
+                                        setSelectedSlot(time);
+                                        if (availableServices.length === 1) {
+                                          setSelectedServiceForSlot(availableServices[0].id);
+                                          setExpandedSlot(null); // Do not expand for single service
+                                        } else {
+                                          setSelectedServiceForSlot(null);
+                                          setExpandedSlot(expandedSlot === time ? null : time);
+                                        }
+                                      }}
+                                    >
+                                      <Clock className="mr-2 h-4 w-4" />{time}
+                                      {/* Show available services count only if not filtering by service */}
+                                      {isAvailable && (!serviceFilter || serviceFilter === "all") && (
+                                        <span className="ml-2 text-xs text-muted-foreground">
+                                          {availableServices.length} serviço{availableServices.length > 1 ? 's' : ''} disponível{availableServices.length > 1 ? 's' : ''}
+                                        </span>
+                                      )}
+                                    </Button>
+                                    {/* Expanded service selection: only for >1 services */}
+                                    {expandedSlot === time && isAvailable && availableServices.length > 1 && (
+                                      <div ref={dropdownRef} className="absolute left-0 right-0 z-10 mt-2 bg-white border rounded shadow-lg p-4">
+                                        <div className="mb-2 font-medium text-sm">Selecione o serviço para este horário:</div>
+                                        <div className="flex flex-col gap-2">
+                                          {availableServices.map(service => (
+                                            <Button
+                                              key={service.id}
+                                              variant={selectedServiceForSlot === service.id ? 'default' : 'outline'}
+                                              className={selectedServiceForSlot === service.id ? 'bg-primary text-white hover:bg-primary/90 border-primary' : ''}
+                                              onClick={() => setSelectedServiceForSlot(service.id)}
+                                            >
+                                              <span className={selectedServiceForSlot === service.id ? 'font-semibold' : ''}>{service.name}</span>
+                                              <span className="text-xs text-gray-500 ml-2">{formatDuration(service.duration)}</span>
+                                            </Button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
-                                  {allSlots.length > 0 ? (
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                      {allSlots.map((time, idx) => {
-                                        // Check if there is an appointment for this service at this time
-                                        const slotTaken = appointments.some(a => {
-                                          if (a.serviceId !== service.id) return false;
-                                          // Parse startTime to local time string
-                                          const apptDate = new Date(a.startTime);
-                                          const apptTime = format(apptDate, 'HH:mm');
-                                          return apptTime === time;
-                                        });
-                                        const available = !slotTaken;
-                                        return (
-                                          <Button key={idx} variant={available ? 'outline' : 'destructive'} className="justify-start" disabled={!available}>
-                                            <Clock className="mr-2 h-4 w-4" />{time}
-                                          </Button>
-                                        );
-                                      })}
-                                    </div>
-                                  ) : (
-                                    <div className="text-center text-gray-500 italic">Nenhum horário cadastrado para este serviço neste dia.</div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                                );
+                              })}
+                            </div>
                           </div>
                         );
                       })()
