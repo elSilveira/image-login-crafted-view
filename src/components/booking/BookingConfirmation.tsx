@@ -34,13 +34,15 @@ const formSchema = z.object({
 
 type BookingFormData = z.infer<typeof formSchema>;
 
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  duration: number;
+}
+
 interface BookingConfirmationProps {
-  service: {
-    id: string; // Need service ID for API call
-    name: string;
-    price: number;
-    duration: number;
-  };
+  services: Service[]; // Changed from 'service' to 'services' array
   professional?: { // Professional might be optional depending on service
     id: string; // Need professional ID if applicable
     name: string;
@@ -58,7 +60,7 @@ interface BookingConfirmationProps {
 }
 
 const BookingConfirmation = ({
-  service,
+  services,
   professional,
   company,
   date,
@@ -68,6 +70,15 @@ const BookingConfirmation = ({
 }: BookingConfirmationProps) => {
   const queryClient = useQueryClient();
   const { user } = useAuth(); // Get user info from AuthContext
+
+  // Calculate total price and duration
+  const totalPrice = React.useMemo(() => {
+    return services.reduce((sum, service) => sum + (service?.price || 0), 0);
+  }, [services]);
+
+  const totalDuration = React.useMemo(() => {
+    return services.reduce((sum, service) => sum + (service?.duration || 0), 0);
+  }, [services]);
 
   const form = useForm<BookingFormData>({
     resolver: zodResolver(formSchema),
@@ -153,9 +164,12 @@ const BookingConfirmation = ({
       // Format time as HH:MM
       const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
+      // Extract service IDs for the new API contract
+      const serviceIds = services.map(service => service.id);
+
       // Build payload according to new contract
       const appointmentData: any = {
-        serviceId: service.id,
+        serviceIds: serviceIds, // Now sending an array of service IDs
         date: dateStr,
         time: timeStr,
         notes: formData.notes || undefined,
@@ -188,9 +202,15 @@ const BookingConfirmation = ({
         <div>
           <h4 className="font-medium mb-2">Resumo do agendamento</h4>
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Serviço:</span>
-              <span>{service.name}</span>
+            {/* Show all selected services */}
+            <div className="space-y-2">
+              <div className="text-muted-foreground">Serviços:</div>
+              {services.map((service, index) => (
+                <div key={service.id} className="flex justify-between">
+                  <span>{service.name}</span>
+                  <span>R$ {service.price}</span>
+                </div>
+              ))}
             </div>
             {professional && (
               <div className="flex justify-between">
@@ -208,11 +228,11 @@ const BookingConfirmation = ({
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Duração:</span>
-              <span>{service.duration} minutos</span>
+              <span>{totalDuration} minutos</span>
             </div>
             <div className="flex justify-between font-medium">
               <span>Valor total:</span>
-              <span>R$ {service.price}</span>
+              <span>R$ {totalPrice}</span>
             </div>
           </div>
         </div>

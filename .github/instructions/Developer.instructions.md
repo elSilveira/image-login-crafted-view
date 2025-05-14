@@ -10,3 +10,5 @@ Coding standards, domain knowledge, and preferences that AI should follow.
 - Follow the best practices and coding standards.
 - Keep your code clean and organized.
 - User swagger.json as backend API documentation
+- Think step-by-step and break down the tasks into smaller parts.
+- Use the provided code snippets as a reference for your implementation.

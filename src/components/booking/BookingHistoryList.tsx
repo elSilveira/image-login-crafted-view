@@ -1,10 +1,10 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, FileText, RefreshCw, Clock, Star } from "lucide-react";
 import { Link } from "react-router-dom";
+import ServicesList from "./ServicesList";
 
 interface BookingHistoryListProps {
   status: "scheduled" | "completed" | "cancelled";
@@ -15,47 +15,59 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
   const appointments = [
     {
       id: 1,
-      service: "Corte de Cabelo Masculino",
+      services: [
+        { id: "s1", name: "Corte de Cabelo Masculino", price: 80, duration: 30 },
+        { id: "s2", name: "Barba", price: 40, duration: 20 }
+      ],
       professional: "João Silva",
       date: "2025-05-15",
       time: "14:00",
-      price: 80,
+      totalPrice: 120,
       status: "scheduled",
     },
     {
       id: 2,
-      service: "Barba",
+      services: [
+        { id: "s2", name: "Barba", price: 40, duration: 20 }
+      ],
       professional: "João Silva",
       date: "2025-05-10",
       time: "15:30",
-      price: 40,
+      totalPrice: 40,
       status: "scheduled",
     },
     {
       id: 3,
-      service: "Coloração",
+      services: [
+        { id: "s3", name: "Coloração", price: 150, duration: 60 },
+        { id: "s4", name: "Hidratação", price: 80, duration: 45 }
+      ],
       professional: "Maria Santos",
       date: "2025-03-25",
       time: "10:00",
-      price: 150,
+      totalPrice: 230,
       status: "completed",
     },
     {
       id: 4,
-      service: "Manicure",
+      services: [
+        { id: "s5", name: "Manicure", price: 60, duration: 40 }
+      ],
       professional: "Ana Oliveira",
       date: "2025-03-20",
       time: "16:00",
-      price: 60,
+      totalPrice: 60,
       status: "completed",
     },
     {
       id: 5,
-      service: "Pedicure",
+      services: [
+        { id: "s6", name: "Pedicure", price: 80, duration: 50 }
+      ],
       professional: "Ana Oliveira",
       date: "2025-03-15",
       time: "09:00",
-      price: 80,
+      totalPrice: 80,
       status: "cancelled",
     }
   ].filter(appointment => appointment.status === status);
@@ -141,16 +153,25 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
                   </div>
                   
                   <div className="flex-1">
-                    <h3 className="font-medium text-lg font-playfair text-iazi-text">{appointment.service}</h3>
+                    {/* Display services using ServicesList component */}
+                    <ServicesList 
+                      services={appointment.services} 
+                      showPrice={false} 
+                      compact={appointment.services.length > 1}
+                    />
+                    
                     <Link 
                       to={`/professional/${appointment.professional.toLowerCase().replace(/\s+/g, '-')}`}
-                      className="text-muted-foreground hover:text-iazi-primary font-inter"
+                      className="text-muted-foreground hover:text-iazi-primary font-inter block mt-1"
                     >
                       com {appointment.professional}
                     </Link>
+                    
                     <div className="flex items-center justify-between mt-2">
                       {getStatusBadge(appointment.status)}
-                      <span className="font-medium font-inter text-iazi-text">R$ {appointment.price}</span>
+                      <span className="font-medium font-inter text-iazi-text">
+                        R$ {appointment.totalPrice}
+                      </span>
                     </div>
                   </div>
                 </div>

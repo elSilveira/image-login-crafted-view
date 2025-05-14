@@ -5,10 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useLocation } from "react-router-dom";
-import { fetchProfessionalAppointments } from "@/lib/api"; // API: fetchProfessionalAppointments(professionalId, date)
-import { format } from "date-fns";
-import { Loader2, AlertCircle } from "lucide-react"; // Import icons
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // Import Alert components
+import { fetchProfessionalAppointments } from "@/lib/api";
+import { format, addMinutes } from "date-fns";
+import { Loader2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Utility to generate time slots every N minutes
 const generateTimeSlots = (start: string, end: string, interval: number) => {
@@ -29,14 +29,19 @@ interface BookingTimeSlotsProps {
   selectedTime: string | undefined;
   onTimeSelect: (time: string) => void;
   onNext: () => void;
-  professionalId: string;  // required now
-  serviceId: string;
+  professionalId: string;
+  serviceId?: string; // Optional now since we might have multiple services
   serviceSchedule?: Array<{ dayOfWeek: string; startTime: string; endTime: string }>;
+  selectedServices: Array<{
+    id: string;
+    name: string;
+    duration: number;
+    price: number;
+  }>;
 }
 
 interface AvailabilityData {
   availableSlots: string[];
-  // disabledDates?: string[]; // Potentially returned by the API
 }
 
 const BookingTimeSlots = ({
@@ -47,9 +52,15 @@ const BookingTimeSlots = ({
   professionalId,
   serviceId,
   serviceSchedule,
+  selectedServices,
 }: BookingTimeSlotsProps) => {
   const location = useLocation();
   const isRescheduling = location.pathname.includes("/reschedule");
+
+  // Calculate total duration of all selected services
+  const totalDuration = React.useMemo(() => {
+    return selectedServices.reduce((sum, service) => sum + (service.duration || 0), 0);
+  }, [selectedServices]);
 
   // Format date for API query (YYYY-MM-DD)
   const formattedDate = date ? format(date, "yyyy-MM-dd") : undefined;
@@ -74,16 +85,50 @@ const BookingTimeSlots = ({
     }
   }
 
-  // Mark slots as unavailable if an appointment exists at that time for the selected service
+  // Mark slots as unavailable if they conflict with existing appointments
+  // or don't have enough time for the total duration of all services
   const slots = allSlots.filter(time => {
-    // Check if there is an appointment for this service at this time
-    const slotTaken = appointments.some((a: any) => {
-      if (a.serviceId !== serviceId) return false;
-      const apptDate = new Date(a.startTime);
-      const apptTime = format(apptDate, 'HH:mm');
-      return apptTime === time;
-    });
-    return !slotTaken;
+    // Parse the time slot
+    const [hours, minutes] = time.split(':').map(Number);
+    const slotDateTime = new Date(date!);
+    slotDateTime.setHours(hours, minutes, 0, 0);
+    
+    // Calculate end time based on total duration of all services
+    const endDateTime = addMinutes(slotDateTime, totalDuration);
+    
+    // Check if this time slot is already booked or overlaps with any appointment
+    for (const appointment of appointments) {
+      const appointmentStart = new Date(appointment.startTime);
+      const appointmentEnd = new Date(appointment.endTime || appointment.startTime); // Fallback if no end time
+      
+      // If appointment overlaps with our time slot + duration, it's not available
+      if (
+        (slotDateTime <= appointmentEnd && endDateTime >= appointmentStart) ||
+        (appointmentStart <= endDateTime && appointmentEnd >= slotDateTime)
+      ) {
+        return false;
+      }
+    }
+    
+    // Check if the slot's end time exceeds the work day
+    if (serviceSchedule) {
+      const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+      const dayKey = days[date!.getDay()];
+      const slotDef = serviceSchedule.find(s => s.dayOfWeek === dayKey);
+      
+      if (slotDef) {
+        const [endHours, endMinutes] = slotDef.endTime.split(':').map(Number);
+        const workDayEnd = new Date(date!);
+        workDayEnd.setHours(endHours, endMinutes, 0, 0);
+        
+        // If the service would end after the workday, it's not available
+        if (endDateTime > workDayEnd) {
+          return false;
+        }
+      }
+    }
+    
+    return true;
   });
 
   // Get current time for comparison
@@ -97,6 +142,11 @@ const BookingTimeSlots = ({
         <p className="text-muted-foreground">
           {date ? `Horários disponíveis para ${date.toLocaleDateString("pt-BR")}` : "Selecione uma data primeiro"}
         </p>
+        {selectedServices.length > 0 && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Duração total dos serviços: {totalDuration} minutos
+          </p>
+        )}
       </div>
 
       <ScrollArea className="h-[300px] rounded-md border p-4">
@@ -120,13 +170,7 @@ const BookingTimeSlots = ({
             {allSlots.map((time) => {
               const available = slots.includes(time);
               const isSelected = selectedTime === time;
-              // Determine if slot is scheduled (booked by someone else)
-              const isScheduled = !available && appointments.some((a: any) => {
-                if (a.serviceId !== serviceId) return false;
-                const apptDate = new Date(a.startTime);
-                const apptTime = format(apptDate, 'HH:mm');
-                return apptTime === time;
-              });
+              
               // Disable if not available or if time is before now (for today)
               let disabled = !available;
               if (isToday) {
@@ -137,20 +181,18 @@ const BookingTimeSlots = ({
                   disabled = true;
                 }
               }
+              
               let variant: any = 'outline';
               let extraClass = '';
-              if (disabled && isScheduled) {
-                // Scheduled (booked) slot: outlined red border
-                variant = 'outline';
-                extraClass = 'border border-red-500 text-red-500 bg-red-50 opacity-80 cursor-not-allowed';
-              } else if (disabled) {
-                // Disabled (past or blocked): gray/destructive
+              if (disabled) {
+                // Disabled (past or unavailable for the duration): gray/destructive
                 variant = 'destructive';
                 extraClass = 'opacity-60 cursor-not-allowed';
               } else if (isSelected) {
                 variant = 'default';
                 extraClass = 'ring-2 ring-primary ring-offset-2 bg-primary text-white';
               }
+              
               return (
                 <Button
                   key={time}

@@ -177,6 +177,8 @@ export const fetchAppointments = async (params: any = {}) => { // Added params
   return response.data;
 }
 export const createAppointment = async (appointmentData: any) => {
+  // Updated to handle the multi-service model
+  // appointmentData should include serviceIds array now
   const response = await apiClient.post("/appointments", appointmentData);
   return response.data;
 }
@@ -236,6 +238,10 @@ export const fetchProfessionals = async (params: any = {}) => { // Added functio
 }
 export const fetchProfessionalDetails = async (professionalId:string) => {
   const response = await apiClient.get(`/professionals/${professionalId}`);
+  return response.data;
+}
+export const fetchProfessionalServices = async (professionalId: string) => {
+  const response = await apiClient.get(`/professionals/${professionalId}/services`);
   return response.data;
 }
 export const createProfessionalProfile = async (data: any) => {
@@ -298,8 +304,9 @@ export const checkDirectBookingEligibility = async (serviceId: string) => {
 };
 
 // --- Direct Professional Service Booking ---
-export const bookProfessionalService = async (professionalId: string, serviceId: string, bookingData: any) => {
-  const response = await apiClient.post(`/professionals/${professionalId}/services/${serviceId}/book`, bookingData);
+export const bookProfessionalService = async (professionalId: string, bookingData: any) => {
+  // Updated to handle multiple services - serviceIds are now part of bookingData
+  const response = await apiClient.post(`/professionals/${professionalId}/book`, bookingData);
   return response.data;
 };
 

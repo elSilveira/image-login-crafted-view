@@ -201,6 +201,7 @@ const ProfessionalProfile = () => {
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
   const [selectedServiceForSlot, setSelectedServiceForSlot] = useState<string | null>(null);
+  const [selectedServicesForSlot, setSelectedServicesForSlot] = useState<string[]>([]);
   const [serviceFilter, setServiceFilter] = useState<string>("");
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -613,27 +614,33 @@ const ProfessionalProfile = () => {
                   {date ? `Horários disponíveis para ${format(date, 'dd/MM/yyyy', { locale: pt })}` : 'Selecione uma data'}
                 </h3>
                 {/* Serviços selecionados acima dos horários */}
-                {selectedSlot && selectedServiceForSlot && (
+                {selectedSlot && selectedServicesForSlot.length > 0 && (
                   <div className="mb-4 flex flex-col md:flex-row md:items-center md:gap-4 p-4 bg-muted/40 rounded border">
-                    <div className="font-medium">
-                      Horário selecionado: <span className="text-iazi-primary">{selectedSlot}</span>
+                    <div className="font-medium flex flex-wrap gap-4 items-center">
+                      <span>Horário selecionado:</span>
+                      <span className="text-iazi-primary font-semibold">{selectedSlot}</span>
                     </div>
-                    <div className="font-medium">
-                      Serviço: <span className="text-iazi-primary">{(professional.services || []).find(s => s.id === selectedServiceForSlot)?.name}</span>
-                      {(() => {
-                        const serv = (professional.services || []).find(s => s.id === selectedServiceForSlot);
-                        return serv ? <span className="ml-2 text-xs text-gray-500">{serv.duration} min</span> : null;
-                      })()}
+                    <div className="font-medium flex flex-wrap gap-4 items-center md:ml-8">
+                      <span>Serviços:</span>
+                      {selectedServicesForSlot.map(sid => {
+                        const serv = (professional.services || []).find(s => s.id === sid);
+                        return serv ? (
+                          <span key={sid} className="flex items-center gap-2 px-2 py-1 rounded bg-white border text-iazi-primary font-semibold shadow-sm">
+                            {serv.name}
+                            <span className="text-xs text-gray-500 ml-1">{formatDuration(serv.duration)}</span>
+                            <span className="text-xs text-gray-500 ml-1">{formatPrice(serv.price)}</span>
+                          </span>
+                        ) : null;
+                      })}
                     </div>
                     <Button
                       className="mt-2 md:mt-0 md:ml-auto"
                       onClick={() => {
-                        if (!selectedServiceForSlot || !selectedSlot || !professional?.id || !date) return;
-                        // Monta a URL: /booking/{serviceId}?professional={professionalId}&date=YYYY-MM-DD&time=HH:mm
+                        if (!selectedServicesForSlot.length || !selectedSlot || !professional?.id || !date) return;
                         const dateStr = date.toISOString().split('T')[0];
-                        navigate(`/booking/${selectedServiceForSlot}?professional=${professional.id}&date=${dateStr}&time=${selectedSlot}`);
+                        navigate(`/booking/${selectedServicesForSlot.join(',')}?professional=${professional.id}&date=${dateStr}&time=${selectedSlot}`);
                       }}
-                      disabled={!selectedSlot || !selectedServiceForSlot}
+                      disabled={!selectedSlot || !selectedServicesForSlot.length}
                     >
                       Agendar
                     </Button>
@@ -757,13 +764,8 @@ const ProfessionalProfile = () => {
                                       onClick={() => {
                                         if (!isAvailable) return;
                                         setSelectedSlot(time);
-                                        if (availableServices.length === 1) {
-                                          setSelectedServiceForSlot(availableServices[0].id);
-                                          setExpandedSlot(null); // Do not expand for single service
-                                        } else {
-                                          setSelectedServiceForSlot(null);
-                                          setExpandedSlot(expandedSlot === time ? null : time);
-                                        }
+                                        setExpandedSlot(expandedSlot === time ? null : time);
+                                        setSelectedServicesForSlot([]);
                                       }}
                                     >
                                       <Clock className="mr-2 h-4 w-4" />{time}
@@ -777,18 +779,25 @@ const ProfessionalProfile = () => {
                                     {/* Expanded service selection: only for >1 services */}
                                     {expandedSlot === time && isAvailable && availableServices.length > 1 && (
                                       <div ref={dropdownRef} className="absolute left-0 right-0 z-10 mt-2 bg-white border rounded shadow-lg p-4">
-                                        <div className="mb-2 font-medium text-sm">Selecione o serviço para este horário:</div>
-                                        <div className="flex flex-col gap-2">
+                                        <div className="mb-2 font-medium text-sm">Selecione um ou mais serviços para este horário:</div>
+                                        <div className="flex flex-col md:flex-row md:flex-wrap gap-2">
                                           {availableServices.map(service => (
-                                            <Button
-                                              key={service.id}
-                                              variant={selectedServiceForSlot === service.id ? 'default' : 'outline'}
-                                              className={selectedServiceForSlot === service.id ? 'bg-primary text-white hover:bg-primary/90 border-primary' : ''}
-                                              onClick={() => setSelectedServiceForSlot(service.id)}
-                                            >
-                                              <span className={selectedServiceForSlot === service.id ? 'font-semibold' : ''}>{service.name}</span>
-                                              <span className="text-xs text-gray-500 ml-2">{formatDuration(service.duration)}</span>
-                                            </Button>
+                                            <label key={service.id} className="flex items-center gap-2 cursor-pointer border rounded px-3 py-2 bg-muted/10 hover:bg-muted/20 transition">
+                                              <input
+                                                type="checkbox"
+                                                checked={selectedServicesForSlot.includes(service.id)}
+                                                onChange={e => {
+                                                  setSelectedServicesForSlot(prev =>
+                                                    e.target.checked
+                                                      ? [...prev, service.id]
+                                                      : prev.filter(id => id !== service.id)
+                                                  );
+                                                }}
+                                              />
+                                              <span className="font-semibold text-iazi-primary">{service.name}</span>
+                                              <span className="text-xs text-gray-500 ml-1">{formatDuration(service.duration)}</span>
+                                              <span className="text-xs text-gray-500 ml-1">{formatPrice(service.price)}</span>
+                                            </label>
                                           ))}
                                         </div>
                                       </div>
