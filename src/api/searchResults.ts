@@ -1,11 +1,10 @@
-
 // Mock search results for API testing (to be replaced with real API)
 import { fetchSearchResults } from "@/lib/api";
 
 // Interface for quick booking search
 export interface QuickBookingResult {
   id: string;
-  type: "service" | "professional" | "company";
+  type: "services" | "professional" | "company";
   name: string;
   subtitle?: string;
   category?: string;
@@ -33,7 +32,7 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
       results.services.slice(0, 2).forEach((service: any) => {
         quickResults.push({
           id: service.id,
-          type: "service",
+          type: "services",
           name: service.name || "Serviço sem nome",
           subtitle: service.company?.name || service.professional?.name,
           category: typeof service.category === 'object' ? service.category?.name : service.category,

@@ -1,4 +1,3 @@
-
 // src/components/SearchDropdown.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +12,7 @@ import { debounce } from "lodash"; // Using lodash for debouncing
 export interface SearchResult {
   id: string; 
   title: string;
-  type: "service" | "company" | "professional"; 
+  type: "service" | "services" | "company" | "professional"; // Allow both for compatibility
   subtitle?: string; 
   category?: string;
   directBooking?: boolean; // Flag for services that can be booked directly
@@ -21,14 +20,14 @@ export interface SearchResult {
 
 // Popular categories (assuming static for now)
 export const popularCategories = [
-  { id: 1, name: "Tratamento Facial", type: "service" },
-  { id: 2, name: "Fisioterapia", type: "service" },
+  { id: 1, name: "Tratamento Facial", type: "services" },
+  { id: 2, name: "Fisioterapia", type: "services" },
   { id: 3, name: "Clínica Dermatológica", type: "company" },
   { id: 4, name: "Salão de Beleza", type: "company" },
-  { id: 5, name: "Cabelo", type: "service" },
+  { id: 5, name: "Cabelo", type: "services" },
   { id: 6, name: "Consultório Nutricional", type: "company" },
-  { id: 7, name: "Odontologia", type: "service" },
-  { id: 8, name: "Fitness", type: "service" },
+  { id: 7, name: "Odontologia", type: "services" },
+  { id: 8, name: "Fitness", type: "services" },
 ];
 
 export function SearchDropdown() {
@@ -78,17 +77,18 @@ export function SearchDropdown() {
 
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
-    // Navigate based on result type with optimized paths for booking
-    if (result.type === "service" && result.directBooking) {
+    // Map both 'service' and 'services' to the correct navigation
+    const type = result.type === "service" ? "services" : result.type;
+    if (type === "services" && result.directBooking) {
       navigate(`/booking/service/${result.id}`); // Direct booking for eligible services
-    } else if (result.type === "service") {
+    } else if (type === "services") {
       navigate(`/service/${result.id}`);
-    } else if (result.type === "professional") {
+    } else if (type === "professional") {
       navigate(`/professional/${result.id}`);
-    } else if (result.type === "company") {
+    } else if (type === "company") {
       navigate(`/company/${result.id}`);
     } else {
-      navigate(`/search?q=${encodeURIComponent(result.title)}&type=${result.type}&highlight=${result.id}`);
+      navigate(`/search?q=${encodeURIComponent(result.title)}&type=${type}&highlight=${result.id}`);
     }
   };
 
@@ -103,7 +103,9 @@ export function SearchDropdown() {
     setOpen(false);
     // Make sure to extract the name as a string
     const categoryName = typeof category.name === 'string' ? category.name : '';
-    navigate(`/search?category=${encodeURIComponent(categoryName)}&type=${category.type}`);
+    // Always use 'services' for service categories
+    const type = category.type === "service" ? "services" : category.type;
+    navigate(`/search?category=${encodeURIComponent(categoryName)}&type=${type}`);
   };
 
   return (

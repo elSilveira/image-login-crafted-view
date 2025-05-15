@@ -89,23 +89,32 @@ const Search = () => {
     return 'Categoria'; // Return a default name for invalid items
   });
   
+  // Map viewType to API type param (services, companies, professionals, all)
+  const getApiType = (viewType: string) => {
+    if (viewType === "service") return "services";
+    if (viewType === "company") return "companies";
+    if (viewType === "professional") return "professionals";
+    return viewType;
+  };
+
   // Fetch Search Results
   const { data: searchApiResponse, isLoading: isLoadingSearch, isError: isErrorSearch, error: errorSearch } = useQuery<any, Error>({
     queryKey: ["search-api", searchTerm, selectedCategory, sortBy, currentPage, viewType, professionalTipo],
     queryFn: async () => {
-      if (viewType !== "all" && viewType !== "service" && viewType !== "professional" && viewType !== "company") return {};
+      const apiType = getApiType(viewType);
+      if (apiType !== "all" && apiType !== "services" && apiType !== "professionals" && apiType !== "companies") return {};
       const params: any = {
         q: searchTerm,
         category: selectedCategory,
         sort: sortBy,
         page: currentPage,
         limit: ITEMS_PER_PAGE,
-        type: viewType,
+        type: apiType,
         professionalTipo,
       };
       return await fetchSearchResults(params);
     },
-    enabled: viewType === "all" || viewType === "service" || viewType === "professional" || viewType === "company",
+    enabled: ["all", "service", "professional", "company"].includes(viewType),
   });
 
   // Use the new structure directly
@@ -221,6 +230,7 @@ const Search = () => {
     updateFilters({ category: category, page: "1" });
   };
 
+  // When changing tabs, always use singular for UI, but map to plural for API
   const handleTabChange = (value: string) => {
     updateFilters({ type: value, page: "1" });
   };
@@ -314,14 +324,13 @@ const Search = () => {
             <h1 className="text-3xl font-bold mb-2">{categoryFilter}</h1>
           ) : (
             <h1 className="text-3xl font-bold mb-2">Explorar</h1>
-          )}
-          <p className="text-gray-600 mb-8">
+          )}          <div className="text-gray-600 mb-8">
             {isAnyLoading ? <Skeleton className="h-4 w-48" /> : 
              isAnyError ? "Erro ao buscar resultados." : 
              searchTerm || categoryFilter ? 
               `Encontramos ${totalItems} resultados` : 
               'Explore empresas e serviços disponíveis'}
-          </p>
+          </div>
 
           {/* Global Error Display (if not category error) */}
           {isAnyError && !isErrorCategories && (

@@ -371,11 +371,44 @@ export const fetchProfessionalAppointments = async (professionalId: string, date
       professionalId,
       dateFrom,
       dateTo,
-      include: 'user,service',
+      include: 'user,service,services,professional,services.service', // Include service details for services array
       limit: 500,
       sort: 'startTime_asc',
     },
   });
+  
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Appointments fetched for ${professionalId} from ${dateFrom} to ${dateTo}:`, 
+      response.data.data.length > 0 ? 
+      `${response.data.data.length} appointments found` : 
+      'No appointments found');
+      
+    // Log appointment data structure for debugging if there are appointments
+    if (response.data.data.length > 0) {
+      const sample = response.data.data[0];
+      console.log('Sample appointment structure:', {
+        id: sample.id,
+        startTime: sample.startTime,
+        endTime: sample.endTime,
+        service: sample.service ? {
+          id: sample.service.id,
+          name: sample.service.name,
+          duration: sample.service.duration
+        } : null,
+        services: Array.isArray(sample.services) ? 
+          sample.services.map((s: any) => ({
+            id: s.id,
+            service: s.service ? {
+              id: s.service.id,
+              name: s.service.name,
+              duration: s.service.duration
+            } : null,
+            duration: s.duration
+          })) : null
+      });
+    }
+  }
+  
   return response.data;
 };
 

@@ -179,7 +179,17 @@ const BookingConfirmation = ({
         appointmentData.companyId = company.id;
       }
 
-      mutation.mutate(appointmentData);
+      // Debug: log payload
+      console.log('[BookingConfirmation] Creating appointment with:', appointmentData);
+
+      mutation.mutate(appointmentData, {
+        onSuccess: (data) => {
+          console.log('[BookingConfirmation] Appointment created, API response:', data);
+        },
+        onError: (error) => {
+          console.error('[BookingConfirmation] Error creating appointment:', error);
+        }
+      });
 
     } catch (e) {
       console.error("Error formatting date/time:", e, { date, time });
