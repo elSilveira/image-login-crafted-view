@@ -198,6 +198,8 @@ const Booking = () => {
           setCurrentStep(3);
           return null;
         }
+        // Só renderiza ServiceSelector se professional e selectedServices existirem
+        if (!professional || !professional.id) return null;
         return (
           <div>
             <ServiceSelector 
@@ -216,6 +218,10 @@ const Booking = () => {
           </div>
         );
       case 3:
+        if (!professional || !professional.id) return null;
+        // Always get the schedule for the current selected service
+        const currentServiceId = selectedServices[0]?.id;
+        const currentServiceSchedule = professional.services?.find((s: any) => s.id === currentServiceId)?.schedule;
         return (
           <div className="grid md:grid-cols-2 gap-6">
             <div>
@@ -224,22 +230,20 @@ const Booking = () => {
                 onDateSelect={setSelectedDate}
                 onNext={() => {}}
                 professionalId={professional.id}
-                serviceSchedule={professional.services?.find((s: any) => s.id === service.id)?.schedule}
+                serviceSchedule={currentServiceSchedule}
               />
             </div>
-            <div>              {selectedDate && (
+            <div>
+              {selectedDate && (
                 <BookingTimeSlots
+                  key={selectedDate?.toISOString() + '-' + currentServiceId}
                   date={selectedDate}
                   selectedTime={selectedTime}
                   onTimeSelect={setSelectedTime}
                   onNext={() => selectedDate && selectedTime && setCurrentStep(4)}
                   professionalId={professional.id}
-                  // Pass all selected services to calculate total duration
                   selectedServices={selectedServices}
-                  // Pass schedule for the first selected service (we assume all services have similar schedules)
-                  serviceSchedule={professional.services?.find((s: any) => 
-                    selectedServices.length > 0 && s.id === selectedServices[0].id
-                  )?.schedule}
+                  serviceSchedule={currentServiceSchedule}
                 />
               )}
             </div>
@@ -298,7 +302,7 @@ const Booking = () => {
                       <Clock className="h-4 w-4" />
                       <span>{totalDuration} minutos</span>
                     </div>
-                    {currentStep > 1 && (
+                    {currentStep > 1 && professional && professional.name && (
                       <div className="flex items-center gap-1">
                         <MapPin className="h-4 w-4" />
                         <span>Com {professional.name}</span>

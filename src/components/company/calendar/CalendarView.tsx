@@ -135,7 +135,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         // if (resourceFilter !== "all") { // Add resource filter if implemented
         //   queryParams.append("resourceId", resourceFilter);
         // }        // Use the correct API URL
-        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/appointments?${queryParams.toString()}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3002/api"}/appointments?${queryParams.toString()}`);
         if (!response.ok) {
           throw new Error(`Erro HTTP ${response.status}: Falha ao buscar agendamentos`);
         }

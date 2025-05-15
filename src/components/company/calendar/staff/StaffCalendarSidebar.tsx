@@ -91,7 +91,7 @@ export const StaffCalendarSidebar: React.FC<StaffCalendarSidebarProps> = ({
           dateTo: todayEnd.substring(0, 10),
           include: "user,service", // Include user and service for display
           limit: "100", // Fetch all for the day
-        });        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/appointments?${queryParams.toString()}`);
+        });        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3002/api"}/appointments?${queryParams.toString()}`);
         if (!response.ok) {
           throw new Error(`Erro HTTP ${response.status}: Falha ao buscar agendamentos de hoje`);
         }
@@ -132,7 +132,7 @@ export const StaffCalendarSidebar: React.FC<StaffCalendarSidebarProps> = ({
   // Function to handle status update (e.g., Start, Complete, Cancel)
   const handleUpdateStatus = async (appointmentId: string, newStatus: AppointmentStatus) => {
     setIsUpdatingStatus(appointmentId);
-    try {      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/appointments/${appointmentId}/status`, {
+    try {      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3002/api"}/appointments/${appointmentId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

@@ -6,7 +6,7 @@
  */
 
 // Base URL for all API requests
-export const API_BASE_URL = "http://localhost:3003/api";
+export const API_BASE_URL = "http://localhost:3002/api";
 
 /**
  * Helper function to get the full URL for an API endpoint

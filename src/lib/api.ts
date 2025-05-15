@@ -14,7 +14,7 @@ const USER_KEY = "user";
 
 // Cria uma instância do Axios com a URL base da API
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3003/api", // CORRIGIDO: Fallback para porta 3003
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3002/api", // CORRIGIDO: Fallback para porta 3002
 });
 
 console.log("API URL Base:", apiClient.defaults.baseURL);

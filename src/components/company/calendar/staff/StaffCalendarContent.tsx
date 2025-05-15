@@ -66,7 +66,7 @@ export const StaffCalendarContent: React.FC<StaffCalendarContentProps> = ({ staf
     const fetchStaffMember = async () => {
       setIsLoading(true);
       setError(null);
-      try {        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/professionals/${staffId}`);
+      try {        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3002/api"}/professionals/${staffId}`);
         if (!response.ok) {
             if (response.status === 404) {
                 throw new Error("Profissional não encontrado.");

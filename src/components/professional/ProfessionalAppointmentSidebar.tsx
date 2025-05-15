@@ -135,7 +135,7 @@ const ProfessionalAppointmentSidebar = ({}: ProfessionalAppointmentSidebarProps)
     if (isUpdatingStatus) return; // Prevent multiple simultaneous updates
     
     setIsUpdatingStatus(appointmentId);      try {
-      // Use proper API endpoint with 3003 port via apiClient
+      // Use proper API endpoint with 3002 port via apiClient
       const response = await apiClient.patch(`/appointments/${appointmentId}/status`, { 
         status: newStatus 
       });

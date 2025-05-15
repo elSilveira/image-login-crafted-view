@@ -94,7 +94,7 @@ export const AppointmentSidebar = ({ companyId }: AppointmentSidebarProps) => {
           include: "user,professional,service", // Include related data
           // Add limit if needed, e.g., limit: "50"
           // Add sort if needed, e.g., sort: "startTime_asc"
-        });        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/appointments?${queryParams.toString()}`);
+        });        const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3002/api"}/appointments?${queryParams.toString()}`);
         if (!response.ok) {
           throw new Error(`Erro HTTP ${response.status}: Falha ao buscar agendamentos`);
         }
@@ -125,7 +125,7 @@ export const AppointmentSidebar = ({ companyId }: AppointmentSidebarProps) => {
   // Function to handle status update (Confirm/Cancel)
   const handleUpdateStatus = async (appointmentId: string, newStatus: "CONFIRMED" | "CANCELLED") => {
     setIsUpdatingStatus(appointmentId);
-    try {      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3003/api"}/appointments/${appointmentId}/status`, {
+    try {      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3002/api"}/appointments/${appointmentId}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
