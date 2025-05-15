@@ -379,4 +379,17 @@ export const fetchProfessionalAppointments = async (professionalId: string, date
   return response.data;
 };
 
+export const fetchProfessionalServicesViaSearch = async (professionalId: string) => {
+  // Uses the new /api/search endpoint to get services for a professional
+  const response = await apiClient.get("/search", {
+    params: {
+      type: "services",
+      professionalId,
+      limit: 100, // or adjust as needed
+    },
+  });
+  // The response structure is { services: [...] }
+  return response.data?.services || [];
+};
+
 export default apiClient;

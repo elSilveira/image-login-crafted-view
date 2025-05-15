@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Clock, DollarSign } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchProfessionalServices } from "@/lib/api";
+import { fetchProfessionalServicesViaSearch } from "@/lib/api";
 
 interface ServiceSelectorProps {
   professionalId: string;
@@ -24,7 +24,7 @@ const ServiceSelector: React.FC<ServiceSelectorProps> = ({
 }) => {
   const { data: services, isLoading, isError } = useQuery({
     queryKey: ["professionalServices", professionalId],
-    queryFn: () => fetchProfessionalServices(professionalId),
+    queryFn: () => fetchProfessionalServicesViaSearch(professionalId),
     enabled: !!professionalId,
   });
 

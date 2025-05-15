@@ -10,8 +10,9 @@ import BookingConfirmation from "@/components/booking/BookingConfirmation";
 import ServiceSelector from "@/components/booking/ServiceSelector";
 import Navigation from "@/components/Navigation";
 import { useQuery, useQueries } from '@tanstack/react-query';
-import { fetchServiceDetails, fetchProfessionalDetails } from '@/lib/api';
+import { fetchServiceDetails, fetchProfessionalDetails, fetchProfessionalAppointments } from '@/lib/api';
 import { Button } from "@/components/ui/button";
+import { getAvailableSlotsForDate } from "@/lib/utils";
 
 const STEPS = [
   { id: 1, title: "Selecionar Profissional" },
@@ -29,13 +30,33 @@ const Booking = () => {
   const dateParam = searchParams.get('date');
   const timeParam = searchParams.get('time');
   const isCompanyBooking = location.search.includes('company=true');
-  const [currentStep, setCurrentStep] = React.useState(isCompanyBooking ? 1 : 2);
+  // If serviceIds are present, skip service selection (step 2)
+  const initialStep = serviceIds.length > 0 ? 3 : (isCompanyBooking ? 1 : 2);
+  const [currentStep, setCurrentStep] = React.useState(initialStep);
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>();
   const [selectedTime, setSelectedTime] = React.useState<string>();
   const [selectedProfessional, setSelectedProfessional] = React.useState<string | undefined>();
   // State for storing multiple selected services
   const [selectedServices, setSelectedServices] = React.useState<any[]>([]);
   const navigate = useNavigate();
+
+  // Fetch all service details in parallel if multiple IDs
+  const serviceQueries = useQueries({
+    queries: serviceIds.map(id => ({
+      queryKey: ['service', id],
+      queryFn: () => fetchServiceDetails(id),
+      enabled: !!id,
+    }))
+  });
+  const allServices = serviceQueries.map(q => q.data).filter(Boolean);
+  const allServicesLoaded = serviceQueries.every(q => q.isSuccess);
+
+  // If serviceIds are present, preselect the services once loaded
+  React.useEffect(() => {
+    if (serviceIds.length > 0 && allServicesLoaded && allServices.length && selectedServices.length === 0) {
+      setSelectedServices(allServices);
+    }
+  }, [serviceIds.length, allServicesLoaded, allServices]);
 
   // Direct navigation to confirmation step if all params are present
   React.useEffect(() => {
@@ -57,17 +78,6 @@ const Booking = () => {
       setSelectedDate(new Date());
     }
   }, []);
-
-  // Fetch all service details in parallel if multiple IDs
-  const serviceQueries = useQueries({
-    queries: serviceIds.map(id => ({
-      queryKey: ['service', id],
-      queryFn: () => fetchServiceDetails(id),
-      enabled: !!id,
-    }))
-  });
-  const allServicesLoaded = serviceQueries.every(q => q.isSuccess);
-  const allServices = serviceQueries.map(q => q.data).filter(Boolean);
 
   // Determine which professional to use: URL param or selected
   const professionalIdUsed = professionalParam || selectedProfessional;
@@ -102,6 +112,43 @@ const Booking = () => {
     }
   };
 
+  // After allServicesLoaded, professionalData, and selectedServices are ready, check for available slots
+  React.useEffect(() => {
+    // Only run if selectedDate is not set by URL or user
+    if (!selectedDate && professionalData && selectedServices.length > 0) {
+      const serviceSchedule = professionalData.services?.find((s: any) => selectedServices[0]?.id === s.id)?.schedule;
+      if (!serviceSchedule) return;
+      const totalDuration = selectedServices.reduce((sum, s) => sum + (s.duration || 0), 0);
+      const checkNextAvailableDate = async () => {
+        let found = false;
+        let date = new Date();
+        for (let i = 0; i < 30; i++) {
+          const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + i);
+          const formatted = checkDate.toISOString().slice(0, 10);
+          // Fetch appointments for this date
+          const appointmentsData = await fetchProfessionalDetails(professionalData.id)
+            .then(() => fetchProfessionalAppointments(professionalData.id, formatted, formatted));
+          const appointments = appointmentsData?.data || [];
+          const slots = getAvailableSlotsForDate({
+            date: checkDate,
+            appointments,
+            serviceSchedule,
+            totalDuration
+          });
+          if (slots.length > 0) {
+            setSelectedDate(checkDate);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          setSelectedDate(new Date()); // fallback to today
+        }
+      };
+      checkNextAvailableDate();
+    }
+  }, [selectedDate, professionalData, selectedServices]);
+
   // Handle loading and error states
   if (serviceIds.length === 0 || serviceQueries.some(q => q.isLoading) || loadingProfessional) {
     return <div className="min-h-screen bg-gray-50 flex justify-center items-center"><Progress value={0} /></div>;
@@ -132,6 +179,7 @@ const Booking = () => {
     navigate("/booking-history");
   };
 
+  // In renderStep, skip step 2 if serviceIds are present
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -145,6 +193,11 @@ const Booking = () => {
           </div>
         ) : null;
       case 2:
+        // If serviceIds are present, skip this step
+        if (serviceIds.length > 0) {
+          setCurrentStep(3);
+          return null;
+        }
         return (
           <div>
             <ServiceSelector 

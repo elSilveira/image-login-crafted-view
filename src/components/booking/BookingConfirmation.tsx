@@ -169,14 +169,13 @@ const BookingConfirmation = ({
 
       // Build payload according to new contract
       const appointmentData: any = {
-        serviceIds: serviceIds, // Now sending an array of service IDs
+        professionalId: professional?.id, // Corrigido: professionalId correto
+        serviceIds, // Corrigido: array de serviceIds
         date: dateStr,
         time: timeStr,
         notes: formData.notes || undefined,
       };
-      if (professional?.id) {
-        appointmentData.professionalId = professional.id;
-      } else if (company?.id) {
+      if (company?.id) {
         appointmentData.companyId = company.id;
       }
 
