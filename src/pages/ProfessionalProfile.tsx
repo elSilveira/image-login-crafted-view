@@ -185,8 +185,9 @@ const ProfessionalProfile = () => {
   // Sync active tab with URL query param `tab`
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'about';
-  const [activeTab, setActiveTab] = useState(defaultTab);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState(defaultTab);  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  // Track dates available for the specific filtered service
+  const [filteredAvailableDates, setFilteredAvailableDates] = useState<string[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
   const [loadingDates, setLoadingDates] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -244,7 +245,6 @@ const ProfessionalProfile = () => {
       .catch(err => console.error(err))
       .finally(() => setLoadingSlots(false));
   }, [date, professional?.id]);
-
   // Debug: log professional.services and availableDates
   useEffect(() => {
     if (professional) {
@@ -254,6 +254,39 @@ const ProfessionalProfile = () => {
   useEffect(() => {
     console.log('[DEBUG] availableDates:', availableDates);
   }, [availableDates]);
+  
+  // Update filtered available dates when service filter changes
+  useEffect(() => {
+    if (!professional?.services) return;
+    
+    // If no service filter or "all" is selected, use all available dates
+    if (!serviceFilter || serviceFilter === "all") {
+      setFilteredAvailableDates(availableDates);
+      return;
+    }
+    
+    // Find the selected service
+    const selectedService = professional.services.find(s => s.id === serviceFilter);
+    if (!selectedService || !selectedService.schedule) {
+      setFilteredAvailableDates([]);
+      return;
+    }
+    
+    // Filter available dates based on the service's schedule
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const availableDaysOfWeek = selectedService.schedule.map(s => s.dayOfWeek);
+    
+    const filtered = availableDates.filter(dateStr => {
+      const date = new Date(dateStr);
+      const dayOfWeek = days[date.getDay()];
+      return availableDaysOfWeek.includes(dayOfWeek);
+    });
+    
+    setFilteredAvailableDates(filtered);
+    console.log('[DEBUG] filteredAvailableDates for service', serviceFilter, ':', filtered);
+    
+  }, [serviceFilter, availableDates, professional?.services]);
+  
   useEffect(() => {
     if (date && professional?.id && professional?.services && professional.services.length > 0) {
       const serviceId = professional.services[0].id;
@@ -581,13 +614,27 @@ const ProfessionalProfile = () => {
                     <CardContent className="p-4">
                       <label className="block text-sm font-medium mb-2">Filtrar por serviço</label>
                       <Select
-                        value={serviceFilter || "all"}
-                        onValueChange={value => {
-                          setServiceFilter(value === "all" ? "" : value);
+                        value={serviceFilter || "all"}                        onValueChange={value => {
+                          const newFilter = value === "all" ? "" : value;
+                          setServiceFilter(newFilter);
                           setSelectedSlot(null);
                           setExpandedSlot(null);
                           setSelectedServiceForSlot(null);
                           setSelectedServicesForSlot([]);
+                          
+                          // If we're selecting a specific service, verify if it's available on the current date
+                          // If not, reset the date selection to avoid confusion
+                          if (newFilter && date) {
+                            const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+                            const dayKey = days[date.getDay()];
+                            const service = professional.services?.find(s => s.id === newFilter);
+                            
+                            // If service isn't available on the current selected day, reset date
+                            if (!service?.schedule?.some(s => s.dayOfWeek === dayKey)) {
+                              setDate(new Date()); // Reset to today
+                              // This will trigger the slot fetch useEffect
+                            }
+                          }
                         }}
                       >
                         <SelectTrigger className="w-full h-10 border-gray-200 bg-white">
@@ -605,8 +652,7 @@ const ProfessionalProfile = () => {
                 )}
                   <Card>
                   <CardContent className="p-4">
-                    <div className="flex justify-center">
-                      <Calendar
+                    <div className="flex justify-center">                      <Calendar
                         mode="single"
                         selected={date}
                         onSelect={setDate}
@@ -615,7 +661,23 @@ const ProfessionalProfile = () => {
                         disabled={dateItem => {
                           const today = new Date(); today.setHours(0,0,0,0);
                           const iso = dateItem.toISOString().split('T')[0];
-                          return loadingDates || dateItem < today || !availableDates.includes(iso);
+                          
+                          // Block past dates
+                          if (loadingDates || dateItem < today) {
+                            return true;
+                          }
+
+                          // Use the appropriate date array based on whether a filter is applied
+                          const datesToCheck = serviceFilter && serviceFilter !== "all" 
+                            ? filteredAvailableDates 
+                            : availableDates;
+                          
+                          // Block dates not in the available dates array
+                          if (!datesToCheck.includes(iso)) {
+                            return true;
+                          }
+                          
+                          return false; // Date is available
                         }}
                       />
                     </div>

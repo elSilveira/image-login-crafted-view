@@ -7,7 +7,7 @@ interface ProfessionalCardProps {
   name: string;
   rating: number;
   image: string | null;
-  id: number;
+  id: number | string;
 }
 
 export const ProfessionalCard = ({ name, rating, image, id }: ProfessionalCardProps) => {

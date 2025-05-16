@@ -9,8 +9,18 @@ interface ServiceCardProps {
   description: string;
   rating: number;
   price: number;
-  id: number;
+  id: number | string;
 }
+
+// Format price to BRL currency format
+const formatPrice = (price: number) => {
+  if (!price && price !== 0) return 'Preço sob consulta';
+  
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(price);
+};
 
 export const ServiceCard = ({ title, description, rating, price, id }: ServiceCardProps) => {
   return (
@@ -27,7 +37,7 @@ export const ServiceCard = ({ title, description, rating, price, id }: ServiceCa
               <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
               <span className="text-sm font-medium font-inter">{rating}</span>
             </div>
-            <span className="text-iazi-primary font-semibold font-inter">R$ {price},00</span>
+            <span className="text-iazi-primary font-semibold font-inter">{formatPrice(price)}</span>
           </div>
           <div className="flex justify-end gap-2">
             <Button size="sm" variant="outline" className="font-inter" asChild>

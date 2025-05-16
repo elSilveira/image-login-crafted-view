@@ -19,13 +19,26 @@ interface Appointment {
   startTime: string; // ISO string
   endTime: string;   // ISO string
   status: string;    // "confirmed", "pending", "completed", etc.
-  service: {
+  service?: {
     id: string;
     name: string;
+    price?: number | string;
+    duration?: string;
   };
+  services?: Array<{
+    id: string;
+    service?: {
+      id: string;
+      name: string;
+      price?: number | string;
+      duration?: string;
+    }
+  }>;
   professional: {
     id: string;
     name: string;
+    image?: string;
+    rating?: number;
   };
   user?: {
     id: string;
@@ -80,14 +93,23 @@ const AppointmentSection = () => {
   // Busca agendamentos do usuário logado (futuros, status relevante)
   const { data: appointments, isLoading: isLoadingAppointments, isError: isErrorAppointments, error: errorAppointments } = useQuery<Appointment[], Error>({
     queryKey: ["userAppointments"],
-    queryFn: () => fetchAppointments({ include: "service,professional", limit: 10, sort: "startTime_asc" }),
-    select: (data) =>
-      data
+    queryFn: () => fetchAppointments({ 
+      include: "service,professional,services.service", 
+      limit: 10, 
+      sort: "startTime_asc" 
+    }),
+    select: (data) => {
+      // Ensure data is an array before filtering
+      if (!data || !Array.isArray(data)) {
+        return [];
+      }
+      return data
         .filter(appt =>
           ["confirmed", "pending", "in-progress"].includes(appt.status) &&
           new Date(appt.startTime) >= new Date()
         )
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+    },
     staleTime: 5 * 60 * 1000,
   });
 
@@ -141,10 +163,15 @@ const AppointmentSection = () => {
                     <div>
                       {/* Link to service details */}
                       <Link
-                        to={`/service/${appointment.service.id}`}
+                        to={`/service/${appointment.service?.id || (appointment.services?.[0]?.service?.id || '')}`}
                         className="block font-playfair font-semibold text-base hover:text-iazi-primary"
                       >
-                        {appointment.service.name}
+                        {appointment.service?.name || (appointment.services?.[0]?.service?.name || 'Serviço Agendado')}
+                        {appointment.services && appointment.services.length > 1 && (
+                          <span className="text-sm text-gray-500 ml-2">
+                            + {appointment.services.length - 1} {appointment.services.length === 2 ? 'serviço' : 'serviços'}
+                          </span>
+                        )}
                       </Link>
                       {/* Link to professional profile */}
                       <Link
@@ -159,15 +186,15 @@ const AppointmentSection = () => {
                         <CalendarDays className="h-3.5 w-3.5" />
                         {formatDate(appointment.startTime)} às {formatTime(appointment.startTime)}
                       </p>
-                      {/* Botão para explorar empresas */}
+                      {/* Link to view appointment details */}
                       <Button
                         variant="outline"
                         size="sm"
                         className="hover:bg-[#4664EA] hover:text-white font-inter"
                         asChild
                       >
-                        <Link to="/search?type=company">
-                          Encontrar Empresas
+                        <Link to={`/booking/history?highlight=${appointment.id}`}>
+                          Ver Detalhes
                         </Link>
                       </Button>
                     </div>
@@ -176,14 +203,21 @@ const AppointmentSection = () => {
               ))
             ) : (
               <div className="flex flex-col items-center gap-4 py-8">
-                <p className="text-center text-sm text-gray-500 italic">
+                <p className="text-center text-sm text-gray-500">
                   Você não tem agendamentos futuros.
                 </p>
-                <Button asChild variant="outline" className="font-inter">
-                  <Link to="/search?type=company">
-                    Encontrar Empresas
-                  </Link>
-                </Button>
+                <div className="flex flex-col gap-2 items-center">
+                  <Button asChild variant="default" className="font-inter bg-iazi-primary hover:bg-iazi-primary-hover">
+                    <Link to="/search?type=service">
+                      Agendar um Serviço
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="font-inter">
+                    <Link to="/search?type=professional">
+                      Encontrar Profissionais
+                    </Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>

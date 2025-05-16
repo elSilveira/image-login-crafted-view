@@ -23,17 +23,20 @@ import { ServiceFilters } from "@/components/services/ServiceFilters";
 interface Service { 
   id: string; 
   name: string; 
-  category: string | { id?: number; name?: string }; 
+  // Support both traditional category and professional_services category format
+  category?: string | { id?: number; name?: string; categoryName?: string }; 
+  categoryName?: string; // Direct categoryName field in professional_services
   company: { id: string; name: string } | null; 
   rating: number; 
-  price: string; 
+  price: string | number; // Support both string and number formats
   image?: string; 
   reviews?: number; 
-  duration?: string; 
+  duration?: string | number; // Support both string and number formats
   availability?: string; 
   company_id?: string; 
-  professional_id?: string; 
-  professional?: string | { id: string; name: string };
+  professional_id?: string;
+  // Professional can be in different formats
+  professional?: string | { id: string; name: string; image?: string };
   profissional?: { 
     id: string; 
     name: string; 
@@ -43,6 +46,20 @@ interface Service {
     hasMultiServiceSupport?: boolean;
     price?: string;
   };
+  // Fields related to professional_services
+  service?: {
+    id: string;
+    name: string;
+    categoryId?: string | number;
+    categoryName?: string;
+    description?: string;
+  };
+  serviceId?: string;
+  schedule?: Array<{
+    dayOfWeek: string;
+    startTime: string;
+    endTime: string;
+  }>;
 }
 interface Company { id: string; name: string; specialty: string; rating: number; /* Add other fields CompanyCard expects */ services?: string[]; professionals?: string[]; professional_ids?: number[]; image?: string; reviews?: number; availability?: string; address?: any; /* address can be an object */ }
 interface Category { id: number; name: string; icon: string; createdAt: string; updatedAt: string; }
@@ -124,8 +141,7 @@ const Search = () => {
     queryKey: ["search-api", searchTerm, selectedCategory, sortBy, currentPage, viewType, professionalTipo],
     queryFn: async () => {
       const apiType = getApiType(viewType);
-      if (apiType !== "all" && apiType !== "services" && apiType !== "professionals" && apiType !== "companies") return {};
-      const params: any = {
+      if (apiType !== "all" && apiType !== "services" && apiType !== "professionals" && apiType !== "companies") return {};      const params: any = {
         q: searchTerm,
         category: selectedCategory,
         sort: sortBy,
@@ -133,13 +149,15 @@ const Search = () => {
         limit: ITEMS_PER_PAGE,
         type: apiType,
         professionalTipo,
+        // Request professional_services instead of services
+        useProfessionalServices: true,
       };
       const result = await fetchSearchResults(params);
-      
-      // Log the structure of the response to help with debugging the format change
+        // Log the structure of the response to help with debugging the format change
       console.log('Search API response structure:', {
         hasServices: !!result.services,
         hasServicesByProfessional: !!result.servicesByProfessional,
+        hasProfessionalServices: !!result.professional_services,
         professionals: Array.isArray(result.professionals) ? result.professionals.length : 'N/A',
         companies: Array.isArray(result.companies) ? result.companies.length : 'N/A'
       });
@@ -147,12 +165,37 @@ const Search = () => {
       return result;
     },
     enabled: ["all", "service", "professional", "company"].includes(viewType),
-  });
-  // Use the new structure directly, with fallbacks for backward compatibility
+  });  // Use the new structure directly, with fallbacks for backward compatibility
   const professionals = searchApiResponse?.professionals || [];
-  // Handle both new 'servicesByProfessional' and legacy 'services' response formats
-  const services = searchApiResponse?.servicesByProfessional || searchApiResponse?.services || [];
+  // Prioritize professional_services, then fall back to servicesByProfessional or services
+  const services = searchApiResponse?.professional_services || searchApiResponse?.servicesByProfessional || searchApiResponse?.services || [];
   const companies = searchApiResponse?.companies || [];
+  // Debug: Log the structure of professional_services if available
+  if (process.env.NODE_ENV !== 'production' && searchApiResponse?.professional_services) {
+    if (searchApiResponse.professional_services.length > 0) {
+      const sampleService = searchApiResponse.professional_services[0];
+      console.log('Debug - professional_services sample structure:', {
+        id: sampleService.id,
+        name: sampleService.name,
+        service: sampleService.service ? {
+          id: sampleService.service.id,
+          name: sampleService.service.name
+        } : 'No service property',
+        category: typeof sampleService.category === 'object' ? {
+          id: sampleService.category?.id,
+          name: sampleService.category?.name,
+          categoryName: sampleService.category?.categoryName
+        } : sampleService.category,
+        categoryName: sampleService.categoryName,
+        price: sampleService.price,
+        duration: sampleService.duration,
+        professional: sampleService.professional,
+        profissional: sampleService.profissional
+      });
+    } else {
+      console.log('Debug - No professional_services available');
+    }
+  }
 
   // --- Filtering, Sorting, and Pagination ---
   // Professionals tab
@@ -180,19 +223,30 @@ const Search = () => {
     (currentPage - 1) * professionalsPerPage, 
     currentPage * professionalsPerPage
   );
-
   // Services tab
   const filteredServices = services.filter((service: any) => {
     const matchesSearch =
       !searchTerm ||
       (service.name && service.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      // Handle both category structures (professional_services vs regular services)
       (service.category && service.category.name && service.category.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.category && service.category.categoryName && service.category.categoryName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (service.categoryName && service.categoryName.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (service.company && service.company.name && service.company.name.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory =
       !selectedCategory || selectedCategory === "Todas categorias" ||
-      (service.category && service.category.name === selectedCategory);
-    const matchesRating = (service.rating ?? 0) >= ratingFilter[0];
-    const priceValue = service.price ? parseFloat(service.price.replace(/[^0-9,]/g, ".").replace(",", ".")) : 0;
+      (service.category && service.category.name === selectedCategory) ||
+      (service.category && service.category.categoryName === selectedCategory) ||
+      (service.categoryName === selectedCategory);
+    const matchesRating = (service.rating ?? 0) >= ratingFilter[0];    // Handle price for both traditional services and professional_services
+    let priceString = service.price;
+    if (typeof priceString !== 'string' && typeof priceString !== 'undefined') {
+      priceString = String(priceString);
+    }
+    // Parse the price with more robust checking
+    const priceValue = priceString ? 
+      parseFloat(String(priceString).replace(/[^0-9,\.]/g, "").replace(",", ".")) : 0;
+    
     const matchesPriceRange =
       priceRange === "Qualquer preço" ||
       (priceRange === "Até R$100" && priceValue <= 100) ||
@@ -293,23 +347,36 @@ const Search = () => {
       </div>
     ))
   );
-
   // Function to render content or empty state for a specific type
   const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company' | 'professional') => {
     if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
     if (isError) return null;
     if (data.length === 0) return null; // Não renderiza a área se não houver resultados
-
+    
     if (type === 'service') {
       return (
         <div className={`grid grid-cols-1 gap-4`}>
-          {data.map(service => (
-            <ServiceCard 
-              key={service?.id ?? Math.random()} 
-              service={service || {}} 
-              isHighlighted={highlightId === (service?.id?.toString?.() ?? "")} 
-            />
-          ))}
+          {data.map(service => {
+            // Process service data to ensure compatibility with ServiceCard
+            // For professional_services, adapt the data structure if needed
+            const adaptedService = {
+              ...service,
+              // If it's a professional_service with a service property, adapt the name
+              name: service?.name || service?.service?.name || "Serviço sem nome",
+              // Use categoryName if available directly or from service object
+              category: service?.category || 
+                (service?.categoryName ? { name: service?.categoryName } : 
+                  (service?.service?.categoryName ? { name: service?.service?.categoryName } : undefined)),
+            };
+            
+            return (
+              <ServiceCard 
+                key={service?.id ?? Math.random()} 
+                service={adaptedService || {}} 
+                isHighlighted={highlightId === (service?.id?.toString?.() ?? "")} 
+              />
+            );
+          })}
         </div>
       );
     }

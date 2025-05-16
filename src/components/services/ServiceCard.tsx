@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 interface ServiceCardProps {
   service: {
     id: number | string;    name?: string;
-    category?: string | { id?: string | number; name?: string };
+    category?: string | { id?: string | number; name?: string; categoryName?: string };
     company?: string | { id?: string | number; name?: string } | null;
     professional?: string | { id?: string | number; name?: string; image?: string };
     // New property from API
@@ -48,6 +48,8 @@ function getCategoryLabel(category: any): string {
   if (!category) return "Categoria não informada";
   if (typeof category === "string") return category;
   if (typeof category === "object" && category !== null) {
+    // Professional services might have categoryName instead of category.name
+    if (typeof category.categoryName === "string" && category.categoryName.trim() !== "") return category.categoryName;
     if (typeof category.name === "string" && category.name.trim() !== "") return category.name;
     if (category.id !== undefined) return String(category.id);
   }
