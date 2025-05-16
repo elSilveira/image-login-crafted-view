@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchProfessionalAvailability } from "@/lib/api";
+// Replace fetchProfessionalAvailability with fetchProfessionalAvailableDates
+import { fetchProfessionalAvailableDates } from "@/lib/api";
 import { format, addDays, startOfWeek, isWithinInterval, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
