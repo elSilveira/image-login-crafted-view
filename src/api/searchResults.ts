@@ -1,3 +1,4 @@
+
 // Mock search results for API testing (to be replaced with real API)
 import { fetchSearchResults } from "@/lib/api";
 
@@ -12,6 +13,7 @@ export interface QuickBookingResult {
   price?: string;
   rating?: number;
   directBooking: boolean;
+  imageUrl?: string; // Adding image URL for UI enhancements
 }
 
 // Function to get quick booking options for the search dropdown
@@ -38,7 +40,8 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
           category: typeof service.category === 'object' ? service.category?.name : service.category,
           price: service.price,
           rating: service.rating,
-          directBooking: true
+          directBooking: true,
+          imageUrl: service.imageUrl || service.professional?.avatarUrl
         });
       });
     }
@@ -52,7 +55,8 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
           name: professional.name || "Profissional sem nome",
           subtitle: professional.company?.name || professional.role,
           rating: professional.rating,
-          directBooking: professional.services && professional.services.length > 0
+          directBooking: professional.services && professional.services.length > 0,
+          imageUrl: professional.avatarUrl
         });
       });
     }
@@ -66,7 +70,8 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
           name: company.name || "Empresa sem nome",
           subtitle: company.specialty || company.address?.city,
           rating: company.rating,
-          directBooking: false
+          directBooking: false,
+          imageUrl: company.logoUrl
         });
       });
     }

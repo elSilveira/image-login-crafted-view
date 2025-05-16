@@ -1,12 +1,14 @@
+
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Clock, Calendar } from "lucide-react";
 
 interface Service {
   id: string;
   name: string;
   price?: number;
   duration?: number;
-  startTime?: string; // Add start time field
+  startTime?: string;
 }
 
 interface ServicesListProps {
@@ -14,8 +16,8 @@ interface ServicesListProps {
   compact?: boolean;
   showPrice?: boolean;
   showDuration?: boolean;
-  showStartTime?: boolean; // Add prop to control start time display
-  startTime?: string; // Optional external start time for all services
+  showStartTime?: boolean;
+  startTime?: string;
   className?: string;
 }
 
@@ -44,7 +46,7 @@ const ServicesList = ({
     return (
       <div className={`flex flex-wrap gap-1 ${className}`}>
         {normalizedServices.map((service) => (
-          <Badge key={service.id} variant="outline">
+          <Badge key={service.id} variant="outline" className="bg-muted/50">
             {service.name}
           </Badge>
         ))}
@@ -55,17 +57,37 @@ const ServicesList = ({
   return (
     <div className={className}>
       <ScrollArea className={normalizedServices.length > 3 ? "h-[120px]" : "h-auto"}>
-        <div className="space-y-1">
-          {normalizedServices.map((service) => (            <div key={service.id} className="flex justify-between text-sm">
-              <span>{service.name}</span>
-              <div className="flex space-x-3">                {(showStartTime || showDuration) && (
-                  <span className="text-muted-foreground">
-                    {showStartTime && (service.startTime || startTime || "")}
-                    {showStartTime && showDuration && service.duration && " - "}
-                    {showDuration && service.duration && `${service.duration} min`}
+        <div className="space-y-3">
+          {normalizedServices.map((service) => (
+            <div 
+              key={service.id} 
+              className="flex justify-between text-sm py-2 px-3 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors"
+            >
+              <span className="font-medium">{service.name}</span>
+              <div className="flex space-x-4">
+                {(showStartTime || showDuration) && (
+                  <div className="flex items-center space-x-2 text-muted-foreground">
+                    {showDuration && service.duration && (
+                      <div className="flex items-center">
+                        <Clock className="mr-1 h-3.5 w-3.5" />
+                        <span>{service.duration} min</span>
+                      </div>
+                    )}
+                    
+                    {showStartTime && (service.startTime || startTime) && (
+                      <div className="flex items-center">
+                        <Calendar className="mr-1 h-3.5 w-3.5" />
+                        <span>{service.startTime || startTime}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {showPrice && service.price !== undefined && (
+                  <span className="font-medium text-iazi-primary">
+                    R$ {service.price}
                   </span>
                 )}
-                {showPrice && <span className="font-medium">R$ {service.price}</span>}
               </div>
             </div>
           ))}
@@ -73,9 +95,9 @@ const ServicesList = ({
       </ScrollArea>
       
       {normalizedServices.length > 1 && showPrice && (
-        <div className="flex justify-between pt-2 mt-2 border-t text-sm font-medium">
+        <div className="flex justify-between pt-3 mt-3 border-t text-sm font-medium">
           <span>Total:</span>
-          <span>
+          <span className="text-iazi-primary">
             R$ {normalizedServices.reduce((sum, service) => sum + (service?.price || 0), 0)}
           </span>
         </div>

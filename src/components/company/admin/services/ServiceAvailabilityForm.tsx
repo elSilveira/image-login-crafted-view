@@ -1,20 +1,21 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMyProfessionalServices } from "@/lib/api-services";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash } from "lucide-react";
+import { Clock, Loader2, Plus, Trash } from "lucide-react";
 import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ServiceItem } from "./types";
+import { Badge } from "@/components/ui/badge";
 
 const daysOfWeek = [
   { label: "Segunda-feira", value: "MONDAY" },
@@ -62,9 +63,10 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
     }
   });
 
+  // Fix: Use form.control for useFieldArray
   const { fields, append, remove } = form.useFieldArray({
     name: "slots",
-    keyName: "id"
+    control: form.control
   });
 
   // When selecting a service, fetch its availability
@@ -136,163 +138,187 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <FormField
-            control={form.control}
-            name="serviceId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Selecione o serviço</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    handleSelectService(value);
-                  }}
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione um serviço" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {serviceOptions.length > 0 ? (
-                      serviceOptions.map((service: any) => (
-                        <SelectItem key={service.serviceId} value={service.serviceId}>
-                          {service.service?.name || "Serviço sem nome"}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <SelectItem value="none" disabled>
-                        Nenhum serviço cadastrado
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <Card className="overflow-visible">
+            <CardHeader className="bg-muted/30">
+              <CardTitle className="text-lg">Selecionar Serviço</CardTitle>
+              <CardDescription>
+                Escolha o serviço para o qual deseja definir a disponibilidade
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <FormField
+                control={form.control}
+                name="serviceId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Serviço</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                        handleSelectService(value);
+                      }}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecione um serviço" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {serviceOptions.length > 0 ? (
+                          serviceOptions.map((service: any) => (
+                            <SelectItem key={service.serviceId} value={service.serviceId}>
+                              {service.service?.name || "Serviço sem nome"}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>
+                            Nenhum serviço cadastrado
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
           
           {selectedService && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Horários de disponibilidade</CardTitle>
+            <Card className="overflow-visible">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span>Horários de disponibilidade</span>
+                  <Badge variant="outline" className="font-normal text-xs">
+                    {selectedService.service?.name || "Serviço selecionado"}
+                  </Badge>
+                </CardTitle>
                 <CardDescription>
                   Defina os dias da semana e horários em que o serviço está disponível
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {fields.map((field, index) => (
-                  <div key={field.id} className="flex flex-col gap-4 p-4 border rounded-md">
-                    <div className="flex justify-between items-start">
-                      <FormField
-                        control={form.control}
-                        name={`slots.${index}.isActive`}
-                        render={({ field }) => (
-                          <FormItem className="flex flex-row items-center space-x-3 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <div className="space-y-1 leading-none">
-                              <FormLabel>
-                                Ativo
-                              </FormLabel>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => remove(index)}
-                      >
-                        <Trash className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
+              <CardContent className="space-y-6">
+                {/* Day selection with improved UI */}
+                <div className="grid grid-cols-7 gap-2">
+                  {daysOfWeek.map(day => {
+                    const dayExists = fields.some(field => field.dayOfWeek === day.value && field.isActive);
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <FormField
-                        control={form.control}
-                        name={`slots.${index}.dayOfWeek`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Dia</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um dia" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {daysOfWeek.map((day) => (
-                                  <SelectItem key={day.value} value={day.value}>
-                                    {day.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
+                    return (
+                      <div 
+                        key={day.value} 
+                        className={`
+                          flex flex-col items-center justify-center p-2 rounded-md cursor-pointer border
+                          ${dayExists 
+                            ? 'bg-iazi-primary/10 border-iazi-primary/30' 
+                            : 'bg-white hover:bg-muted/30 border-gray-200'}
+                        `}
+                        onClick={() => {
+                          const existingIdx = fields.findIndex(f => f.dayOfWeek === day.value);
+                          if (existingIdx >= 0) {
+                            // Toggle active state
+                            const isCurrentlyActive = fields[existingIdx].isActive;
+                            form.setValue(`slots.${existingIdx}.isActive`, !isCurrentlyActive);
+                          } else {
+                            // Add new day
+                            append({
+                              dayOfWeek: day.value,
+                              startTime: "09:00",
+                              endTime: "17:00",
+                              isActive: true
+                            });
+                          }
+                        }}
+                      >
+                        <span className="text-xs font-medium">{day.label.substring(0, 3)}</span>
+                        {dayExists ? (
+                          <div className="mt-1 text-xs text-iazi-primary flex items-center">
+                            <Clock className="h-3 w-3 mr-1" />
+                            <span>Configurado</span>
+                          </div>
+                        ) : (
+                          <span className="mt-1 text-xs text-muted-foreground">Não configurado</span>
                         )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name={`slots.${index}.startTime`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Início</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="time"
-                                step="60"
-                                placeholder="09:00"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name={`slots.${index}.endTime`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Fim</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="time"
-                                step="60"
-                                placeholder="17:00"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                ))}
+                      </div>
+                    );
+                  })}
+                </div>
                 
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addTimeSlot}
-                  className="mt-2"
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Adicionar outro horário
-                </Button>
+                {/* Time slots configuration */}
+                {fields.filter(field => field.isActive).length > 0 ? (
+                  <div className="space-y-4 mt-6">
+                    <h4 className="font-medium text-sm">Configuração de horários por dia</h4>
+                    {fields.map((field, index) => (
+                      field.isActive && (
+                        <Card key={field.id} className="overflow-visible border-l-4 border-l-iazi-primary">
+                          <CardContent className="p-4 space-y-4">
+                            <div className="flex justify-between items-center">
+                              <h5 className="font-medium">
+                                {daysOfWeek.find(d => d.value === field.dayOfWeek)?.label || field.dayOfWeek}
+                              </h5>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => {
+                                  // Instead of removing, just set as inactive
+                                  form.setValue(`slots.${index}.isActive`, false);
+                                }}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name={`slots.${index}.startTime`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Horário de início</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        type="time"
+                                        step="60"
+                                        className="bg-muted/30"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              
+                              <FormField
+                                control={form.control}
+                                name={`slots.${index}.endTime`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Horário de término</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        {...field}
+                                        type="time"
+                                        step="60"
+                                        className="bg-muted/30"
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground">
+                    <p>Selecione ao menos um dia da semana para definir horários</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -308,7 +334,10 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={!selectedService || !form.formState.isDirty}>
+            <Button 
+              type="submit" 
+              disabled={!selectedService || !form.formState.isDirty || fields.filter(f => f.isActive).length === 0}
+            >
               Salvar horários
             </Button>
           </div>
