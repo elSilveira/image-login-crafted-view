@@ -4,11 +4,18 @@ import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { AppointmentStatus, getMyAppointments, AppointmentWithDetails, mapApiStatusToInternal } from "@/lib/api-services";
+import { 
+  AppointmentStatus, 
+  getMyAppointments, 
+  AppointmentWithDetails, 
+  mapApiStatusToInternal 
+} from "@/lib/api-services";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO, isSameDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import AppointmentDetailsModal, { AppointmentDetails } from "./AppointmentDetailsModal";
 
 interface BookingHistoryCalendarProps {
   status?: AppointmentStatus | "all";
@@ -26,6 +33,8 @@ interface FormattedAppointment {
   time: string;
   price: number;
   status: AppointmentStatus;
+  notes?: string;
+  location?: string;
 }
 
 const BookingHistoryCalendar = ({ 
@@ -39,6 +48,8 @@ const BookingHistoryCalendar = ({
   const [appointments, setAppointments] = useState<FormattedAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetails | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
   
   // Function to format appointments from API response
@@ -90,7 +101,9 @@ const BookingHistoryCalendar = ({
         date: formattedDate,
         time: formattedTime,
         price: servicePrice,
-        status: mappedStatus
+        status: mappedStatus,
+        notes: appointment.notes || '',
+        location: appointment.location || ''
       };
     });
   };
@@ -148,7 +161,7 @@ const BookingHistoryCalendar = ({
         });
         
         setAppointments(filteredAppointments);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro ao buscar agendamentos:", err);
         setError("Não foi possível carregar seus agendamentos. Tente novamente mais tarde.");
         toast({
@@ -183,6 +196,18 @@ const BookingHistoryCalendar = ({
   };
   
   const selectedDateAppointments = getAppointmentsForSelectedDate();
+
+  const handleAppointmentClick = (appointment: FormattedAppointment) => {
+    setSelectedAppointment({
+      ...appointment,
+      services: [{
+        id: appointment.id.toString(),
+        name: appointment.service,
+        price: appointment.price
+      }]
+    });
+    setIsModalOpen(true);
+  };
   
   // Show loading state
   if (isLoading) {
@@ -212,8 +237,8 @@ const BookingHistoryCalendar = ({
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-6">
-      <Card>
+    <div className="grid gap-6 md:grid-cols-2">
+      <Card className="md:sticky md:top-24 self-start">
         <CardContent className="p-4">
           <Calendar
             mode="single"
@@ -230,6 +255,7 @@ const BookingHistoryCalendar = ({
                 color: "#cc6677" 
               }
             }}
+            locale={ptBR}
           />
         </CardContent>
       </Card>
@@ -240,11 +266,7 @@ const BookingHistoryCalendar = ({
             {selectedDate ? (
               <>
                 Agendamentos em{" "}
-                {selectedDate.toLocaleDateString("pt-BR", {
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
+                {format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
               </>
             ) : (
               "Selecione uma data"
@@ -257,7 +279,8 @@ const BookingHistoryCalendar = ({
                 {selectedDateAppointments.map((apt) => (
                   <div 
                     key={apt.id} 
-                    className="p-3 border rounded-md hover:bg-iazi-background-alt transition-colors"
+                    className="p-3 border rounded-md hover:bg-iazi-background-alt transition-colors cursor-pointer"
+                    onClick={() => handleAppointmentClick(apt)}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -286,6 +309,13 @@ const BookingHistoryCalendar = ({
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* Appointment Details Modal */}
+      <AppointmentDetailsModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        appointment={selectedAppointment}
+      />
     </div>
   );
 };

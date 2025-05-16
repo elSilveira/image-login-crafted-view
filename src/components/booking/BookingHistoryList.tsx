@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,10 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, FileText, RefreshCw, Clock, Star, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import ServicesList from "./ServicesList";
-import { getMyAppointments, AppointmentStatus, AppointmentWithDetails, mapApiStatusToInternal } from "@/lib/api-services";
+import { 
+  getMyAppointments, 
+  AppointmentStatus, 
+  AppointmentWithDetails, 
+  mapApiStatusToInternal 
+} from "@/lib/api-services";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
+import AppointmentDetailsModal, { AppointmentDetails } from "./AppointmentDetailsModal";
 
 interface BookingHistoryListProps {
   status: AppointmentStatus | "all";
@@ -32,6 +39,8 @@ interface FormattedAppointment {
   time: string;
   totalPrice: number;
   status: AppointmentStatus;
+  notes?: string;
+  location?: string;
 }
 
 const BookingHistoryList = ({ 
@@ -44,6 +53,8 @@ const BookingHistoryList = ({
   const [appointments, setAppointments] = useState<FormattedAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetails | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -80,9 +91,9 @@ const BookingHistoryList = ({
           throw new Error('Formato de resposta inválido da API');
         }
         
-        // Transformar os dados da API para o formato esperado pelo componente
+        // Transform API data to the format expected by the component
         const formattedAppointments: FormattedAppointment[] = appointmentsData.map((appointment: AppointmentWithDetails) => {
-          // Usar startTime como fonte de data primária
+          // Use startTime as primary date source
           let dateObj;
           let formattedTime;
           
@@ -99,11 +110,11 @@ const BookingHistoryList = ({
           
           const formattedDate = format(dateObj, "yyyy-MM-dd");
           
-          // Processar serviços - podemos ter um array services ou um único service
+          // Process services - we can have an array of services or a single service
           const appointmentServices = [];
           let totalPrice = 0;
           
-          // Caso 1: Array services na resposta da API
+          // Case 1: Array services in API response
           if (Array.isArray(appointment.services) && appointment.services.length > 0) {
             appointmentServices.push(...appointment.services.map(service => ({
               id: service.id,
@@ -113,11 +124,11 @@ const BookingHistoryList = ({
               startTime: formattedTime
             })));
             
-            // Calcular preço total dos serviços
+            // Calculate total price of services
             totalPrice = appointmentServices.reduce((sum, service) => 
               sum + (typeof service.price === 'number' ? service.price : 0), 0);
           }
-          // Caso 2: Campo service único
+          // Case 2: Single service field
           else if (appointment.service) {
             appointmentServices.push({
               id: appointment.service.id,
@@ -133,7 +144,7 @@ const BookingHistoryList = ({
               : (appointment.service.price || 0);
           }
           
-          // Mapear status da API para nosso status interno
+          // Map API status to our internal status
           const mappedStatus = mapApiStatusToInternal(appointment.status.toString());
           
           return {
@@ -144,12 +155,14 @@ const BookingHistoryList = ({
             date: formattedDate,
             time: formattedTime,
             totalPrice: totalPrice,
-            status: mappedStatus
+            status: mappedStatus,
+            notes: appointment.notes || '',
+            location: appointment.location || ''
           };
         });
         
         setAppointments(formattedAppointments);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Erro ao buscar agendamentos:", err);
         setError("Não foi possível carregar seus agendamentos. Tente novamente mais tarde.");
         toast({
@@ -165,7 +178,7 @@ const BookingHistoryList = ({
     fetchAppointments();
   }, [status, startDate, endDate, toast]);
   
-  // Exibir estado de carregamento
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-12">
@@ -174,7 +187,7 @@ const BookingHistoryList = ({
     );
   }
   
-  // Exibir mensagem de erro, se houver
+  // Error state
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -192,7 +205,7 @@ const BookingHistoryList = ({
     );
   }
   
-  // Exibir mensagem quando não há agendamentos
+  // No appointments state
   if (appointments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center">
@@ -244,7 +257,27 @@ const BookingHistoryList = ({
     return true;
   });
 
-  const getStatusBadge = (status: string) => {
+  const handleAppointmentClick = (appointment: FormattedAppointment) => {
+    // Convert FormattedAppointment to AppointmentDetails for modal
+    const modalAppointment: AppointmentDetails = {
+      id: appointment.id,
+      service: appointment.services.map(s => s.name).join(", "),
+      services: appointment.services,
+      professional: appointment.professional,
+      professionalId: appointment.professionalId,
+      date: appointment.date,
+      time: appointment.time,
+      price: appointment.totalPrice,
+      status: appointment.status,
+      notes: appointment.notes,
+      location: appointment.location
+    };
+    
+    setSelectedAppointment(modalAppointment);
+    setIsModalOpen(true);
+  };
+
+  const getStatusBadge = (status: AppointmentStatus) => {
     switch (status) {
       case "scheduled":
         return <Badge className="bg-iazi-primary">Confirmado</Badge>;
@@ -252,71 +285,28 @@ const BookingHistoryList = ({
         return <Badge className="bg-green-500">Concluído</Badge>;
       case "cancelled":
         return <Badge variant="outline" className="border-red-500 text-red-500">Cancelado</Badge>;
+      case "no-show":
+        return <Badge variant="outline" className="border-orange-500 text-orange-500">Não Compareceu</Badge>;
       default:
         return <Badge variant="outline">Pendente</Badge>;
     }
   };
 
-  const getActionButtons = (status: string, id: string | number) => {
-    switch (status) {
-      case "scheduled":
-        return (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="text-red-500 hover:bg-red-50 font-inter" asChild>
-              <Link to={`/booking/${id}/cancel`}>Cancelar</Link>
-            </Button>
-            <Button size="sm" variant="outline" className="font-inter" asChild>
-              <Link to={`/booking/${id}/reschedule`}>
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Reagendar
-              </Link>
-            </Button>
-          </div>
-        );
-      case "completed":
-        return (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="font-inter" asChild>
-              <Link to={`/reviews/create/${id}`}>
-                <Star className="h-3 w-3 mr-1" />
-                Avaliar
-              </Link>
-            </Button>
-            <Button size="sm" variant="outline" className="font-inter" asChild>
-              <Link to={`/booking/${id}/receipt`}>
-                <FileText className="h-3 w-3 mr-1" />
-                Recibo
-              </Link>
-            </Button>
-            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter" asChild>
-              <Link to={`/booking/${id}/reschedule`}>Agendar Novamente</Link>
-            </Button>
-          </div>
-        );
-      case "cancelled":
-        return (
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className="bg-iazi-primary text-white hover:bg-iazi-primary-hover font-inter" asChild>
-              <Link to={`/booking/${id}/reschedule`}>Agendar Novamente</Link>
-            </Button>
-          </div>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className="space-y-4">
-      {appointments.length > 0 ? (
-        appointments.map((appointment) => (
-          <Card key={appointment.id} className="hover:shadow-md transition-shadow border-iazi-border">
+      {filteredAppointments.length > 0 ? (
+        filteredAppointments.map((appointment) => (
+          <Card 
+            key={appointment.id} 
+            className="hover:shadow-md transition-shadow border-iazi-border cursor-pointer"
+            onClick={() => handleAppointmentClick(appointment)}
+          >
             <CardContent className="p-5">
               <div className="flex flex-col md:flex-row justify-between gap-4">
                 <div className="flex flex-col md:flex-row gap-4 items-start md:items-center flex-1">
                   <div className="bg-iazi-background-alt rounded-md p-3 text-center min-w-[70px]">
-                    <p className="text-sm font-medium font-inter">
-                      {new Date(appointment.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                    <p className="text-sm font-medium">
+                      {format(parseISO(appointment.date), "dd/MM", { locale: ptBR })}
                     </p>
                     <div className="flex items-center justify-center mt-1 text-sm text-muted-foreground">
                       <Clock className="h-3 w-3 mr-1" />
@@ -325,36 +315,32 @@ const BookingHistoryList = ({
                   </div>
                   
                   <div className="flex-1">
-                    {/* Display services using ServicesList component */}
-                    <ServicesList 
-                      services={appointment.services} 
-                      showPrice={false}
-                      showDuration={true}
-                      showStartTime={true}
-                      startTime={appointment.time}
-                      compact={appointment.services.length > 1}
-                    />
+                    {/* Display services */}
+                    <div className="mb-1">
+                      <h3 className="font-medium text-base">
+                        {appointment.services.length > 0 
+                          ? appointment.services.map(s => s.name).join(", ")
+                          : "Serviço não especificado"}
+                      </h3>
+                    </div>
                     
                     <Link 
-                      to={`/professional/${appointment.professional.toLowerCase().replace(/\s+/g, '-')}`}
-                      className="text-muted-foreground hover:text-iazi-primary font-inter block mt-1"
+                      to={`/professional/${appointment.professionalId || ''}`}
+                      className="text-muted-foreground hover:text-iazi-primary block mt-1"
+                      onClick={(e) => e.stopPropagation()} // Prevent modal from opening
                     >
                       com {appointment.professional}
                     </Link>
                     
                     <div className="flex items-center justify-between mt-2">
                       {getStatusBadge(appointment.status)}
-                      <span className="font-medium font-inter text-iazi-text">
+                      <span className="font-medium text-iazi-text">
                         R$ {typeof appointment.totalPrice === 'number' ? 
-                            appointment.totalPrice.toFixed(2) : 
+                            appointment.totalPrice.toFixed(2).replace('.', ',') : 
                             appointment.totalPrice}
                       </span>
                     </div>
                   </div>
-                </div>
-                
-                <div className="mt-3 md:mt-0">
-                  {getActionButtons(appointment.status, appointment.id)}
                 </div>
               </div>
             </CardContent>
@@ -362,9 +348,16 @@ const BookingHistoryList = ({
         ))
       ) : (
         <div className="text-center p-10">
-          <p className="text-muted-foreground font-inter">Nenhum agendamento encontrado</p>
+          <p className="text-muted-foreground">Nenhum agendamento encontrado</p>
         </div>
       )}
+
+      {/* Appointment Details Modal */}
+      <AppointmentDetailsModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        appointment={selectedAppointment}
+      />
     </div>
   );
 };

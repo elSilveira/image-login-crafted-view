@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,11 +14,9 @@ import Navigation from "@/components/Navigation";
 import { AppointmentStatus } from "@/lib/api-services";
 import { useToast } from "@/hooks/use-toast";
 
-// Header is provided by ProfessionalAreaLayout in professional area
 const BookingHistory = () => {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
   const [activeTab, setActiveTab] = useState<AppointmentStatus | "all">("scheduled");
-  // Remove Navigation usage here to avoid duplicate header in professional area
   const [filter, setFilter] = useState({
     status: "all",
     period: "all",
@@ -86,19 +85,19 @@ const BookingHistory = () => {
   return (
     <>
       {showNav && <Navigation />}
-      <div className="container mx-auto px-4 py-8 mt-16">
-        <h1 className="text-3xl font-bold mb-6 text-iazi-text font-playfair">Meus Agendamentos</h1>
+      <div className="container mx-auto px-4 py-6 mt-16 md:py-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-iazi-text font-playfair">Meus Agendamentos</h1>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             {/* Top controls */}
-            <div className="flex flex-wrap gap-3 items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-6">
               <div className="flex gap-2">
                 <Button
                   variant={viewMode === "list" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setViewMode("list")}
-                  className={viewMode === "list" ? "bg-iazi-primary hover:bg-iazi-primary-hover" : ""}
+                  className={`${viewMode === "list" ? "bg-iazi-primary hover:bg-iazi-primary-hover" : ""} flex-shrink-0`}
                 >
                   Lista
                 </Button>
@@ -106,14 +105,14 @@ const BookingHistory = () => {
                   variant={viewMode === "calendar" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setViewMode("calendar")}
-                  className={viewMode === "calendar" ? "bg-iazi-primary hover:bg-iazi-primary-hover" : ""}
+                  className={`${viewMode === "calendar" ? "bg-iazi-primary hover:bg-iazi-primary-hover" : ""} flex-shrink-0`}
                 >
                   <Calendar className="h-4 w-4 mr-2" />
                   Calendário
                 </Button>
               </div>
 
-              <div className="relative flex-1 max-w-sm ml-auto">
+              <div className="relative w-full sm:w-auto sm:flex-1 sm:max-w-xs">
                 <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar agendamentos..."
@@ -133,7 +132,8 @@ const BookingHistory = () => {
                     <span className="text-sm font-medium">Filtros:</span>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">                    <Select value={filter.period} onValueChange={handlePeriodChange}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                    <Select value={filter.period} onValueChange={handlePeriodChange}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Período" />
                       </SelectTrigger>
@@ -168,20 +168,22 @@ const BookingHistory = () => {
               className="w-full"
               onValueChange={(value) => setActiveTab(value as AppointmentStatus | "all")}
             >
-              <TabsList className="mb-6 bg-iazi-background-alt">
-                <TabsTrigger value="all" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
+              <TabsList className="mb-6 bg-iazi-background-alt w-full overflow-x-auto flex-nowrap justify-start sm:justify-center">
+                <TabsTrigger value="all" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white flex-1">
                   Todos
                 </TabsTrigger>
-                <TabsTrigger value="scheduled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
+                <TabsTrigger value="scheduled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white flex-1">
                   Agendados
                 </TabsTrigger>
-                <TabsTrigger value="completed" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
+                <TabsTrigger value="completed" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white flex-1">
                   Concluídos
                 </TabsTrigger>
-                <TabsTrigger value="cancelled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
+                <TabsTrigger value="cancelled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white flex-1">
                   Cancelados
                 </TabsTrigger>
-              </TabsList>              <TabsContent value="all">
+              </TabsList>
+              
+              <TabsContent value="all">
                 {viewMode === "list" ? (
                   <BookingHistoryList 
                     status="all" 
@@ -266,7 +268,7 @@ const BookingHistory = () => {
           {/* Sidebar with quick actions */}
           <div className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-playfair">Ações Rápidas</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -290,12 +292,12 @@ const BookingHistory = () => {
             </Card>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-playfair">Agendamentos Recentes</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {[1, 2].map((i) => (
-                  <div key={i} className="p-3 bg-iazi-background-alt rounded-md">
+                  <div key={i} className="p-3 bg-iazi-background-alt rounded-md hover:bg-gray-100 transition-colors cursor-pointer">
                     <div className="flex justify-between items-start">
                       <div>
                         <p className="font-medium">{i === 1 ? "Corte de Cabelo" : "Manicure"}</p>
