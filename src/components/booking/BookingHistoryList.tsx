@@ -5,13 +5,17 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, FileText, RefreshCw, Clock, Star, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import ServicesList from "./ServicesList";
-import { getMyAppointments, AppointmentStatus, AppointmentWithDetails } from "@/lib/api-services";
+import { getMyAppointments, AppointmentStatus, AppointmentWithDetails, mapApiStatusToInternal } from "@/lib/api-services";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 
 interface BookingHistoryListProps {
   status: AppointmentStatus | "all";
+  serviceType?: string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface FormattedAppointment {
@@ -30,7 +34,13 @@ interface FormattedAppointment {
   status: AppointmentStatus;
 }
 
-const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
+const BookingHistoryList = ({ 
+  status, 
+  serviceType, 
+  search, 
+  startDate, 
+  endDate 
+}: BookingHistoryListProps) => {
   const [appointments, setAppointments] = useState<FormattedAppointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +53,9 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
         setError(null);
         
         const response = await getMyAppointments({ 
-          status: status === 'all' ? undefined : status
+          status: status === 'all' ? undefined : status,
+          startDate,
+          endDate
         });
         
         console.log('API response:', response);
@@ -70,29 +82,69 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
         
         // Transformar os dados da API para o formato esperado pelo componente
         const formattedAppointments: FormattedAppointment[] = appointmentsData.map((appointment: AppointmentWithDetails) => {
-          // Extrair data e hora do campo date
-          const dateObj = appointment.date ? parseISO(appointment.date) : new Date();
-          const formattedDate = format(dateObj, "yyyy-MM-dd");
-          const formattedTime = format(dateObj, "HH:mm");
+          // Usar startTime como fonte de data primária
+          let dateObj;
+          let formattedTime;
           
-          // Calcular preço total dos serviços
-          const servicePrice = appointment.service?.price || 0;
+          if (appointment.startTime) {
+            dateObj = parseISO(appointment.startTime);
+            formattedTime = format(dateObj, "HH:mm");
+          } else if (appointment.date) {
+            dateObj = parseISO(appointment.date);
+            formattedTime = format(dateObj, "HH:mm");
+          } else {
+            dateObj = new Date();
+            formattedTime = format(dateObj, "HH:mm");
+          }
+          
+          const formattedDate = format(dateObj, "yyyy-MM-dd");
+          
+          // Processar serviços - podemos ter um array services ou um único service
+          const appointmentServices = [];
+          let totalPrice = 0;
+          
+          // Caso 1: Array services na resposta da API
+          if (Array.isArray(appointment.services) && appointment.services.length > 0) {
+            appointmentServices.push(...appointment.services.map(service => ({
+              id: service.id,
+              name: service.name,
+              price: typeof service.price === 'string' ? parseFloat(service.price) : service.price,
+              duration: service.duration,
+              startTime: formattedTime
+            })));
+            
+            // Calcular preço total dos serviços
+            totalPrice = appointmentServices.reduce((sum, service) => 
+              sum + (typeof service.price === 'number' ? service.price : 0), 0);
+          }
+          // Caso 2: Campo service único
+          else if (appointment.service) {
+            appointmentServices.push({
+              id: appointment.service.id,
+              name: appointment.service.name,
+              price: typeof appointment.service.price === 'string' 
+                ? parseFloat(appointment.service.price as string) 
+                : appointment.service.price,
+              duration: appointment.service.duration,
+              startTime: formattedTime
+            });
+            totalPrice = typeof appointment.service.price === 'string' 
+              ? parseFloat(appointment.service.price) 
+              : (appointment.service.price || 0);
+          }
+          
+          // Mapear status da API para nosso status interno
+          const mappedStatus = mapApiStatusToInternal(appointment.status.toString());
           
           return {
             id: appointment.id,
-            services: appointment.service ? [{
-              id: appointment.service.id,
-              name: appointment.service.name,
-              price: appointment.service.price,
-              duration: appointment.service.duration,
-              startTime: formattedTime
-            }] : [],
+            services: appointmentServices,
             professional: appointment.professional?.name || "Profissional não informado",
-            professionalId: appointment.professionalId,
+            professionalId: appointment.professional?.id || appointment.professionalId,
             date: formattedDate,
             time: formattedTime,
-            totalPrice: servicePrice,
-            status: appointment.status
+            totalPrice: totalPrice,
+            status: mappedStatus
           };
         });
         
@@ -111,7 +163,7 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
     };
     
     fetchAppointments();
-  }, [status, toast]);
+  }, [status, startDate, endDate, toast]);
   
   // Exibir estado de carregamento
   if (isLoading) {
@@ -158,10 +210,39 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
     );
   }
   
-  // Filtrar agendamentos pelo status, se não for "all"
-  const filteredAppointments = status === "all" 
-    ? appointments 
-    : appointments.filter((app) => app.status === status);
+  // Apply client-side filters (status, service type, search)
+  const filteredAppointments = appointments.filter(app => {
+    // Filter by status if not "all"
+    if (status !== "all" && app.status !== status) {
+      return false;
+    }
+    
+    // Filter by service type
+    if (serviceType && serviceType !== 'all') {
+      // Check if any service matches the service type
+      const hasMatchingService = app.services.some(
+        service => service.name.toLowerCase().includes(serviceType.toLowerCase())
+      );
+      if (!hasMatchingService) {
+        return false;
+      }
+    }
+    
+    // Filter by search term
+    if (search && search.trim() !== '') {
+      const searchTerm = search.toLowerCase();
+      const matchesProfessional = app.professional.toLowerCase().includes(searchTerm);
+      const matchesServices = app.services.some(service => 
+        service.name.toLowerCase().includes(searchTerm)
+      );
+      
+      if (!matchesProfessional && !matchesServices) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -264,7 +345,9 @@ const BookingHistoryList = ({ status }: BookingHistoryListProps) => {
                     <div className="flex items-center justify-between mt-2">
                       {getStatusBadge(appointment.status)}
                       <span className="font-medium font-inter text-iazi-text">
-                        R$ {appointment.totalPrice}
+                        R$ {typeof appointment.totalPrice === 'number' ? 
+                            appointment.totalPrice.toFixed(2) : 
+                            appointment.totalPrice}
                       </span>
                     </div>
                   </div>

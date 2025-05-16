@@ -24,32 +24,56 @@ export interface ProfessionalServiceData {
 // Interface para tipagem dos agendamentos
 export interface AppointmentData {
   id: string;
-  userId: string;
-  professionalId: string;
-  serviceId: string;
-  date: string;
-  status: AppointmentStatus;
-  notes?: string;
+  userId?: string;
+  professionalId?: string;
+  serviceId?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  status: AppointmentStatus | string;
+  notes?: string | null;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+  location?: string | null;
 }
 
 export type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-show";
 
+// Map API status to our internal status
+export const mapApiStatusToInternal = (apiStatus: string): AppointmentStatus => {
+  const statusMap: Record<string, AppointmentStatus> = {
+    "PENDING": "scheduled",
+    "CONFIRMED": "scheduled",
+    "COMPLETED": "completed",
+    "CANCELLED": "cancelled",
+    "NO_SHOW": "no-show"
+  };
+  
+  return statusMap[apiStatus] || "scheduled";
+};
+
+export interface ServiceData {
+  id: string;
+  name: string;
+  description?: string;
+  price?: number | string;
+  duration?: number | string;
+}
+
+export interface ProfessionalData {
+  id: string;
+  name: string;
+  role?: string;
+  image?: string;
+  phone?: string;
+  services?: ServiceData[];
+  company?: any | null;
+}
+
 export interface AppointmentWithDetails extends AppointmentData {
-  service?: {
-    id: string;
-    name: string;
-    description?: string;
-    price?: number;
-    duration?: number;
-  };
-  professional?: {
-    id: string;
-    name: string;
-    role?: string;
-    image?: string;
-  };
+  service?: ServiceData;
+  services?: ServiceData[];
+  professional?: ProfessionalData;
 }
 
 // Criar um novo serviço
@@ -136,14 +160,16 @@ export const fetchProfessionals = async () => {
 
 // Obter agendamentos do usuário atual
 export const getMyAppointments = async (params?: {
-  status?: AppointmentStatus | 'all';
+  status?: AppointmentStatus;
   startDate?: string;
   endDate?: string;
+  serviceType?: string;
+  search?: string;
 }) => {
   let url = '/appointments/me';
   const queryParams = new URLSearchParams();
   
-  if (params?.status && params.status !== 'all') {
+  if (params?.status) {
     queryParams.append('status', params.status);
   }
   
@@ -154,7 +180,17 @@ export const getMyAppointments = async (params?: {
   if (params?.endDate) {
     queryParams.append('endDate', params.endDate);
   }
-    const queryString = queryParams.toString();
+  
+  // Add service type and search if API supports these filters
+  if (params?.serviceType) {
+    queryParams.append('serviceType', params.serviceType);
+  }
+  
+  if (params?.search) {
+    queryParams.append('search', params.search);
+  }
+  
+  const queryString = queryParams.toString();
   if (queryString) {
     url += `?${queryString}`;
   }

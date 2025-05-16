@@ -603,21 +603,22 @@ const ProfessionalProfile = () => {
                     </CardContent>
                   </Card>
                 )}
-                
-                <Card>
+                  <Card>
                   <CardContent className="p-4">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={setDate}
-                      className="border rounded-md pointer-events-auto"
-                      locale={pt}
-                      disabled={dateItem => {
-                        const today = new Date(); today.setHours(0,0,0,0);
-                        const iso = dateItem.toISOString().split('T')[0];
-                        return loadingDates || dateItem < today || !availableDates.includes(iso);
-                      }}
-                    />
+                    <div className="flex justify-center">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        className="border rounded-md pointer-events-auto mx-auto"
+                        locale={pt}
+                        disabled={dateItem => {
+                          const today = new Date(); today.setHours(0,0,0,0);
+                          const iso = dateItem.toISOString().split('T')[0];
+                          return loadingDates || dateItem < today || !availableDates.includes(iso);
+                        }}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -628,8 +629,7 @@ const ProfessionalProfile = () => {
                     <h3 className="font-medium text-lg mb-4">
                       {date ? `Horários disponíveis para ${format(date, 'dd/MM/yyyy', { locale: pt })}` : 'Selecione uma data'}
                     </h3>
-                    
-                    {/* Selected services and time display */}
+                      {/* Selected services and time display */}
                     {selectedSlot && selectedServicesForSlot.length > 0 && (
                       <div className="mb-4 p-4 bg-iazi-primary/10 rounded-md border border-iazi-primary/30">
                         <div className="flex flex-col md:flex-row md:items-center gap-3 justify-between">
@@ -675,6 +675,67 @@ const ProfessionalProfile = () => {
                             })}
                           </div>
                         </div>
+                        
+                        {/* Total price and duration calculations */}
+                        {selectedServicesForSlot.length > 0 && (
+                          <div className="mt-4 border-t border-iazi-primary/30 pt-3">
+                            <div className="flex flex-col sm:flex-row justify-between gap-2">
+                              <div>
+                                <span className="text-sm text-gray-600">Tempo total:</span>
+                                <span className="ml-2 font-semibold">
+                                  {(() => {
+                                    // Calculate total duration
+                                    let totalMinutes = 0;
+                                    selectedServicesForSlot.forEach(sid => {
+                                      const serv = (professional.services || []).find(s => s.id === sid);
+                                      if (serv) {
+                                        const duration = typeof serv.duration === 'string' 
+                                          ? parseInt(serv.duration, 10) 
+                                          : (serv.duration || 0);
+                                        totalMinutes += isNaN(duration) ? 0 : duration;
+                                      }
+                                    });
+                                    
+                                    // Format duration
+                                    const hours = Math.floor(totalMinutes / 60);
+                                    const minutes = totalMinutes % 60;
+                                    if (hours > 0 && minutes > 0) {
+                                      return `${hours}h ${minutes}min`;
+                                    } else if (hours > 0) {
+                                      return `${hours}h`;
+                                    } else {
+                                      return `${minutes}min`;
+                                    }
+                                  })()}
+                                </span>
+                              </div>
+                              <div>
+                                <span className="text-sm text-gray-600">Valor total:</span>
+                                <span className="ml-2 font-semibold text-iazi-primary">
+                                  {(() => {
+                                    // Calculate total price
+                                    let totalPrice = 0;
+                                    selectedServicesForSlot.forEach(sid => {
+                                      const serv = (professional.services || []).find(s => s.id === sid);
+                                      if (serv) {
+                                        const price = typeof serv.price === 'string'
+                                          ? parseFloat(serv.price)
+                                          : (serv.price || 0);
+                                        totalPrice += isNaN(price) ? 0 : price;
+                                      }
+                                    });
+                                    
+                                    // Format price
+                                    return new Intl.NumberFormat("pt-BR", { 
+                                      style: "currency", 
+                                      currency: "BRL" 
+                                    }).format(totalPrice);
+                                  })()}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                     
@@ -887,7 +948,61 @@ const ProfessionalProfile = () => {
                                                 </div>
                                               </label>
                                             ))}
-                                          </div>
+                                          </div>                                          {/* Show total duration and price when services are selected */}
+                                          {selectedServicesForSlot.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t text-sm">
+                                              <div className="flex justify-between mb-1">
+                                                <span className="text-gray-600">Tempo total:</span>
+                                                <span className="font-medium">
+                                                  {(() => {
+                                                    let totalMinutes = 0;
+                                                    selectedServicesForSlot.forEach(sid => {
+                                                      const serv = availableServices.find(s => s.id === sid);
+                                                      if (serv) {
+                                                        const duration = typeof serv.duration === 'string' 
+                                                          ? parseInt(serv.duration, 10) 
+                                                          : (serv.duration || 0);
+                                                        totalMinutes += isNaN(duration) ? 0 : duration;
+                                                      }
+                                                    });
+                                                    
+                                                    const hours = Math.floor(totalMinutes / 60);
+                                                    const minutes = totalMinutes % 60;
+                                                    if (hours > 0 && minutes > 0) {
+                                                      return `${hours}h ${minutes}min`;
+                                                    } else if (hours > 0) {
+                                                      return `${hours}h`;
+                                                    } else {
+                                                      return `${minutes}min`;
+                                                    }
+                                                  })()}
+                                                </span>
+                                              </div>
+                                              <div className="flex justify-between">
+                                                <span className="text-gray-600">Valor total:</span>
+                                                <span className="font-medium text-iazi-primary">
+                                                  {(() => {
+                                                    let totalPrice = 0;
+                                                    selectedServicesForSlot.forEach(sid => {
+                                                      const serv = availableServices.find(s => s.id === sid);
+                                                      if (serv) {
+                                                        const price = typeof serv.price === 'string'
+                                                          ? parseFloat(serv.price)
+                                                          : (serv.price || 0);
+                                                        totalPrice += isNaN(price) ? 0 : price;
+                                                      }
+                                                    });
+                                                    
+                                                    return new Intl.NumberFormat("pt-BR", { 
+                                                      style: "currency", 
+                                                      currency: "BRL" 
+                                                    }).format(totalPrice);
+                                                  })()}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          )}
+                                        
                                           <div className="flex justify-end mt-3 gap-2">
                                             <Button 
                                               variant="outline" 

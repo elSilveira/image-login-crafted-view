@@ -23,10 +23,65 @@ const BookingHistory = () => {
     period: "all",
     serviceType: "all",
     search: "",
+    startDate: "",
+    endDate: "",
   });
   const { toast } = useToast();
   const location = useLocation();
   const showNav = !location.pathname.startsWith("/profile/professional");
+  
+  // Handle period filter change
+  const handlePeriodChange = (value: string) => {
+    const today = new Date();
+    let startDate = "";
+    let endDate = "";
+    
+    switch (value) {
+      case "past-week":
+        // Last 7 days
+        const lastWeek = new Date(today);
+        lastWeek.setDate(today.getDate() - 7);
+        startDate = lastWeek.toISOString().split('T')[0];
+        endDate = today.toISOString().split('T')[0];
+        break;
+      
+      case "past-month":
+        // Last 30 days
+        const lastMonth = new Date(today);
+        lastMonth.setDate(today.getDate() - 30);
+        startDate = lastMonth.toISOString().split('T')[0];
+        endDate = today.toISOString().split('T')[0];
+        break;
+        
+      case "next-week":
+        // Next 7 days
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 7);
+        startDate = today.toISOString().split('T')[0];
+        endDate = nextWeek.toISOString().split('T')[0];
+        break;
+        
+      case "next-month":
+        // Next 30 days
+        const nextMonth = new Date(today);
+        nextMonth.setDate(today.getDate() + 30);
+        startDate = today.toISOString().split('T')[0];
+        endDate = nextMonth.toISOString().split('T')[0];
+        break;
+        
+      default:
+        // All periods (no date filter)
+        startDate = "";
+        endDate = "";
+    }
+    
+    setFilter(prev => ({
+      ...prev,
+      period: value,
+      startDate,
+      endDate
+    }));
+  };
 
   return (
     <>
@@ -78,8 +133,7 @@ const BookingHistory = () => {
                     <span className="text-sm font-medium">Filtros:</span>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-                    <Select value={filter.period} onValueChange={(value) => setFilter({ ...filter, period: value })}>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">                    <Select value={filter.period} onValueChange={handlePeriodChange}>
                       <SelectTrigger className="h-9">
                         <SelectValue placeholder="Período" />
                       </SelectTrigger>
@@ -127,37 +181,83 @@ const BookingHistory = () => {
                 <TabsTrigger value="cancelled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
                   Cancelados
                 </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="all">
+              </TabsList>              <TabsContent value="all">
                 {viewMode === "list" ? (
-                  <BookingHistoryList status="all" />
+                  <BookingHistoryList 
+                    status="all" 
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 ) : (
-                  <BookingHistoryCalendar />
+                  <BookingHistoryCalendar 
+                    status="all"
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 )}
               </TabsContent>
 
               <TabsContent value="scheduled">
                 {viewMode === "list" ? (
-                  <BookingHistoryList status="scheduled" />
+                  <BookingHistoryList 
+                    status="scheduled" 
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 ) : (
-                  <BookingHistoryCalendar />
+                  <BookingHistoryCalendar 
+                    status="scheduled"
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 )}
               </TabsContent>
               
               <TabsContent value="completed">
                 {viewMode === "list" ? (
-                  <BookingHistoryList status="completed" />
+                  <BookingHistoryList 
+                    status="completed" 
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 ) : (
-                  <BookingHistoryCalendar />
+                  <BookingHistoryCalendar 
+                    status="completed"
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 )}
               </TabsContent>
               
               <TabsContent value="cancelled">
                 {viewMode === "list" ? (
-                  <BookingHistoryList status="cancelled" />
+                  <BookingHistoryList 
+                    status="cancelled" 
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 ) : (
-                  <BookingHistoryCalendar />
+                  <BookingHistoryCalendar 
+                    status="cancelled"
+                    serviceType={filter.serviceType !== "all" ? filter.serviceType : undefined}
+                    search={filter.search}
+                    startDate={filter.startDate}
+                    endDate={filter.endDate}
+                  />
                 )}
               </TabsContent>
             </Tabs>
