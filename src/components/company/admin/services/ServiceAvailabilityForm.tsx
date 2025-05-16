@@ -1,13 +1,13 @@
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMyProfessionalServices } from "@/lib/api-services";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ServiceItem } from "./types";
 import { Badge } from "@/components/ui/badge";
+import ServicesList from "@/components/booking/ServicesList";
 
 const daysOfWeek = [
   { label: "Segunda-feira", value: "MONDAY" },
@@ -46,6 +47,7 @@ interface ServiceAvailabilityFormProps {
 }
 
 export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = ({ professionalId }) => {
+  const queryClient = useQueryClient();
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null);
   
   const { data: myServices, isLoading: isLoadingServices } = useQuery({
@@ -63,8 +65,8 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
     }
   });
 
-  // Fix: Use form.control for useFieldArray
-  const { fields, append, remove } = form.useFieldArray({
+  // Use the correct useFieldArray from react-hook-form
+  const { fields, append, remove } = useFieldArray({
     name: "slots",
     control: form.control
   });
@@ -112,6 +114,8 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
     // Simulate API call
     try {
       toast.success("Horários do serviço salvos com sucesso");
+      // Invalidate relevant queries after success
+      queryClient.invalidateQueries({queryKey: ["myProfessionalServices"]});
     } catch (error) {
       toast.error("Erro ao salvar horários do serviço");
     }
@@ -138,7 +142,7 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <Card className="overflow-visible">
+          <Card className="overflow-visible shadow-sm">
             <CardHeader className="bg-muted/30">
               <CardTitle className="text-lg">Selecionar Serviço</CardTitle>
               <CardDescription>
@@ -182,18 +186,35 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
                   </FormItem>
                 )}
               />
+              
+              {selectedService && selectedService.service && (
+                <div className="mt-4 p-3 bg-muted/20 rounded-md">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium">{selectedService.service.name}</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedService.service.description && selectedService.service.description.substring(0, 100)}
+                        {selectedService.service.description && selectedService.service.description.length > 100 ? '...' : ''}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="bg-iazi-primary/10 text-iazi-primary">
+                        {selectedService.service.price ? `R$ ${selectedService.service.price}` : 'Preço não definido'}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {selectedService.service.duration ? `${selectedService.service.duration} min` : 'Duração não definida'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
           
-          {selectedService && (
-            <Card className="overflow-visible">
+          {selectedService && selectedService.service && (
+            <Card className="overflow-visible shadow-sm">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <span>Horários de disponibilidade</span>
-                  <Badge variant="outline" className="font-normal text-xs">
-                    {selectedService.service?.name || "Serviço selecionado"}
-                  </Badge>
-                </CardTitle>
+                <CardTitle className="text-lg">Horários de disponibilidade</CardTitle>
                 <CardDescription>
                   Defina os dias da semana e horários em que o serviço está disponível
                 </CardDescription>
@@ -210,7 +231,7 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
                         className={`
                           flex flex-col items-center justify-center p-2 rounded-md cursor-pointer border
                           ${dayExists 
-                            ? 'bg-iazi-primary/10 border-iazi-primary/30' 
+                            ? 'bg-iazi-primary/10 border-iazi-primary/30 text-iazi-primary' 
                             : 'bg-white hover:bg-muted/30 border-gray-200'}
                         `}
                         onClick={() => {
@@ -232,12 +253,12 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
                       >
                         <span className="text-xs font-medium">{day.label.substring(0, 3)}</span>
                         {dayExists ? (
-                          <div className="mt-1 text-xs text-iazi-primary flex items-center">
+                          <div className="mt-1 text-xs flex items-center">
                             <Clock className="h-3 w-3 mr-1" />
                             <span>Configurado</span>
                           </div>
                         ) : (
-                          <span className="mt-1 text-xs text-muted-foreground">Não configurado</span>
+                          <span className="mt-1 text-xs text-muted-foreground">Não config.</span>
                         )}
                       </div>
                     );
@@ -250,7 +271,7 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
                     <h4 className="font-medium text-sm">Configuração de horários por dia</h4>
                     {fields.map((field, index) => (
                       field.isActive && (
-                        <Card key={field.id} className="overflow-visible border-l-4 border-l-iazi-primary">
+                        <Card key={field.id} className="overflow-visible border-l-4 border-l-iazi-primary shadow-sm">
                           <CardContent className="p-4 space-y-4">
                             <div className="flex justify-between items-center">
                               <h5 className="font-medium">
@@ -337,6 +358,7 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
             <Button 
               type="submit" 
               disabled={!selectedService || !form.formState.isDirty || fields.filter(f => f.isActive).length === 0}
+              className="bg-iazi-primary hover:bg-iazi-primary/90"
             >
               Salvar horários
             </Button>
@@ -345,7 +367,7 @@ export const ServiceAvailabilityForm: React.FC<ServiceAvailabilityFormProps> = (
       </Form>
       
       {serviceOptions.length === 0 && (
-        <Card className="mt-6">
+        <Card className="mt-6 shadow-sm">
           <CardContent className="pt-6">
             <div className="text-center py-6">
               <p className="text-muted-foreground mb-4">

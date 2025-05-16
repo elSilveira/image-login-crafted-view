@@ -1,48 +1,102 @@
-import React from "react";
+
+import React, { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { fetchProfessionalAvailability } from "@/lib/api";
+import { format, addDays, startOfWeek, isWithinInterval, isSameDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { CalendarIcon } from "lucide-react";
 
 interface BookingCalendarProps {
   selectedDate: Date | undefined;
   onDateSelect: (date: Date | undefined) => void;
-  onNext: () => void;
-  professionalId?: string;
-  serviceSchedule?: Array<{ dayOfWeek: string; startTime: string; endTime: string }>;
+  onNext?: () => void;
+  professionalId: string;
+  serviceId?: string;
+  serviceSchedule?: Array<{dayOfWeek: string, startTime: string, endTime: string}>;
 }
+
+const days = ["SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"];
 
 const BookingCalendar = ({
   selectedDate,
   onDateSelect,
+  onNext,
+  professionalId,
   serviceSchedule,
 }: BookingCalendarProps) => {
-  // Determine allowed weekdays from service schedule
-  const dayMap: Record<string, number> = { SUNDAY: 0, MONDAY: 1, TUESDAY: 2, WEDNESDAY: 3, THURSDAY: 4, FRIDAY: 5, SATURDAY: 6 };
-  const allowedDays = serviceSchedule?.map(s => dayMap[s.dayOfWeek]!).filter(d => d !== undefined) || [];
+  const [availableDays, setAvailableDays] = useState<number[]>([]);
+  
+  useEffect(() => {
+    // Map service schedule to numeric days
+    if (serviceSchedule && serviceSchedule.length > 0) {
+      const numericDays = serviceSchedule.map(schedule => {
+        const dayIndex = days.indexOf(schedule.dayOfWeek);
+        return dayIndex;
+      }).filter(day => day !== -1);
+      
+      setAvailableDays(numericDays);
+    } else {
+      // Default to all days if no schedule provided
+      setAvailableDays([0, 1, 2, 3, 4, 5, 6]);
+    }
+  }, [serviceSchedule]);
+
+  // Function to check if a date is disabled
+  const isDayDisabled = (date: Date) => {
+    const dayOfWeek = date.getDay();
+    
+    // Disable past dates
+    if (date < new Date(new Date().setHours(0, 0, 0, 0))) {
+      return true;
+    }
+    
+    // Disable days not in schedule
+    return !availableDays.includes(dayOfWeek);
+  };
 
   return (
-    <div className="space-y-6 max-w-md mx-auto bg-white p-6 rounded-lg shadow-sm">
-      <div>
-        <h3 className="text-lg font-playfair font-semibold mb-2 text-iazi-text">Selecione uma data</h3>
-        <p className="text-muted-foreground font-lato">
-          Escolha o dia para seu agendamento
-        </p>
-      </div>
-
-      <Calendar
-        mode="single"
-        selected={selectedDate}
-        onSelect={onDateSelect}
-        disabled={dateItem => {
-          const today = new Date(); today.setHours(0,0,0,0);
-          // disable past
-          if (dateItem < today) return true;
-          // disable if not in service schedule weekdays
-          const weekday = dateItem.getDay();
-          if (allowedDays.length > 0 && !allowedDays.includes(weekday)) return true;
-          return false;
-        }}
-        className="rounded-md border-iazi-border mx-auto"
-      />
-    </div>
+    <Card className="border-none shadow-sm">
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center text-lg font-medium">
+          <CalendarIcon className="mr-2 h-5 w-5 text-iazi-primary" />
+          Escolha uma data
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pb-6 pt-2">
+        <div className="flex flex-col items-center p-1">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={onDateSelect}
+            disabled={isDayDisabled}
+            locale={ptBR}
+            className="rounded-md border p-3 shadow-sm pointer-events-auto bg-white"
+            showOutsideDays={false}
+            fromDate={new Date()}
+            toDate={addDays(new Date(), 60)}
+            modifiers={{
+              available: (date) => !isDayDisabled(date)
+            }}
+            modifiersClassNames={{
+              selected: "bg-iazi-primary text-white hover:bg-iazi-primary hover:text-white",
+              available: "hover:bg-muted",
+              today: "border border-iazi-primary/30 text-iazi-primary"
+            }}
+            classNames={{
+              day_disabled: "text-muted-foreground opacity-30 hover:bg-white hover:text-muted-foreground"
+            }}
+          />
+          {selectedDate && (
+            <div className="w-full mt-4 text-center">
+              <p className="text-muted-foreground text-sm">
+                Data selecionada: <span className="font-medium text-foreground">{format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+              </p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

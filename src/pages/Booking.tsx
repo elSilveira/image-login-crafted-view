@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,8 @@ import { useQuery, useQueries } from '@tanstack/react-query';
 import { fetchServiceDetails, fetchProfessionalDetails, fetchProfessionalAppointments } from '@/lib/api';
 import { Button } from "@/components/ui/button";
 import { getAvailableSlotsForDate, parseDurationToMinutes, formatDuration } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
+import ServicesList from "@/components/booking/ServicesList";
 
 const STEPS = [
   { id: 1, title: "Selecionar Profissional" },
@@ -81,7 +84,7 @@ const Booking = () => {
 
   // Determine which professional to use: URL param or selected
   const professionalIdUsed = professionalParam || selectedProfessional;
-  const { data: professionalData, isLoading: loadingProfessional, isError: errorProfessionalFlag, error: errorProfessional } = useQuery<any, Error>({
+  const { data: professionalData, isLoading: loadingProfessional, isError: errorProfessionalFlag, error: errorProfessional } = useQuery({
     queryKey: ['professional', professionalIdUsed],
     queryFn: () => fetchProfessionalDetails(professionalIdUsed!),
     enabled: !!professionalIdUsed,
@@ -93,13 +96,11 @@ const Booking = () => {
       setSelectedServices(allServices);
     }
   }, [allServicesLoaded, allServices]);
+  
   // Calculate total duration and price from selected services
   const totalDuration = React.useMemo(() => {
     return selectedServices.reduce((sum, service) => {
       const duration = parseDurationToMinutes(service?.duration || 0);
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`Service ${service?.name} duration: ${formatDuration(service?.duration)} (${duration} minutes)`);
-      }
       return sum + duration;
     }, 0);
   }, [selectedServices]);
@@ -116,110 +117,17 @@ const Booking = () => {
       setSelectedServices(prev => prev.filter(s => s.id !== service.id));
     }
   };
-  // After allServicesLoaded, professionalData, and selectedServices are ready, check for available slots
-  React.useEffect(() => {
-    // Only run if selectedDate is not set by URL or user
-    if (!selectedDate && professionalData && selectedServices.length > 0) {
-      // Get merged service schedule for all selected services
-      let mergedServiceSchedule: Array<{ dayOfWeek: string; startTime: string; endTime: string }> = [];
-      if (selectedServices.length > 0 && professionalData.services) {
-        // Get all schedules for selected services
-        const schedules = selectedServices
-          .map(svc => professionalData.services.find((ps: any) => ps.id === svc.id)?.schedule)
-          .filter(Boolean);
-        
-        // Flatten and merge by dayOfWeek, taking the earliest start and latest end for each day
-        const scheduleMap: Record<string, { startTime: string; endTime: string }> = {};
-        for (const schArr of schedules) {
-          for (const sch of schArr) {
-            if (!scheduleMap[sch.dayOfWeek]) {
-              scheduleMap[sch.dayOfWeek] = { startTime: sch.startTime, endTime: sch.endTime };
-            } else {
-              // Earliest start
-              if (sch.startTime < scheduleMap[sch.dayOfWeek].startTime) {
-                scheduleMap[sch.dayOfWeek].startTime = sch.startTime;
-              }
-              // Latest end
-              if (sch.endTime > scheduleMap[sch.dayOfWeek].endTime) {
-                scheduleMap[sch.dayOfWeek].endTime = sch.endTime;
-              }
-            }
-          }
-        }
-        mergedServiceSchedule = Object.entries(scheduleMap).map(([dayOfWeek, { startTime, endTime }]) => ({ dayOfWeek, startTime, endTime }));
-      } else {
-        // Fallback to just the first service's schedule if merging failed
-        const serviceSchedule = professionalData.services?.find((s: any) => selectedServices[0]?.id === s.id)?.schedule;
-        if (serviceSchedule) {
-          mergedServiceSchedule = serviceSchedule;
-        }
-      }
-        if (mergedServiceSchedule.length === 0) return;
-      
-      // Calculate total duration properly using the utility function
-      const totalDuration = selectedServices.reduce((sum, s) => {
-        return sum + parseDurationToMinutes(s.duration);
-      }, 0);
-      
-      console.log("Looking for available dates with total duration:", totalDuration, "minutes", 
-                  `(${formatDuration(totalDuration)})`);
-      
-      const checkNextAvailableDate = async () => {
-        let found = false;
-        let date = new Date();
-        for (let i = 0; i < 30; i++) {
-          const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + i);
-          const formatted = checkDate.toISOString().slice(0, 10);
-          console.log(`Checking availability for date: ${formatted}`);
-          
-          try {
-            // Fetch appointments for this date
-            const appointmentsData = await fetchProfessionalAppointments(professionalData.id, formatted, formatted);
-            const appointments = appointmentsData?.data || [];
-            
-            if (appointments.length > 0) {
-              console.log(`Found ${appointments.length} appointments for date ${formatted}`);
-            }
-            
-            const slots = getAvailableSlotsForDate({
-              date: checkDate,
-              appointments,
-              serviceSchedule: mergedServiceSchedule,
-              totalDuration
-            });
-            
-            console.log(`Date ${formatted} has ${slots.length} available slots`);
-            
-            if (slots.length > 0) {
-              setSelectedDate(checkDate);
-              found = true;
-              break;
-            }
-          } catch (err) {
-            console.error(`Error checking date ${formatted}:`, err);
-          }
-        }
-        
-        if (!found) {
-          console.log("No available dates found in the next 30 days, falling back to today");
-          setSelectedDate(new Date()); // fallback to today
-        }
-      };
-      
-      checkNextAvailableDate();
-    }
-  }, [selectedDate, professionalData, selectedServices]);
 
   // Handle loading and error states
   if (serviceIds.length === 0 || serviceQueries.some(q => q.isLoading) || loadingProfessional) {
     return <div className="min-h-screen bg-gray-50 flex justify-center items-center"><Progress value={0} /></div>;
   }
+  
   if (serviceQueries.some(q => q.isError) || errorProfessionalFlag) {
     return <div className="min-h-screen bg-gray-50 flex justify-center items-center text-red-500">Erro ao carregar dados.</div>;
   }
-  const service = allServices[0]; // For legacy usages, but prefer selectedServices
+  
   const professional = professionalData!;
-
   const progress = (currentStep / STEPS.length) * 100;
 
   const handleProfessionalSelect = (professionalId: string) => {
@@ -272,6 +180,7 @@ const Booking = () => {
               <Button 
                 onClick={() => setCurrentStep(3)} 
                 disabled={selectedServices.length === 0}
+                className="bg-iazi-primary hover:bg-iazi-primary/90"
               >
                 Próximo
               </Button>
@@ -280,6 +189,7 @@ const Booking = () => {
         );
       case 3:
         if (!professional || !professional.id) return null;
+        
         // Merge schedules for all selected services
         let mergedServiceSchedule: Array<{ dayOfWeek: string; startTime: string; endTime: string }> = [];
         if (selectedServices.length > 0 && professional.services) {
@@ -287,7 +197,8 @@ const Booking = () => {
           const schedules = selectedServices
             .map(svc => professional.services.find((ps: any) => ps.id === svc.id)?.schedule)
             .filter(Boolean);
-          // Flatten and merge by dayOfWeek, taking the earliest start and latest end for each day
+          
+          // Flatten and merge by dayOfWeek
           const scheduleMap: Record<string, { startTime: string; endTime: string }> = {};
           for (const schArr of schedules) {
             for (const sch of schArr) {
@@ -307,31 +218,46 @@ const Booking = () => {
           }
           mergedServiceSchedule = Object.entries(scheduleMap).map(([dayOfWeek, { startTime, endTime }]) => ({ dayOfWeek, startTime, endTime }));
         }
+        
         return (
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <BookingCalendar
-                selectedDate={selectedDate}
-                onDateSelect={setSelectedDate}
-                onNext={() => {}}
-                professionalId={professional.id}
-                serviceSchedule={mergedServiceSchedule}
-              />
-            </div>
-            <div>              {selectedDate && (
-                <BookingTimeSlots
-                  key={`booking-slots-${selectedDate?.toISOString()}-${selectedServices.map(s=>s.id).join(',')}-${professional.id}`}
-                  date={selectedDate}
-                  selectedTime={selectedTime}
-                  onTimeSelect={setSelectedTime}
-                  onNext={() => selectedDate && selectedTime && setCurrentStep(4)}
+          <>
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1">
+                <BookingCalendar
+                  selectedDate={selectedDate}
+                  onDateSelect={setSelectedDate}
+                  onNext={() => {}}
                   professionalId={professional.id}
-                  selectedServices={selectedServices}
                   serviceSchedule={mergedServiceSchedule}
                 />
-              )}
+              </div>
+              <div className="flex-1">
+                {selectedDate && (
+                  <BookingTimeSlots
+                    key={`booking-slots-${selectedDate?.toISOString()}-${selectedServices.map(s=>s.id).join(',')}-${professional.id}`}
+                    date={selectedDate}
+                    selectedTime={selectedTime}
+                    onTimeSelect={setSelectedTime}
+                    onNext={() => selectedDate && selectedTime && setCurrentStep(4)}
+                    professionalId={professional.id}
+                    selectedServices={selectedServices}
+                    serviceSchedule={mergedServiceSchedule}
+                  />
+                )}
+              </div>
             </div>
-          </div>
+            
+            {selectedDate && selectedTime && (
+              <div className="mt-6 flex justify-end">
+                <Button
+                  onClick={() => setCurrentStep(4)}
+                  className="bg-iazi-primary hover:bg-iazi-primary/90"
+                >
+                  Próximo
+                </Button>
+              </div>
+            )}
+          </>
         );
       case 4:
         return (
@@ -356,13 +282,13 @@ const Booking = () => {
         <div className="max-w-3xl mx-auto">
           {/* Progress */}
           <div className="mb-8">
-            <Progress value={progress} className="mb-2" />
+            <Progress value={progress} className="mb-2 h-2" />
             <div className="flex justify-between text-sm">
               {STEPS.slice(isCompanyBooking ? 0 : 1).map((step) => (
                 <div
                   key={step.id}
                   className={`${
-                    step.id <= currentStep ? "text-primary" : "text-muted-foreground"
+                    step.id <= currentStep ? "text-iazi-primary" : "text-muted-foreground"
                   }`}
                 >
                   {step.title}
@@ -372,42 +298,53 @@ const Booking = () => {
           </div>
 
           {/* Service and Professional Info */}
-          <Card className="mb-8">
+          <Card className="mb-8 shadow-sm border-none">
             <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
+              <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                <div className="flex-1">
                   {selectedServices.length === 1 ? (
                     <h2 className="text-2xl font-semibold mb-2">{selectedServices[0]?.name}</h2>
                   ) : (
                     <h2 className="text-2xl font-semibold mb-2">Múltiplos Serviços ({selectedServices.length})</h2>
-                  )}                  <div className="flex items-center gap-4 text-muted-foreground">
+                  )}
+                  <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
+                      <Clock className="h-4 w-4 text-iazi-primary" />
                       <span>{formatDuration(totalDuration)}</span>
                     </div>
                     {currentStep > 1 && professional && professional.name && (
                       <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
+                        <MapPin className="h-4 w-4 text-iazi-primary" />
                         <span>Com {professional.name}</span>
                       </div>
                     )}
                   </div>
+                  
+                  {selectedServices.length > 1 && (
+                    <div className="mt-4">
+                      <ServicesList 
+                        services={selectedServices}
+                        compact={true}
+                        showPrice={false}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-semibold">R$ {totalPrice}</div>
+                  <div className="text-2xl font-semibold text-iazi-primary">R$ {totalPrice}</div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Current Step Content */}
-          <div className="bg-card rounded-lg border p-6">
+          <div className="bg-white rounded-lg border shadow-sm p-6">
             {renderStep()}
           </div>
 
           {/* Cancellation Policy */}
           <div className="mt-6 flex items-start gap-2 text-sm text-muted-foreground">
-            <AlertCircle className="h-4 w-4 mt-0.5" />
+            <AlertCircle className="h-4 w-4 mt-0.5 text-iazi-primary" />
             <p>
               Cancelamentos podem ser feitos gratuitamente com até 4 horas de
               antecedência. Após esse prazo, poderá haver cobrança de taxa.
