@@ -4,8 +4,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface Service {
   id: string;
   name: string;
-  price: number;
-  duration: number;
+  price?: number;
+  duration?: number;
+  startTime?: string; // Add start time field
 }
 
 interface ServicesListProps {
@@ -13,6 +14,8 @@ interface ServicesListProps {
   compact?: boolean;
   showPrice?: boolean;
   showDuration?: boolean;
+  showStartTime?: boolean; // Add prop to control start time display
+  startTime?: string; // Optional external start time for all services
   className?: string;
 }
 
@@ -21,6 +24,8 @@ const ServicesList = ({
   compact = false,
   showPrice = true,
   showDuration = false,
+  showStartTime = false,
+  startTime = "",
   className = "",
 }: ServicesListProps) => {
   // Normalize the services array - the API might return either plain services or {service: Service} objects
@@ -51,11 +56,15 @@ const ServicesList = ({
     <div className={className}>
       <ScrollArea className={normalizedServices.length > 3 ? "h-[120px]" : "h-auto"}>
         <div className="space-y-1">
-          {normalizedServices.map((service) => (
-            <div key={service.id} className="flex justify-between text-sm">
+          {normalizedServices.map((service) => (            <div key={service.id} className="flex justify-between text-sm">
               <span>{service.name}</span>
-              <div className="flex space-x-3">
-                {showDuration && <span className="text-muted-foreground">{service.duration} min</span>}
+              <div className="flex space-x-3">                {(showStartTime || showDuration) && (
+                  <span className="text-muted-foreground">
+                    {showStartTime && (service.startTime || startTime || "")}
+                    {showStartTime && showDuration && service.duration && " - "}
+                    {showDuration && service.duration && `${service.duration} min`}
+                  </span>
+                )}
                 {showPrice && <span className="font-medium">R$ {service.price}</span>}
               </div>
             </div>

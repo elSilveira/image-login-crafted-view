@@ -20,7 +20,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ServiceFilters } from "@/components/services/ServiceFilters";
 
 // Interfaces
-interface Service { id: string; name: string; category: string; company: { id: string; name: string }; rating: number; price: string; /* Add other fields ServiceCard expects */ image?: string; reviews?: number; duration?: string; availability?: string; company_id?: string; professional_id?: string; professional?: string; }
+interface Service { 
+  id: string; 
+  name: string; 
+  category: string | { id?: number; name?: string }; 
+  company: { id: string; name: string } | null; 
+  rating: number; 
+  price: string; 
+  image?: string; 
+  reviews?: number; 
+  duration?: string; 
+  availability?: string; 
+  company_id?: string; 
+  professional_id?: string; 
+  professional?: string | { id: string; name: string };
+  profissional?: { 
+    id: string; 
+    name: string; 
+    role?: string; 
+    rating?: number; 
+    image?: string; 
+    hasMultiServiceSupport?: boolean;
+    price?: string;
+  };
+}
 interface Company { id: string; name: string; specialty: string; rating: number; /* Add other fields CompanyCard expects */ services?: string[]; professionals?: string[]; professional_ids?: number[]; image?: string; reviews?: number; availability?: string; address?: any; /* address can be an object */ }
 interface Category { id: number; name: string; icon: string; createdAt: string; updatedAt: string; }
 
@@ -96,7 +119,6 @@ const Search = () => {
     if (viewType === "professional") return "professionals";
     return viewType;
   };
-
   // Fetch Search Results
   const { data: searchApiResponse, isLoading: isLoadingSearch, isError: isErrorSearch, error: errorSearch } = useQuery<any, Error>({
     queryKey: ["search-api", searchTerm, selectedCategory, sortBy, currentPage, viewType, professionalTipo],
@@ -112,14 +134,24 @@ const Search = () => {
         type: apiType,
         professionalTipo,
       };
-      return await fetchSearchResults(params);
+      const result = await fetchSearchResults(params);
+      
+      // Log the structure of the response to help with debugging the format change
+      console.log('Search API response structure:', {
+        hasServices: !!result.services,
+        hasServicesByProfessional: !!result.servicesByProfessional,
+        professionals: Array.isArray(result.professionals) ? result.professionals.length : 'N/A',
+        companies: Array.isArray(result.companies) ? result.companies.length : 'N/A'
+      });
+      
+      return result;
     },
     enabled: ["all", "service", "professional", "company"].includes(viewType),
   });
-
-  // Use the new structure directly
+  // Use the new structure directly, with fallbacks for backward compatibility
   const professionals = searchApiResponse?.professionals || [];
-  const services = searchApiResponse?.services || [];
+  // Handle both new 'servicesByProfessional' and legacy 'services' response formats
+  const services = searchApiResponse?.servicesByProfessional || searchApiResponse?.services || [];
   const companies = searchApiResponse?.companies || [];
 
   // --- Filtering, Sorting, and Pagination ---

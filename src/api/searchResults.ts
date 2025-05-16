@@ -26,10 +26,10 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
     
     // Transform the results into QuickBookingResults
     const quickResults: QuickBookingResult[] = [];
-    
-    // Add directly bookable services first
-    if (results.services) {
-      results.services.slice(0, 2).forEach((service: any) => {
+      // Add directly bookable services first - supporting both new and legacy formats
+    const servicesArray = results.servicesByProfessional || results.services || [];
+    if (servicesArray.length > 0) {
+      servicesArray.slice(0, 2).forEach((service: any) => {
         quickResults.push({
           id: service.id,
           type: "services",
