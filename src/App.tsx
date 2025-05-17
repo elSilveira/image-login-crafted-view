@@ -45,8 +45,13 @@ const CompanyServices = lazy(() => import("./pages/CompanyServices"));
 // Professional pages
 const ProfessionalDashboard = lazy(() => import("./pages/ProfessionalDashboard"));
 const ProfessionalCalendar = lazy(() => import("./pages/ProfessionalCalendar"));
+const ProfessionalBookings = lazy(() => import("./pages/ProfessionalBookings"));
 const ProfessionalReports = lazy(() => import("./pages/ProfessionalReports"));
 const ProfessionalSettings = lazy(() => import("./pages/ProfessionalSettings"));
+
+// Test pages
+const TestBookingsList = lazy(() => import("./pages/TestBookingsList"));
+const DebugBookingsPage = lazy(() => import("./pages/DebugBookingsPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,13 +94,14 @@ function App() {
               <Route path="/profile/professional" element={<ProfessionalAreaLayout />}
                 >
                 {/* Perfil tab */}
-                <Route index element={<ProfessionalProfileSettings />} />
-                {/* Serviços tab */}
+                <Route index element={<ProfessionalProfileSettings />} />                {/* Serviços tab */}
                 <Route path="services" element={<ProfessionalServicesAdmin />} />
                 {/* Dashboard tab */}
                 <Route path="dashboard" element={<ProfessionalDashboard />} />
+                {/* Agenda tab */}
+                <Route path="calendar" element={<ProfessionalCalendar />} />
                 {/* Agendamentos tab */}
-                <Route path="bookings" element={<ProfessionalCalendar />} />
+                <Route path="bookings" element={<ProfessionalBookings />} />
                 {/* Avaliações tab */}
                 <Route path="reviews" element={<Reviews />} />
                 {/* Relatórios tab */}
@@ -115,9 +121,11 @@ function App() {
               <Route path="/company/my-company/reviews" element={<CompanyReviewsAdmin />} />
               <Route path="/company/my-company/reports" element={<CompanyReportsAdmin />} />
               <Route path="/company/my-company/staff" element={<CompanyStaff />} />
-              <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />
-              <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
+              <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />              <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
               <Route path="/company/:id/services" element={<CompanyServices />} />
+                {/* Test routes */}
+              <Route path="/test/bookings" element={<TestBookingsList />} />
+              <Route path="/test/debug-bookings" element={<DebugBookingsPage />} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>

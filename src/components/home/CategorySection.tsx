@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "@/lib/api";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { CategoryCard } from "@/components/home/CategoryCard";
-import { Wrench, Home, Brush, Car, GraduationCap, Utensils, Palette, Code, HeartPulse, Loader2, AlertCircle } from "lucide-react";
+import { Wrench, Home, Brush, Car, GraduationCap, Utensils, Palette, Code, HeartPulse, Loader2, AlertCircle, LucideIcon } from "lucide-react";
 import React from "react"; // Import React for Lucide icons
 
 // Define an interface for the Category data from the API
@@ -14,7 +14,7 @@ interface Category {
 }
 
 // Helper to map icon names (strings) to Lucide components
-const iconMap: { [key: string]: React.ElementType } = {
+const iconMap: { [key: string]: LucideIcon } = {
   wrench: Wrench,
   home: Home,
   brush: Brush,
@@ -27,11 +27,23 @@ const iconMap: { [key: string]: React.ElementType } = {
   // Add more mappings as needed based on potential icon names from the API
 };
 
-export const CategorySection = () => {
-  // Fetch categories using React Query
+export const CategorySection = () => {  // Fetch categories using React Query
   const { data: categories, isLoading, isError, error } = useQuery<Category[], Error>({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: async () => {
+      try {
+        const result = await fetchCategories();
+        // Ensure we have an array
+        if (!result || !Array.isArray(result)) {
+          console.warn('Expected array from fetchCategories, got:', typeof result);
+          return [];
+        }
+        return result;
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        throw err; // Re-throw to trigger error state
+      }
+    },
     staleTime: Infinity, // Categories usually don't change often, cache indefinitely
   });
 
@@ -55,10 +67,14 @@ export const CategorySection = () => {
       {!isLoading && !isError && categories && (
         <ScrollArea className="w-full whitespace-nowrap">
           <div className="flex gap-4 pb-4"> {/* Added padding-bottom for scrollbar visibility */}
-            {categories.length > 0 ? (
-              categories.map((category) => {
+            {categories.length > 0 ? (              categories.map((category) => {
                 // Get the corresponding Lucide icon, default to a generic one if not found
-                const IconComponent = category.icon ? iconMap[category.icon.toLowerCase()] || Wrench : Wrench;
+                let IconComponent: LucideIcon = Wrench; // Default icon
+                
+                if (category.icon && typeof category.icon === 'string') {
+                  const iconKey = category.icon.toLowerCase();
+                  IconComponent = iconMap[iconKey] || Wrench;
+                }
                 
                 // Make sure to extract category.name as a string for display
                 const categoryName = typeof category.name === 'string' ? category.name : 'Categoria';
@@ -67,7 +83,7 @@ export const CategorySection = () => {
                   <CategoryCard 
                     key={category.id} 
                     title={categoryName} 
-                    icon={IconComponent} // Pass the component itself
+                    icon={IconComponent} // Pass the LucideIcon component
                     // Construct href based on category name or ID
                     href={`/search?category=${encodeURIComponent(categoryName.toLowerCase())}`}
                   />

@@ -17,20 +17,34 @@ const SocialFeed = () => {
   
   // Show create publication if user has isProfessional, hasCompany, or isAdmin
   const canPublish = !!(user && (user.isProfessional || user.hasCompany || user.isAdmin));
-  
-  // Fetch professional services only if user is professional and a backend ID is available (not from user context)
+    // Fetch professional services only if user is professional and a backend ID is available (not from user context)
   // This example disables the fetch if no backend ID is available
   const { data: professionalServices = [] } = useQuery({
     queryKey: ["professionalServices", user?.id], // Use user.id as a fallback, or fetch after login
-    queryFn: () => user?.isProfessional ? getProfessionalServices(user?.id || "") : [],
+    queryFn: async () => {
+      if (!user?.isProfessional) return [];
+      
+      try {
+        const result = await getProfessionalServices(user?.id || "");
+        // Ensure we have an array
+        if (!result || !Array.isArray(result)) {
+          console.warn('Expected array from getProfessionalServices, got:', typeof result);
+          return [];
+        }
+        return result;
+      } catch (err) {
+        console.error('Error fetching professional services:', err);
+        return []; // Return empty array on error
+      }
+    },
     enabled: !!canPublish && !!user?.isProfessional && !!user?.id,
   });
 
   // Convert professional services to the format expected by PublicationForm
-  const formattedServices = professionalServices.map((ps: any) => ({
+  const formattedServices = Array.isArray(professionalServices) ? professionalServices.map((ps: any) => ({
     id: ps.serviceId,
-    name: ps.service.name
-  }));
+    name: ps.service?.name || 'Serviço sem nome'
+  })) : [];
 
   // Handle publication submission
   const handlePublicationSubmit = async (data: {content: string; serviceId: string; image?: File}) => {

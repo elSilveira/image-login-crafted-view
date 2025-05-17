@@ -173,8 +173,105 @@ export const deleteUserAddress = async (addressId: string) => {
 
 // --- Appointments API Functions ---
 export const fetchAppointments = async (params: any = {}) => { // Added params
-  const response = await apiClient.get("/appointments", { params });
-  return response.data;
+  try {
+    // Create a copy of params to avoid modifying the original object
+    const apiParams = { ...params };
+    
+    // Ensure status values are capitalized for the API
+    if (apiParams.status) {
+      console.log('Original status filter:', apiParams.status);
+      
+      // When filtering by multiple statuses, it comes as a comma-separated string
+      // We need to split it, uppercase each status, and join it back
+      if (typeof apiParams.status === 'string' && apiParams.status.includes(',')) {
+        const statusArray = apiParams.status.split(',');
+        apiParams.status = statusArray.map(s => s.toUpperCase()).join(',');
+      } else {
+        // Single status case
+        apiParams.status = apiParams.status.toUpperCase();
+      }
+      
+      console.log('Formatted status filter for API:', apiParams.status);
+    }
+    
+    // Check if we should use mock data for testing (can be enabled via localStorage)
+    const useMockData = localStorage.getItem('useMockAppointmentsData') === 'true';
+    
+    if (useMockData) {
+      console.log('Using mock appointments data for testing');
+      const mockAppointments = [
+        {
+          id: "mock-1",
+          startTime: "2025-05-25T09:00:00.000Z",
+          endTime: "2025-05-25T10:00:00.000Z",
+          status: apiParams.status?.includes('PENDING') ? "PENDING" : 
+                 apiParams.status?.includes('CONFIRMED') ? "CONFIRMED" :
+                 apiParams.status?.includes('COMPLETED') ? "COMPLETED" : "PENDING",
+          service: {
+            id: "s1",
+            name: "Corte de Cabelo",
+            duration: 60
+          },
+          user: {
+            id: "u1",
+            name: "João Silva"
+          }
+        },
+        {
+          id: "mock-2",
+          startTime: "2025-05-26T14:00:00.000Z",
+          endTime: "2025-05-26T15:30:00.000Z",
+          status: apiParams.status?.includes('CONFIRMED') ? "CONFIRMED" : 
+                 apiParams.status?.includes('PENDING') ? "PENDING" :
+                 apiParams.status?.includes('COMPLETED') ? "COMPLETED" : "CONFIRMED",
+          services: [
+            {
+              service: {
+                id: "s2",
+                name: "Tintura",
+                duration: 90
+              }
+            }
+          ],
+          user: {
+            id: "u2",
+            name: "Maria Santos"
+          }
+        }
+      ];
+      
+      // Filter based on status if provided
+      if (apiParams.status) {
+        const statusArray = apiParams.status.split(',');
+        return mockAppointments.filter(appointment => 
+          statusArray.includes(appointment.status)
+        );
+      }
+      
+      return mockAppointments;
+    }    
+    // Use real API
+    const response = await apiClient.get("/appointments", { params: apiParams });
+    
+    // Handle response with data array (pagination format)
+    if (response.data && response.data.data && Array.isArray(response.data.data)) {
+      console.log("Received paginated appointments data:", response.data.data.length, "appointments");
+      return response.data.data;
+    }
+    
+    // Handle direct array response
+    if (Array.isArray(response.data)) {
+      console.log("Received array appointments data:", response.data.length, "appointments");
+      return response.data;
+    }
+    
+    // Default fallback
+    console.warn('Unexpected response format in fetchAppointments:', response.data);
+    return [];
+  } catch (error) {
+    console.error('Error in fetchAppointments:', error);
+    throw error;
+  }
 }
 export const createAppointment = async (appointmentData: any) => {
   // Updated to handle the multi-service model
@@ -184,8 +281,92 @@ export const createAppointment = async (appointmentData: any) => {
 }
 // Added function to update appointment status
 export const updateAppointmentStatus = async (appointmentId: string, status: string) => {
-    const response = await apiClient.patch(`/appointments/${appointmentId}/status`, { status });
-    return response.data;
+    try {
+        // Normalize the status format to what the API expects
+        let normalizedStatus = status.toLowerCase();
+        
+        // Handle different status format variations
+        if (normalizedStatus === "in-progress") {
+            normalizedStatus = "in_progress"; // Use the API's preferred format
+        } else if (normalizedStatus === "inprogress") {
+            normalizedStatus = "in_progress";
+        } else if (normalizedStatus === "no-show") {
+            normalizedStatus = "no_show";
+        } else if (normalizedStatus === "noshow") {
+            normalizedStatus = "no_show";
+        }
+        
+        // Convert to uppercase as required by the API (status like PENDING, CONFIRMED, COMPLETED, CANCELLED, NO_SHOW)
+        const apiStatusValue = normalizedStatus.toUpperCase();
+        
+        console.log("[API] Updating appointment status:", { 
+            appointmentId, 
+            originalStatus: status,
+            normalizedStatus,
+            apiStatusValue
+        });
+        
+        // Check if we're using mock data
+        const useMockData = localStorage.getItem('useMockAppointmentsData') === 'true';
+        
+        if (useMockData) {
+            console.log('Using mock data for status update:', { appointmentId, status: apiStatusValue });
+            // Simulate a successful response
+            return { 
+                success: true,
+                message: "Status updated successfully",
+                appointment: {
+                    id: appointmentId,
+                    status: apiStatusValue
+                }
+            };
+        }
+        
+        // Use real API
+        const response = await apiClient.patch(`/appointments/${appointmentId}/status`, { status: apiStatusValue });
+        console.log("[API] Status update response:", response.data);
+        return response.data;
+        return response.data;
+    } catch (error) {
+        console.error("[API] Error updating appointment status:", error);
+        
+        if (error instanceof AxiosError) {
+            // Handle specific API error messages
+            const errorMessage = error.response?.data?.message || 
+                "Não foi possível atualizar o status do agendamento.";
+                
+            throw new Error(errorMessage);
+        }
+        
+        throw error; // Re-throw other types of errors
+    }
+}
+
+// Added function to reschedule appointment
+export const rescheduleAppointment = async (appointmentId: string, startTime: string, endTime: string) => {
+    try {
+        const response = await apiClient.patch(`/appointments/${appointmentId}`, { 
+            startTime, 
+            endTime 
+        });
+        return response.data;
+    } catch (error) {
+        console.error("[API] Error rescheduling appointment:", error);
+        
+        if (error instanceof AxiosError) {
+            // Handle specific API error messages
+            const errorMessage = error.response?.data?.message || 
+                "Não foi possível reagendar o agendamento.";
+                
+            if (error.response?.status === 409) {
+                throw new Error("Conflito de horário: Este horário já está reservado.");
+            }
+            
+            throw new Error(errorMessage);
+        }
+        
+        throw error; // Re-throw other types of errors
+    }
 }
 
 // --- Categories API Functions ---

@@ -19,22 +19,48 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const Home = () => {
   const { user, isAuthenticated } = useAuth();
-  
-  // Fetch Categories using React Query
+    // Fetch Categories using React Query
   const { data: categories, isLoading, isError, error } = useQuery<any[], Error>({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: async () => {
+      try {
+        const result = await fetchCategories();
+        // Ensure we have an array
+        if (!result || !Array.isArray(result)) {
+          console.warn('Expected array from fetchCategories, got:', typeof result);
+          return [];
+        }
+        return result;
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        throw err; // Re-throw to trigger error state
+      }
+    },
     staleTime: 10 * 60 * 1000, // Cache categories for 10 minutes
   });
   
   // Pre-fetch upcoming appointments to improve user experience
   const { data: upcomingAppointments } = useQuery({
     queryKey: ["upcomingAppointments"],
-    queryFn: () => fetchAppointments({ 
-      include: "service,professional,services.service", 
-      limit: 5, 
-      sort: "startTime_asc" 
-    }),
+    queryFn: async () => {
+      try {
+        const result = await fetchAppointments({ 
+          include: "service,professional,services.service", 
+          limit: 5, 
+          sort: "startTime_asc" 
+        });
+        
+        // Ensure we have an array
+        if (!result || !Array.isArray(result)) {
+          console.warn('Expected array from fetchAppointments, got:', typeof result);
+          return [];
+        }
+        return result;
+      } catch (err) {
+        console.error('Error fetching upcoming appointments:', err);
+        return []; // Return empty array on error
+      }
+    },
     enabled: isAuthenticated,
     staleTime: 5 * 60 * 1000,
   });
@@ -42,12 +68,29 @@ const Home = () => {
   // Pre-fetch recommended services based on user preferences
   const { data: recommendedServices } = useQuery({
     queryKey: ["recommendedServices"],
-    queryFn: () => fetchSearchResults({ 
-      type: "services",
-      limit: 5,
-      sort: "rating_desc",
-      useProfessionalServices: true
-    }),
+    queryFn: async () => {
+      try {
+        const result = await fetchSearchResults({ 
+          type: "services",
+          limit: 5,
+          sort: "rating_desc",
+          useProfessionalServices: true
+        });
+        
+        // Handle different possible return structures
+        if (Array.isArray(result)) {
+          return result;
+        } else if (result && result.services && Array.isArray(result.services)) {
+          return result.services;
+        } else {
+          console.warn('Unexpected response format from fetchSearchResults:', result);
+          return [];
+        }
+      } catch (err) {
+        console.error('Error fetching recommended services:', err);
+        return []; // Return empty array on error
+      }
+    },
     staleTime: 15 * 60 * 1000,
   });
   return (
