@@ -6,10 +6,8 @@ import { CompanyCalendarContent } from "@/components/company/calendar/CompanyCal
 const CompanyCalendar = () => {
   return (
     <CompanyLayout>
-      <div className="space-y-6 w-full">
-        <h1 className="text-2xl font-semibold">Agenda da Empresa</h1>
-        <CompanyCalendarContent />
-      </div>
+      <h1 className="text-2xl font-semibold">Agenda da Empresa</h1>
+      <CompanyCalendarContent />
     </CompanyLayout>
   );
 };

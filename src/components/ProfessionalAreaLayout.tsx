@@ -4,6 +4,7 @@ import { Outlet, useLocation, Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import ProfessionalTopNav from "@/components/ProfessionalTopNav";
 import ProfessionalSchedule from "@/pages/ProfessionalSchedule";
+import { PageContainer } from "@/components/ui/page-container";
 
 const ProfessionalAreaLayout: React.FC = () => {
   const location = useLocation();
@@ -20,11 +21,11 @@ const ProfessionalAreaLayout: React.FC = () => {
       <div className="min-h-screen flex flex-col w-full bg-background">
         <Navigation />
         <ProfessionalTopNav />
-        <div className="flex-1 pt-[104px]">
+        <div className="flex-1 pt-16">
           <main className="p-4 md:p-6 lg:p-8">
-            <div className="w-full max-w-5xl mx-auto">
+            <PageContainer>
               <ProfessionalSchedule />
-            </div>
+            </PageContainer>
           </main>
         </div>
       </div>
@@ -36,11 +37,11 @@ const ProfessionalAreaLayout: React.FC = () => {
     <div className="min-h-screen flex flex-col w-full bg-background">
       <Navigation />
       <ProfessionalTopNav />
-      <div className="flex-1 pt-[104px]">
+      <div className="flex-1 pt-16">
         <main className="p-4 md:p-6 lg:p-8">
-          <div className="w-full max-w-5xl mx-auto">
+          <PageContainer>
             <Outlet />
-          </div>
+          </PageContainer>
         </main>
       </div>
     </div>

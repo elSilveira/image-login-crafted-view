@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +18,7 @@ import DebugOverlay from "@/components/Debug/DebugOverlay";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loading } from "@/components/ui/loading";
+import { PageContainer } from "@/components/ui/page-container";
 
 // Status map for the tabs - following the APPOINTMENT_STATUS documentation
 // Using uppercase status values as required by the API
@@ -82,7 +84,7 @@ const ProfessionalBookings = () => {
   };
 
   return (
-    <div className="space-y-6 w-full">
+    <PageContainer>
       <h1 className="text-2xl font-semibold">Meus Agendamentos</h1>
       
       <Tabs defaultValue="upcoming" onValueChange={handleTabChange} className="w-full">
@@ -132,32 +134,7 @@ const ProfessionalBookings = () => {
           </>
         )}
       </Tabs>
-      
-      {/* Debug overlay - disabled for production
-      {import.meta.env.DEV && (
-        <>
-          <ProfessionalIdDebugger />
-          <DebugOverlay 
-            data={{ 
-              activeTab,
-              appointmentsLength: appointments?.length || 0,
-              showActions: true,
-              mockDataEnabled: localStorage.getItem('useMockAppointmentsData') === 'true',
-              firstAppointment: appointments && appointments.length > 0 ? {
-                id: appointments[0].id,
-                status: appointments[0].status,
-                services: appointments[0].services,
-                service: appointments[0].service,
-                startTime: appointments[0].startTime,
-                user: appointments[0].user
-              } : null
-            }} 
-            title="Appointments Debug"
-          />
-        </>
-      )}
-      */}
-    </div>
+    </PageContainer>
   );
 };
 

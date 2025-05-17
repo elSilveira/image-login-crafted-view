@@ -13,7 +13,7 @@ const ProfessionalSchedule = () => {
   // On desktop, we'll show both views side by side
   if (isDesktop) {
     return (
-      <div className="space-y-6 w-full">
+      <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Minha Agenda</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -31,9 +31,9 @@ const ProfessionalSchedule = () => {
     );
   }
   
-  // On mobile, we'll show tabs to switch between views with better indication
+  // On mobile, we'll show tabs to switch between views
   return (
-    <div className="space-y-6 w-full">
+    <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Minha Agenda</h1>
       
       <Tabs value={activeView} onValueChange={(value) => setActiveView(value as "calendar" | "list")}>
