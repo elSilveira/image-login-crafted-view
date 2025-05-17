@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, AlertCircle, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { Loading, LoadingInline } from "@/components/ui/loading";
 import { 
   Select,
   SelectContent,
@@ -157,13 +158,10 @@ export const ProfessionalBookingsView = () => {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-      )}
-      
+      )}      
       {isLoading ? (
         <Card className="w-full">
-          <div className="flex justify-center items-center h-40">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <Loading text="Carregando agendamentos..." size="md" className="h-40" />
         </Card>
       ) : isError ? (
         <Alert variant="destructive" className="mb-4">

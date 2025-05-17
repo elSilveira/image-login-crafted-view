@@ -14,10 +14,11 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { fetchServices, fetchCompanies, fetchCategories, fetchSearchResults } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton"; // For loading state
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // For error state
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { ProfessionalQuickCard } from "@/components/home/ProfessionalQuickCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceFilters } from "@/components/services/ServiceFilters";
+import { Loading, LoadingInline } from "@/components/ui/loading";
 
 // Interfaces
 interface Service { 
@@ -345,11 +346,23 @@ const Search = () => {
           </div>
         </div>
       </div>
-    ))
+    ))  );
+    // Enhanced loading skeletons that are more visible and consistent
+  const renderEnhancedLoadingSkeletons = (count: number, type: 'service' | 'company' | 'professional') => (
+    <div className="space-y-4">
+      <Loading 
+        text={type === 'service' ? 'Carregando serviços...' : 
+              type === 'company' ? 'Carregando empresas...' : 
+              'Carregando profissionais...'}
+        size="md"
+      />
+      {renderLoadingSkeletons(count, type)}
+    </div>
   );
+  
   // Function to render content or empty state for a specific type
   const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company' | 'professional') => {
-    if (isLoading) return renderLoadingSkeletons(ITEMS_PER_PAGE, type);
+    if (isLoading) return renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, type);
     if (isError) return null;
     if (data.length === 0) return null; // Não renderiza a área se não houver resultados
     
@@ -413,8 +426,7 @@ const Search = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      
-      <main className="container mx-auto px-4 pt-24 pb-12">
+        <main className="container mx-auto px-4 pt-20 pb-12">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           {searchTerm ? (
@@ -422,13 +434,16 @@ const Search = () => {
           ) : categoryFilter ? (
             <h1 className="text-3xl font-bold mb-2">{categoryFilter}</h1>
           ) : (
-            <h1 className="text-3xl font-bold mb-2">Explorar</h1>
-          )}          <div className="text-gray-600 mb-8">
-            {isAnyLoading ? <Skeleton className="h-4 w-48" /> : 
-             isAnyError ? "Erro ao buscar resultados." : 
-             searchTerm || categoryFilter ? 
-              `Encontramos ${totalItems} resultados` : 
-              'Explore empresas e serviços disponíveis'}
+            <h1 className="text-3xl font-bold mb-2">Explorar</h1>          )}<div className="text-gray-600 mb-8">
+            {isAnyLoading ? (
+              <LoadingInline text="Buscando resultados..." />
+            ) : isAnyError ? (
+              "Erro ao buscar resultados."
+            ) : searchTerm || categoryFilter ? (
+              `Encontramos ${totalItems} resultados`
+            ) : (
+              'Explore empresas e serviços disponíveis'
+            )}
           </div>
 
           {/* Global Error Display (if not category error) */}

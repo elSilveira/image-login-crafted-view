@@ -8,6 +8,7 @@ import { ServicePagination } from "@/components/services/ServicePagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Terminal } from "lucide-react";
+import { Loading, PageLoading } from "@/components/ui/loading";
 
 // Define the structure of a Service object fetched from the API (based on schema.prisma)
 interface ApiService {
@@ -215,36 +216,35 @@ const Services = () => {
   const handlePauseService = (serviceId: string | number) => {
     // Implementation would go here - API call to pause the service
     console.log("Pause service:", serviceId);
-  };
-
-  // Render logic
+  };  // Render logic
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="container mx-auto px-4 pt-24 pb-12">
-          <Skeleton className="h-8 w-1/4 mb-2" />
-          <Skeleton className="h-4 w-1/2 mb-8" />
-          {/* Skeleton for filters */}
-          <Skeleton className="h-20 w-full mb-8" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-          {/* Skeleton for pagination */}
-          <Skeleton className="h-10 w-1/3 mx-auto" />
+        <main className="container mx-auto px-4 pt-20 pb-12">
+          <PageLoading>
+            <Skeleton className="h-8 w-1/4 mb-2" />
+            <Skeleton className="h-4 w-1/2 mb-8" />
+            {/* Skeleton for filters */}
+            <Skeleton className="h-20 w-full mb-8" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-40 w-full" />
+            </div>
+            {/* Skeleton for pagination */}
+            <Skeleton className="h-10 w-1/3 mx-auto" />
+          </PageLoading>
         </main>
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="container mx-auto px-4 pt-24 pb-12">
+        <main className="container mx-auto px-4 pt-20 pb-12">
            <Alert variant="destructive" className="mt-6">
             <Terminal className="h-4 w-4" />
             <AlertTitle>Erro ao Carregar Serviços</AlertTitle>
@@ -258,8 +258,7 @@ const Services = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-
-      <main className="container mx-auto px-4 pt-24 pb-12">
+      <main className="container mx-auto px-4 pt-20 pb-12">
         <h1 className="text-3xl font-bold mb-2">Serviços</h1>
         <p className="text-gray-600 mb-8">
           Encontre os melhores serviços disponíveis na plataforma

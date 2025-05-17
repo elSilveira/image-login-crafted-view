@@ -7,6 +7,7 @@ import { Mail, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { LoadingInline } from "@/components/ui/loading";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -65,12 +66,8 @@ const Login = () => {
               type="submit" 
               className="w-full h-12 text-lg font-medium bg-iazi-primary hover:bg-iazi-primary-hover transition-colors"
               disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Entrando...
-                </>
+            >              {isLoading ? (
+                <LoadingInline text="Entrando..." size="sm" />
               ) : (
                 "Entrar"
               )}

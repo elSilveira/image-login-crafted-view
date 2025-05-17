@@ -12,6 +12,7 @@ import ServiceIncludes from "@/components/ServiceIncludes";
 import ServiceFAQ from "@/components/ServiceFAQ";
 import RelatedServices from "@/components/RelatedServices";
 import Navigation from "@/components/Navigation";
+import { Loading } from "@/components/ui/loading";
 // Removed mock data import: import { services } from "@/lib/mock-services";
 
 // Define an interface for the service data structure (adjust based on actual API response)
@@ -43,14 +44,13 @@ const ServiceDetails = () => {
   });
 
   const [imageError, setImageError] = useState(false);
-
   // --- Loading State --- 
   if (isLoading) {
     return (
       <>
         <Navigation />
         <div className="container mx-auto px-4 py-8 mt-6 flex justify-center items-center h-[calc(100vh-200px)]">
-          <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+          <Loading text="Carregando detalhes do serviço..." size="lg" />
         </div>
       </>
     );

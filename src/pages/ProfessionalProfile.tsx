@@ -18,6 +18,7 @@ import {
   Loader2,
   AlertCircle
 } from "lucide-react";
+import { Loading } from "@/components/ui/loading";
 import { 
   Tabs, 
   TabsContent, 
@@ -308,14 +309,13 @@ const ProfessionalProfile = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [expandedSlot]);
-
   // --- Loading State --- 
   if (isLoading) {
     return (
       <>
         <Navigation />
         <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
+          <Loading text="Carregando perfil do profissional..." size="lg" fullScreen />
         </div>
       </>
     );

@@ -16,6 +16,7 @@ import ProfessionalIdDebugger from "@/components/professional/ProfessionalIdDebu
 import DebugOverlay from "@/components/Debug/DebugOverlay";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loading } from "@/components/ui/loading";
 
 // Status map for the tabs - following the APPOINTMENT_STATUS documentation
 // Using uppercase status values as required by the API
@@ -93,9 +94,7 @@ const ProfessionalBookings = () => {
         
         {isLoading ? (
           <Card className="w-full">
-            <div className="flex justify-center items-center h-40">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <Loading text="Carregando agendamentos..." size="md" className="h-40" />
           </Card>
         ) : isError ? (
           <Alert variant="destructive" className="mb-4">

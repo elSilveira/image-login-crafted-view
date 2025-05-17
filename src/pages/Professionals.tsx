@@ -191,7 +191,7 @@ const Professionals = () => {
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       
-      <main className="container mx-auto px-4 pt-24 pb-12">
+      <main className="container mx-auto px-4 pt-20 pb-12">
         <h1 className="text-3xl font-bold mb-2">Empresas</h1>
         <p className="text-gray-600 mb-8">
           Encontre as melhores empresas e profissionais para o serviço que você precisa
