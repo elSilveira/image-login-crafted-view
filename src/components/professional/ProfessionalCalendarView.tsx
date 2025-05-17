@@ -1,13 +1,12 @@
-
 import React, { useState, useEffect, useMemo } from "react";
 import { format, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfMonth, endOfMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { Terminal, ChevronLeft, ChevronRight, Info, CheckCircle, XCircle, AlertTriangle, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { 
   Tooltip,
   TooltipContent,
@@ -23,6 +22,10 @@ import { ListCalendarView } from "@/components/company/calendar/ListCalendarView
 import { ViewType, FilterType, AppointmentType, AppointmentStatus } from "@/components/company/calendar/types";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/lib/api";
+import { updateAppointmentStatus } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import ProfessionalRescheduleModal from "./ProfessionalRescheduleModal";
 
 // Define the structure expected from the API for an appointment
 interface ApiAppointment {
@@ -98,6 +101,8 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
   filters,
 }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const professionalId = user?.professionalId;
   
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -105,10 +110,12 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [calendarVisible, setCalendarVisible] = useState<boolean>(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
   
   // For appointment details modal
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState<boolean>(false);
 
   // Handle opening appointment details
   const handleOpenAppointmentDetails = (appointment: AppointmentType) => {
@@ -188,6 +195,66 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
 
     fetchAppointments();
   }, [professionalId, dateRange, filters]);
+
+  // Handle status update
+  const handleStatusUpdate = async (appointmentId: string, newStatus: string) => {
+    setIsUpdating(true);
+
+    try {
+      await updateAppointmentStatus(appointmentId, newStatus);
+      
+      // Success toast
+      toast({
+        title: "Status atualizado",
+        description: `Agendamento ${statusLabels[newStatus as AppointmentStatus].toLowerCase()} com sucesso.`,
+      });
+      
+      // Close the modal
+      setIsDetailsOpen(false);
+      
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ["professionalBookings"] });
+      
+      // Refresh calendar view
+      const queryParams = new URLSearchParams({
+        professionalId: professionalId || '',
+        dateFrom: dateRange.start.toISOString().substring(0, 10),
+        dateTo: dateRange.end.toISOString().substring(0, 10),
+        include: "user,service",
+        limit: "500",
+        sort: "startTime_asc"
+      });
+
+      if (filters.status !== "all") {
+        queryParams.append("status", filters.status);
+      }
+      if (filters.service !== "all") {
+        queryParams.append("serviceId", filters.service);
+      }        
+      
+      const response = await apiClient.get(`/appointments?${queryParams.toString()}`);
+      const result = response.data;
+      const data = result.data ?? [];
+
+      const adaptedData = data.map(adaptApiAppointment);
+      setAppointments(adaptedData);
+
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message || "Ocorreu um erro ao atualizar o status. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Open reschedule modal
+  const openRescheduleModal = () => {
+    setIsDetailsOpen(false);
+    setIsRescheduleModalOpen(true);
+  };
 
   // Handler for changing the selected date
   const handleDateSelect = (date: Date | undefined) => {
@@ -361,13 +428,13 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
         {renderCalendarView()}
       </div>
 
-      {/* Appointment Details Modal */}
+      {/* Improved Appointment Details Modal */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Detalhes do Agendamento</DialogTitle>
+            <DialogTitle className="text-lg">Detalhes do Agendamento</DialogTitle>
             <DialogDescription>
-              Informações completas sobre este agendamento.
+              Informações e ações disponíveis para este agendamento
             </DialogDescription>
           </DialogHeader>
           
@@ -421,14 +488,117 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
                 {selectedAppointment.notes && (
                   <div className="py-2">
                     <h4 className="text-sm font-medium text-muted-foreground">Observações</h4>
-                    <p className="text-sm">{selectedAppointment.notes}</p>
+                    <p className="text-sm bg-muted/30 p-2 rounded-md">{selectedAppointment.notes}</p>
                   </div>
                 )}
               </div>
             </div>
           )}
+          
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between sm:space-x-0">
+            {selectedAppointment && (
+              <>
+                {/* Action buttons based on appointment status */}
+                {selectedAppointment.status === "pending" && (
+                  <div className="flex flex-wrap gap-2 justify-end w-full">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={isUpdating}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "confirmed")}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                      Confirmar
+                    </Button>
+                    
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={isUpdating}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "cancelled")}
+                    >
+                      <XCircle className="h-3.5 w-3.5 mr-1" />
+                      Cancelar
+                    </Button>
+                  </div>
+                )}
+                
+                {selectedAppointment.status === "confirmed" && (
+                  <div className="flex flex-wrap gap-2 justify-end w-full">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={isUpdating}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "in-progress")}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                      Iniciar
+                    </Button>
+                    
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={isUpdating}
+                      onClick={openRescheduleModal}
+                    >
+                      <CalendarDays className="h-3.5 w-3.5 mr-1" />
+                      Reagendar
+                    </Button>
+                    
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={isUpdating}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "cancelled")}
+                    >
+                      <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                      Não Compareceu
+                    </Button>
+                  </div>
+                )}
+                
+                {selectedAppointment.status === "in-progress" && (
+                  <div className="flex flex-wrap gap-2 justify-end w-full">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      disabled={isUpdating}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "completed")}
+                    >
+                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                      Finalizar
+                    </Button>
+                  </div>
+                )}
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsDetailsOpen(false)}
+                  className="mt-2 sm:mt-0"
+                >
+                  Fechar
+                </Button>
+              </>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Reschedule Modal */}
+      {selectedAppointment && (
+        <ProfessionalRescheduleModal
+          isOpen={isRescheduleModalOpen}
+          onClose={() => setIsRescheduleModalOpen(false)}
+          appointment={selectedAppointment}
+        />
+      )}
     </div>
   );
 };

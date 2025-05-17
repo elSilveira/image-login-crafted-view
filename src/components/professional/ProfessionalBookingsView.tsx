@@ -7,16 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import ProfessionalBookingsList from "@/components/professional/ProfessionalBookingsList";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, AlertCircle, CalendarDays, CheckCircle, XCircle, Filter } from "lucide-react";
+import { Loader2, AlertCircle, Filter } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
 
 // Status map for the tabs and dropdown
 const statusGroups = {
@@ -92,31 +92,26 @@ export const ProfessionalBookingsView = () => {
         <h2 className="text-lg font-semibold">Meus Agendamentos</h2>
         
         {isMobile && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="flex gap-2 items-center">
-                <Filter className="h-4 w-4" />
-                {statusLabels[activeTab as keyof typeof statusLabels]}
-                <Badge variant="secondary" className="ml-1">
-                  {appointmentCount}
-                </Badge>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleTabChange("upcoming")} className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4" />
-                <span>Ativos</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTabChange("completed")} className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4" />
-                <span>Concluídos</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleTabChange("cancelled")} className="flex items-center gap-2">
-                <XCircle className="h-4 w-4" />
-                <span>Cancelados</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Select 
+            value={activeTab} 
+            onValueChange={handleTabChange}
+          >
+            <SelectTrigger className="w-[160px]">
+              <div className="flex items-center gap-2">
+                <span>{statusLabels[activeTab as keyof typeof statusLabels]}</span>
+                {!isLoading && appointments && (
+                  <Badge variant="secondary" className="ml-1">
+                    {appointmentCount}
+                  </Badge>
+                )}
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="upcoming">Ativos</SelectItem>
+              <SelectItem value="completed">Concluídos</SelectItem>
+              <SelectItem value="cancelled">Cancelados</SelectItem>
+            </SelectContent>
+          </Select>
         )}
       </div>
       
@@ -124,7 +119,6 @@ export const ProfessionalBookingsView = () => {
         <Tabs defaultValue={activeTab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="flex w-full mb-4 overflow-x-auto no-scrollbar">
             <TabsTrigger value="upcoming" className="flex items-center gap-2 flex-1">
-              <CalendarDays className="h-4 w-4" />
               <span>Ativos</span>
               {!isLoading && appointments && (
                 <Badge variant="outline" className="bg-primary/10 ml-1">
@@ -133,11 +127,9 @@ export const ProfessionalBookingsView = () => {
               )}
             </TabsTrigger>
             <TabsTrigger value="completed" className="flex items-center gap-2 flex-1">
-              <CheckCircle className="h-4 w-4" />
               <span>Concluídos</span>
             </TabsTrigger>
             <TabsTrigger value="cancelled" className="flex items-center gap-2 flex-1">
-              <XCircle className="h-4 w-4" />
               <span>Cancelados</span>
             </TabsTrigger>
           </TabsList>
