@@ -6,7 +6,8 @@ import { fetchAppointments } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import ProfessionalBookingsList from "@/components/professional/ProfessionalBookingsList";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2, AlertCircle, CalendarDays, CheckCircle, XCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Status map for the tabs
@@ -67,15 +68,29 @@ export const ProfessionalBookingsView = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Meus Agendamentos</h2>
       </div>
       
       <Tabs defaultValue="upcoming" onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-3 w-full mb-4">
-          <TabsTrigger value="upcoming">Ativos</TabsTrigger>
-          <TabsTrigger value="completed">Concluídos</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelados</TabsTrigger>
+        <TabsList className="flex w-full mb-4 overflow-x-auto no-scrollbar">
+          <TabsTrigger value="upcoming" className="flex items-center gap-2 flex-1">
+            <CalendarDays className="h-4 w-4" />
+            <span>Ativos</span>
+            {!isLoading && appointments && (
+              <Badge variant="outline" className="bg-primary/10 ml-1">
+                {appointments.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="completed" className="flex items-center gap-2 flex-1">
+            <CheckCircle className="h-4 w-4" />
+            <span>Concluídos</span>
+          </TabsTrigger>
+          <TabsTrigger value="cancelled" className="flex items-center gap-2 flex-1">
+            <XCircle className="h-4 w-4" />
+            <span>Cancelados</span>
+          </TabsTrigger>
         </TabsList>
         
         {isLoading ? (
@@ -106,7 +121,7 @@ export const ProfessionalBookingsView = () => {
             <TabsContent value="completed" className="mt-0 w-full">
               <ProfessionalBookingsList 
                 appointments={appointments || []} 
-                showActions={true}
+                showActions={false} 
                 emptyMessage="Você não tem agendamentos concluídos."
                 compact={true}
               />
@@ -115,7 +130,7 @@ export const ProfessionalBookingsView = () => {
             <TabsContent value="cancelled" className="mt-0 w-full">
               <ProfessionalBookingsList 
                 appointments={appointments || []} 
-                showActions={true}
+                showActions={false}
                 emptyMessage="Você não tem agendamentos cancelados."
                 compact={true}
               />

@@ -1,9 +1,10 @@
 
 import React, { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import ProfessionalCalendarContent from "@/components/professional/ProfessionalCalendarContent";
 import { ProfessionalBookingsView } from "@/components/professional/ProfessionalBookingsView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CalendarDays, ClipboardList } from "lucide-react";
 
 const ProfessionalSchedule = () => {
   const [activeView, setActiveView] = useState<"calendar" | "list">("calendar");
@@ -30,15 +31,21 @@ const ProfessionalSchedule = () => {
     );
   }
   
-  // On mobile, we'll show tabs to switch between views
+  // On mobile, we'll show tabs to switch between views with better indication
   return (
     <div className="space-y-6 w-full">
       <h1 className="text-2xl font-semibold">Minha Agenda</h1>
       
       <Tabs value={activeView} onValueChange={(value) => setActiveView(value as "calendar" | "list")}>
         <TabsList className="grid grid-cols-2 w-full mb-6">
-          <TabsTrigger value="calendar">Calendário</TabsTrigger>
-          <TabsTrigger value="list">Agendamentos</TabsTrigger>
+          <TabsTrigger value="calendar" className="flex items-center justify-center gap-2">
+            <CalendarDays className="h-4 w-4" />
+            <span>Calendário</span>
+          </TabsTrigger>
+          <TabsTrigger value="list" className="flex items-center justify-center gap-2">
+            <ClipboardList className="h-4 w-4" />
+            <span>Agendamentos</span>
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="calendar" className="mt-0">

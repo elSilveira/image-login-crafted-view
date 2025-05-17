@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, Calendar, User, MapPin, PhoneCall, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { AlertCircle, Clock, Calendar, User, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { updateAppointmentStatus } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import ProfessionalRescheduleModal from "./ProfessionalRescheduleModal";
@@ -85,7 +85,8 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
     }
   };
 
-  const openRescheduleModal = (appointment: any) => {
+  const openRescheduleModal = (appointment: any, e: React.MouseEvent) => {
+    e.stopPropagation();
     setSelectedAppointment(appointment);
     setIsRescheduleModalOpen(true);
   };
@@ -122,7 +123,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
 
   if (appointments.length === 0) {
     return (
-      <div className="text-center p-8">
+      <div className="text-center p-8 bg-white rounded-lg shadow-sm border">
         <AlertCircle className="h-10 w-10 text-muted-foreground mx-auto mb-2" />
         <p className="text-muted-foreground">{emptyMessage}</p>
       </div>
@@ -130,7 +131,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {appointments.map((appointment) => {
         const isUpdatingStatus = isUpdating[appointment.id] || false;
         const startTime = parseISO(appointment.startTime);
@@ -180,9 +181,9 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                 </div>
               </div>
               
-              {/* Action buttons - only shown if showActions is true and not in compact mode */}
-              {showActions && !compact && (
-                <div className="bg-muted/30 p-3 flex flex-wrap gap-2 justify-end border-t">
+              {/* Action buttons - only shown if showActions is true */}
+              {showActions && (
+                <div className="bg-muted/30 p-2 flex flex-wrap gap-2 justify-end border-t">
                   {/* Show actions based on current appointment status */}
                   {(statusKey === "PENDING") && (
                     <>
@@ -239,7 +240,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                         disabled={isUpdatingStatus}
                         onClick={(e) => {
                           e.stopPropagation(); 
-                          openRescheduleModal(appointment);
+                          openRescheduleModal(appointment, e);
                         }}
                       >
                         <Calendar className="h-3.5 w-3.5" />

@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { format, startOfWeek, endOfWeek, startOfDay, endOfDay, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal } from "lucide-react";
+import { Terminal, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DayCalendarView } from "@/components/company/calendar/DayCalendarView";
 import { WeekCalendarView } from "@/components/company/calendar/WeekCalendarView";
 import { MonthCalendarView } from "@/components/company/calendar/MonthCalendarView";
@@ -12,7 +14,6 @@ import { ListCalendarView } from "@/components/company/calendar/ListCalendarView
 import { ViewType, FilterType, AppointmentType, AppointmentStatus } from "@/components/company/calendar/types";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/lib/api";
-import { API_BASE_URL } from "@/lib/api-config";
 
 // Define the structure expected from the API for an appointment
 interface ApiAppointment {
@@ -73,6 +74,7 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
   const [appointments, setAppointments] = useState<AppointmentType[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [calendarVisible, setCalendarVisible] = useState<boolean>(false);
 
   // Determine date range based on viewType and selectedDate
   const dateRange = useMemo(() => {
@@ -127,7 +129,8 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
         }
         if (filters.service !== "all") {
           queryParams.append("serviceId", filters.service);
-        }        const response = await apiClient.get(`/appointments?${queryParams.toString()}`);
+        }        
+        const response = await apiClient.get(`/appointments?${queryParams.toString()}`);
         const result = response.data;
         const data: ApiAppointment[] = result.data ?? [];
 
@@ -150,7 +153,59 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
   const handleDateSelect = (date: Date | undefined) => {
     if (date) {
       setSelectedDate(date);
+      setCalendarVisible(false); // Hide calendar after selection
     }
+  };
+  
+  // Navigate to previous period
+  const goToPrevious = () => {
+    let newDate;
+    switch (viewType) {
+      case "day":
+        newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() - 1);
+        break;
+      case "week":
+        newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() - 7);
+        break;
+      case "month":
+        newDate = new Date(selectedDate);
+        newDate.setMonth(selectedDate.getMonth() - 1);
+        break;
+      default:
+        newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() - 7);
+    }
+    setSelectedDate(newDate);
+  };
+  
+  // Navigate to next period
+  const goToNext = () => {
+    let newDate;
+    switch (viewType) {
+      case "day":
+        newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() + 1);
+        break;
+      case "week":
+        newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() + 7);
+        break;
+      case "month":
+        newDate = new Date(selectedDate);
+        newDate.setMonth(selectedDate.getMonth() + 1);
+        break;
+      default:
+        newDate = new Date(selectedDate);
+        newDate.setDate(selectedDate.getDate() + 7);
+    }
+    setSelectedDate(newDate);
+  };
+  
+  // Go to today
+  const goToToday = () => {
+    setSelectedDate(new Date());
   };
 
   const renderCalendarView = () => {
@@ -187,27 +242,66 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-medium">
-          {viewType === "day" 
-            ? format(selectedDate, "dd 'de' MMMM, yyyy", { locale: ptBR })
-            : viewType === "week"
-              ? `${format(dateRange.start, "dd/MM", { locale: ptBR })} - ${format(dateRange.end, "dd/MM/yyyy", { locale: ptBR })}`
-              : format(selectedDate, "MMMM yyyy", { locale: ptBR })
-          }
-        </h2>
-
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={handleDateSelect}
-            className="rounded-md border shadow"
-          />
+      <div className="flex flex-wrap justify-between items-center gap-2 pb-2 border-b">
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={goToPrevious}
+            className="p-1 h-8 w-8"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 px-3 font-medium"
+            onClick={() => setCalendarVisible(!calendarVisible)}
+          >
+            {viewType === "day" 
+              ? format(selectedDate, "dd 'de' MMMM, yyyy", { locale: ptBR })
+              : viewType === "week"
+                ? `${format(dateRange.start, "dd/MM", { locale: ptBR })} - ${format(dateRange.end, "dd/MM/yyyy", { locale: ptBR })}`
+                : format(selectedDate, "MMMM yyyy", { locale: ptBR })
+            }
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={goToNext}
+            className="p-1 h-8 w-8"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToToday}
+            className="h-8 ml-1"
+          >
+            Hoje
+          </Button>
         </div>
+        
+        {/* Calendar picker - toggle visibility */}
+        {calendarVisible && (
+          <div className="absolute z-50 mt-1 bg-white border shadow-lg rounded-md p-2 top-20">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={handleDateSelect}
+              className="rounded-md border shadow"
+            />
+          </div>
+        )}
       </div>
       
-      {renderCalendarView()}
+      <div className="overflow-x-auto">
+        {renderCalendarView()}
+      </div>
     </div>
   );
 };
