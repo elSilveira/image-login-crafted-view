@@ -51,30 +51,23 @@ const ProfessionalBookings = () => {
           sort: activeTab === "upcoming" ? "startTime_asc" : "startTime_desc",
         });
         
-        console.log("API Response:", result);
-        
         // Ensure we have valid data
         if (!result) {
-          console.warn("No result from fetchAppointments");
           return [];
         }
         
         // Check if we have a data property (common in paginated responses)
         if (result.data && Array.isArray(result.data)) {
-          console.log("Using result.data (paginated response):", result.data);
           return result.data;
         }
         
         // If result is already an array, use it
         if (Array.isArray(result)) {
-          console.log("Result is already an array:", result);
           return result;
         }
         
-        console.warn("Unexpected response format:", result);
         return [];
       } catch (err) {
-        console.error("Error fetching appointments:", err);
         throw err;
       }
     },
@@ -86,23 +79,6 @@ const ProfessionalBookings = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };
-
-  // Debug: Log appointments data and errors
-  useEffect(() => {
-    console.log("Appointments data in component:", appointments);
-    
-    if (isError) {
-      console.error("Error in ProfessionalBookings query:", error);
-    }
-    
-    if (appointments) {
-      if (appointments.length === 0) {
-        console.warn("Empty appointments array received in ProfessionalBookings");
-      } else {
-        console.log("First appointment in ProfessionalBookings:", appointments[0]);
-      }
-    }
-  }, [appointments, isError, error]);
 
   return (
     <div className="space-y-6 w-full">
@@ -158,7 +134,7 @@ const ProfessionalBookings = () => {
         )}
       </Tabs>
       
-      {/* Debug overlay - only visible in development */}
+      {/* Debug overlay - disabled for production
       {import.meta.env.DEV && (
         <>
           <ProfessionalIdDebugger />
@@ -181,6 +157,7 @@ const ProfessionalBookings = () => {
           />
         </>
       )}
+      */}
     </div>
   );
 };

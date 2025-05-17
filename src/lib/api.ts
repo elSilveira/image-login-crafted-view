@@ -176,11 +176,8 @@ export const fetchAppointments = async (params: any = {}) => { // Added params
   try {
     // Create a copy of params to avoid modifying the original object
     const apiParams = { ...params };
-    
-    // Ensure status values are capitalized for the API
+      // Ensure status values are capitalized for the API
     if (apiParams.status) {
-      console.log('Original status filter:', apiParams.status);
-      
       // When filtering by multiple statuses, it comes as a comma-separated string
       // We need to split it, uppercase each status, and join it back
       if (typeof apiParams.status === 'string' && apiParams.status.includes(',')) {
@@ -190,15 +187,12 @@ export const fetchAppointments = async (params: any = {}) => { // Added params
         // Single status case
         apiParams.status = apiParams.status.toUpperCase();
       }
-      
-      console.log('Formatted status filter for API:', apiParams.status);
     }
     
     // Check if we should use mock data for testing (can be enabled via localStorage)
     const useMockData = localStorage.getItem('useMockAppointmentsData') === 'true';
     
     if (useMockData) {
-      console.log('Using mock appointments data for testing');
       const mockAppointments = [
         {
           id: "mock-1",
@@ -252,21 +246,17 @@ export const fetchAppointments = async (params: any = {}) => { // Added params
     }    
     // Use real API
     const response = await apiClient.get("/appointments", { params: apiParams });
-    
-    // Handle response with data array (pagination format)
+      // Handle response with data array (pagination format)
     if (response.data && response.data.data && Array.isArray(response.data.data)) {
-      console.log("Received paginated appointments data:", response.data.data.length, "appointments");
       return response.data.data;
     }
     
     // Handle direct array response
     if (Array.isArray(response.data)) {
-      console.log("Received array appointments data:", response.data.length, "appointments");
       return response.data;
     }
     
     // Default fallback
-    console.warn('Unexpected response format in fetchAppointments:', response.data);
     return [];
   } catch (error) {
     console.error('Error in fetchAppointments:', error);
@@ -295,22 +285,13 @@ export const updateAppointmentStatus = async (appointmentId: string, status: str
         } else if (normalizedStatus === "noshow") {
             normalizedStatus = "no_show";
         }
-        
-        // Convert to uppercase as required by the API (status like PENDING, CONFIRMED, COMPLETED, CANCELLED, NO_SHOW)
+          // Convert to uppercase as required by the API (status like PENDING, CONFIRMED, COMPLETED, CANCELLED, NO_SHOW)
         const apiStatusValue = normalizedStatus.toUpperCase();
-        
-        console.log("[API] Updating appointment status:", { 
-            appointmentId, 
-            originalStatus: status,
-            normalizedStatus,
-            apiStatusValue
-        });
         
         // Check if we're using mock data
         const useMockData = localStorage.getItem('useMockAppointmentsData') === 'true';
         
         if (useMockData) {
-            console.log('Using mock data for status update:', { appointmentId, status: apiStatusValue });
             // Simulate a successful response
             return { 
                 success: true,
@@ -321,11 +302,8 @@ export const updateAppointmentStatus = async (appointmentId: string, status: str
                 }
             };
         }
-        
-        // Use real API
+          // Use real API
         const response = await apiClient.patch(`/appointments/${appointmentId}/status`, { status: apiStatusValue });
-        console.log("[API] Status update response:", response.data);
-        return response.data;
         return response.data;
     } catch (error) {
         console.error("[API] Error updating appointment status:", error);

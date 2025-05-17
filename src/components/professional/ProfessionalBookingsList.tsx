@@ -85,9 +85,8 @@ const ProfessionalBookingsList = ({
     const [isProcessing, setIsProcessing] = useState<string | null>(null);
     const [rescheduleAppointment, setRescheduleAppointment] = useState<Appointment | null>(null);
     const [appointmentToCancel, setAppointmentToCancel] = useState<Appointment | null>(null);
-    const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null);
-
-    // Debug: Log appointments received by this component
+    const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null);    // Debug: Log appointments received by this component (disabled for production)
+    /*
     useEffect(() => {
         console.log('ProfessionalBookingsList received appointments:', appointments);
         console.log('showActions flag value:', showActions);
@@ -113,6 +112,7 @@ const ProfessionalBookingsList = ({
             console.log('No appointments received');
         }
     }, [appointments]);
+    */
 
     // Function to get the main service name
     const getServiceName = (appointment: Appointment): string => {
@@ -268,9 +268,16 @@ const ProfessionalBookingsList = ({
         return (lowerStatus === "pending" || lowerStatus === "confirmed") && 
                (appointmentTime < now);
     };
-
+    
+    // Function to check if appointment time has passed
+    const hasAppointmentTimePassed = (appointment: Appointment): boolean => {
+        const appointmentTime = new Date(appointment.startTime);
+        const now = new Date();
+        return appointmentTime < now;
+    };
+    
     if (!appointments || appointments.length === 0) {
-        console.log('No appointments to display, showing empty message:', emptyMessage);
+        // No appointments to display, show empty message
         return (
             <Card className="w-full">
                 <CardContent className="flex flex-col items-center justify-center py-10">
@@ -279,10 +286,7 @@ const ProfessionalBookingsList = ({
                 </CardContent>
             </Card>
         );
-    }
-
-    console.log(`Rendering ${appointments.length} appointments`);
-    return (
+    }    return (
         <div className="space-y-3">
             {appointments.map((appointment) => (
                 <Card
@@ -332,11 +336,62 @@ const ProfessionalBookingsList = ({
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex flex-wrap items-start gap-2 relative mt-2 sm:mt-0 ml-0 sm:ml-2" style={{ zIndex: 30, minWidth: '120px' }}>
-                                    {showActions && (
+                                <div className="flex flex-wrap items-start gap-2 relative mt-2 sm:mt-0 ml-0 sm:ml-2" style={{ zIndex: 30, minWidth: '120px' }}>                                    {showActions && (
                                         <>
-                                            {/* Confirm button for pending appointments */}
-                                            {appointment.status.toLowerCase() === "pending" && (
+                                            {/* For past appointments (pending/confirmed), only show attended/no-show buttons */}
+                                            {(appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && 
+                                             hasAppointmentTimePassed(appointment) && (
+                                                <>
+                                                    {/* Mark as Attended button */}
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 border-purple-200 py-1 px-2 h-auto whitespace-nowrap"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleStatusUpdate(appointment.id, "completed");
+                                                        }}
+                                                        disabled={isProcessing === appointment.id}
+                                                    >
+                                                        {isProcessing === appointment.id ?
+                                                            <Loader2 className="h-4 w-4 mr-1 animate-spin" /> :
+                                                            <Check className="h-4 w-4 mr-1" />
+                                                        }
+                                                        Atendido
+                                                    </Button>
+                                                    
+                                                    {/* Mark as No-Show button */}
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button 
+                                                                    variant="outline" 
+                                                                    size="sm" 
+                                                                    className="bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-700 border-gray-200 py-1 px-2 h-auto whitespace-nowrap"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleStatusUpdate(appointment.id, "no_show");
+                                                                    }}
+                                                                    disabled={isProcessing === appointment.id}
+                                                                >
+                                                                    {isProcessing === appointment.id ? 
+                                                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : 
+                                                                        <X className="h-4 w-4 mr-1" />
+                                                                    }
+                                                                    Não Compareceu
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                <p>Marcar que o cliente não compareceu ao horário agendado</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </>
+                                            )}
+                                            
+                                            {/* For upcoming appointments, show normal action buttons */}
+                                            {/* Confirm button for pending upcoming appointments */}
+                                            {appointment.status.toLowerCase() === "pending" && !hasAppointmentTimePassed(appointment) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -353,7 +408,10 @@ const ProfessionalBookingsList = ({
                                                     }
                                                     Confirmar
                                                 </Button>
-                                            )}                                            {/* Status indicator for confirmed appointments */}                      {appointment.status.toLowerCase() === "confirmed" && (
+                                            )}
+                                            
+                                            {/* Status indicator for confirmed upcoming appointments */}                      
+                                            {appointment.status.toLowerCase() === "confirmed" && !hasAppointmentTimePassed(appointment) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -370,27 +428,31 @@ const ProfessionalBookingsList = ({
                                                     Confirmado
                                                 </Button>
                                             )}
-                                            {/* Complete button for in-progress appointments */}                      {(appointment.status.toLowerCase() === "in-progress" ||
+                                            
+                                            {/* Complete button for in-progress appointments */}                      
+                                            {(appointment.status.toLowerCase() === "in-progress" ||
                                                 appointment.status.toLowerCase() === "inprogress" ||
                                                 appointment.status.toLowerCase() === "in_progress") && (
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        className="bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 border-purple-200 py-1 px-2 h-auto whitespace-nowrap"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleStatusUpdate(appointment.id, "completed");
-                                                        }}
-                                                        disabled={isProcessing === appointment.id}
-                                                    >
-                                                        {isProcessing === appointment.id ?
-                                                            <Loader2 className="h-4 w-4 mr-1 animate-spin" /> :
-                                                            <Check className="h-4 w-4 mr-1" />
-                                                        }
-                                                        Concluir
-                                                    </Button>
-                                                )}
-                                            {/* Reschedule Client button for completed appointments */}                      {appointment.status.toLowerCase() === "completed" && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="bg-purple-50 text-purple-600 hover:bg-purple-100 hover:text-purple-700 border-purple-200 py-1 px-2 h-auto whitespace-nowrap"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleStatusUpdate(appointment.id, "completed");
+                                                    }}
+                                                    disabled={isProcessing === appointment.id}
+                                                >
+                                                    {isProcessing === appointment.id ?
+                                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" /> :
+                                                        <Check className="h-4 w-4 mr-1" />
+                                                    }
+                                                    Concluir
+                                                </Button>
+                                            )}
+                                            
+                                            {/* Reschedule Client button for completed appointments */}                      
+                                            {appointment.status.toLowerCase() === "completed" && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -407,7 +469,9 @@ const ProfessionalBookingsList = ({
                                                     }
                                                     Reagendar
                                                 </Button>
-                                            )}                                            {/* Reactivate button for cancelled appointments */}
+                                            )}
+                                            
+                                            {/* Reactivate button for cancelled appointments */}
                                             {(appointment.status.toLowerCase() === "cancelled" || 
                                               appointment.status.toLowerCase() === "no_show" ||
                                               appointment.status.toLowerCase() === "no-show" ||
@@ -429,7 +493,10 @@ const ProfessionalBookingsList = ({
                                                     Reativar
                                                 </Button>
                                             )}
-                                            {/* Reschedule button for pending/confirmed appointments */}                      {(appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && (
+                                            
+                                            {/* Reschedule button for pending/confirmed upcoming appointments */}                      
+                                            {(appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && 
+                                             !hasAppointmentTimePassed(appointment) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -444,7 +511,10 @@ const ProfessionalBookingsList = ({
                                                     Reagendar
                                                 </Button>
                                             )}
-                                            {/* Cancel button for pending/confirmed appointments */}                      {(appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && (
+                                            
+                                            {/* Cancel button for pending/confirmed upcoming appointments */}                      
+                                            {(appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && 
+                                             !hasAppointmentTimePassed(appointment) && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
@@ -458,32 +528,6 @@ const ProfessionalBookingsList = ({
                                                     <X className="h-4 w-4 mr-1" />
                                                     Cancelar
                                                 </Button>
-                                            )}                                            {/* Mark as No-Show button for pending/confirmed appointments */}
-                                            {canMarkAsNoShow(appointment) && (
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Button 
-                                                                variant="outline" 
-                                                                size="sm" 
-                                                                className="bg-gray-50 text-gray-600 hover:bg-gray-100 hover:text-gray-700 border-gray-200 py-1 px-2 h-auto whitespace-nowrap"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleStatusUpdate(appointment.id, "no_show");
-                                                                }}
-                                                                disabled={isProcessing === appointment.id}
-                                                            >
-                                                                {isProcessing === appointment.id ? 
-                                                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : 
-                                                                    <X className="h-4 w-4 mr-1" />
-                                                                }
-                                                                Não Compareceu
-                                                            </Button>
-                                                        </TooltipTrigger>                                                        <TooltipContent>
-                                                            <p>Marcar que o cliente não compareceu ao horário agendado</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
                                             )}
                                         </>
                                     )}
@@ -527,9 +571,54 @@ const ProfessionalBookingsList = ({
                                             <div className="flex items-start text-sm">
                                                 <span className="font-medium mr-1 mt-0.5">Observações:</span>
                                                 <span className="text-gray-700">{appointment.notes}</span>
+                                            </div>                                        )}                      
+                                        {/* For past appointments in expanded view, only show attendance marking options */}
+                                        {showActions && (appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && 
+                                         hasAppointmentTimePassed(appointment) && (
+                                            <div className="flex flex-wrap gap-2 mt-2 mb-1">
+                                                {/* Mark as Attended button */}
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="bg-purple-100 text-purple-800 hover:bg-purple-200 py-1 px-2 h-auto whitespace-nowrap"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleStatusUpdate(appointment.id, "completed");
+                                                    }}
+                                                    disabled={isProcessing === appointment.id}
+                                                >
+                                                    {isProcessing === appointment.id ?
+                                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" /> :
+                                                        <Check className="h-4 w-4 mr-1" />
+                                                    }
+                                                    Atendido
+                                                </Button>
+                                                
+                                                {/* No-Show button */}
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="bg-gray-100 text-gray-700 hover:bg-gray-200 py-1 px-2 h-auto whitespace-nowrap"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleStatusUpdate(appointment.id, "no_show");
+                                                    }}
+                                                    disabled={isProcessing === appointment.id}
+                                                >
+                                                    {isProcessing === appointment.id ? 
+                                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : 
+                                                        <X className="h-4 w-4 mr-1" />
+                                                    }
+                                                    Não Compareceu
+                                                </Button>
                                             </div>
-                                        )}                      {showActions && (appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && (
-                                            <div className="flex flex-wrap gap-2 mt-2 mb-1">{appointment.status.toLowerCase() === "pending" && (
+                                        )}
+                                        
+                                        {/* For upcoming appointments in expanded view */}
+                                        {showActions && (appointment.status.toLowerCase() === "pending" || appointment.status.toLowerCase() === "confirmed") && 
+                                         !hasAppointmentTimePassed(appointment) && (
+                                            <div className="flex flex-wrap gap-2 mt-2 mb-1">
+                                                {appointment.status.toLowerCase() === "pending" && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
