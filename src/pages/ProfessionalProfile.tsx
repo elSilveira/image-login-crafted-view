@@ -326,7 +326,7 @@ const ProfessionalProfile = () => {
     return (
       <>
         <Navigation />
-        <div className="container mx-auto px-4 py-8 mt-16">
+        <div className="container mx-auto px-4 py-6 mt-6">
           <Card className="border-destructive bg-destructive/10">
             <CardContent className="p-6 flex flex-col items-center text-center text-destructive">
               <AlertCircle className="h-10 w-10 mb-4" />
@@ -439,7 +439,7 @@ const ProfessionalProfile = () => {
         
         {/* Tabs navigation */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v)} className="space-y-4">
-          <TabsList className="bg-white w-full h-auto flex-wrap justify-start p-0 md:p-0 shadow-sm rounded-lg overflow-x-auto">
+          <TabsList className="bg-white w-full h-auto flex-wrap justify-start p-0 md:p-0 shadow-sm rounded-lg whitespace-nowrap">
             <TabsTrigger value="about" className="data-[state=active]:bg-iazi-primary/10 data-[state=active]:text-iazi-primary rounded-none border-b-2 border-transparent data-[state=active]:border-iazi-primary px-4 py-3 flex items-center gap-2 flex-shrink-0">
               <User className="h-4 w-4" />
               Sobre

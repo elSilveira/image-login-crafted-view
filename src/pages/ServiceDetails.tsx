@@ -49,7 +49,7 @@ const ServiceDetails = () => {
     return (
       <>
         <Navigation />
-        <div className="container mx-auto px-4 py-8 mt-16 flex justify-center items-center h-[calc(100vh-200px)]">
+        <div className="container mx-auto px-4 py-8 mt-6 flex justify-center items-center h-[calc(100vh-200px)]">
           <Loader2 className="h-12 w-12 animate-spin text-muted-foreground" />
         </div>
       </>
@@ -61,7 +61,7 @@ const ServiceDetails = () => {
     return (
       <>
         <Navigation />
-        <div className="container mx-auto px-4 py-8 mt-16">
+        <div className="container mx-auto px-4 py-6 mt-6">
           <Card className="border-destructive bg-destructive/10">
             <CardContent className="p-6 flex flex-col items-center text-center text-destructive">
               <AlertCircle className="h-10 w-10 mb-4" />
@@ -97,7 +97,7 @@ const ServiceDetails = () => {
   return (
     <>
       <Navigation />
-      <div className="container mx-auto px-4 py-8 mt-16">
+      <div className="container mx-auto px-4 py-6 mt-6">
         {/* Hero Section */}
         <div className="relative h-[300px] md:h-[400px] w-full mb-8 rounded-lg overflow-hidden bg-muted">
           {!imageError && (

@@ -57,7 +57,7 @@ const BookingReschedule = () => {
   return (
     <>
       <Navigation />
-      <div className="container mx-auto px-4 py-8 mt-16">
+      <div className="container mx-auto px-4 py-6 mt-6">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl font-semibold mb-6">Reagendar Agendamento</h1>
           

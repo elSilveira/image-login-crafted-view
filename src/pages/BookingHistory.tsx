@@ -81,11 +81,10 @@ const BookingHistory = () => {
       endDate
     }));
   };
-
   return (
     <>
       {showNav && <Navigation />}
-      <div className="container mx-auto px-4 py-6 mt-16 md:py-8">
+      <div className="container mx-auto px-4 py-6 mt-6 md:py-8">
         <h1 className="text-2xl md:text-3xl font-bold mb-6 text-iazi-text font-playfair">Meus Agendamentos</h1>
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -167,8 +166,7 @@ const BookingHistory = () => {
               defaultValue="scheduled" 
               className="w-full"
               onValueChange={(value) => setActiveTab(value as AppointmentStatus | "all")}
-            >
-              <TabsList className="mb-6 bg-iazi-background-alt w-full overflow-x-auto flex-nowrap justify-start sm:justify-center">
+            >              <TabsList className="mb-6 bg-iazi-background-alt w-full justify-start sm:justify-center whitespace-nowrap">
                 <TabsTrigger value="all" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white flex-1">
                   Todos
                 </TabsTrigger>

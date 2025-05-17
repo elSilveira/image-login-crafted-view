@@ -274,11 +274,10 @@ const Booking = () => {
         return null;
     }
   };
-
   return (
     <>
       <Navigation />
-      <div className="container mx-auto px-4 py-8 mt-16">
+      <div className="container mx-auto px-4 py-6 mt-6">
         <div className="max-w-3xl mx-auto">
           {/* Progress */}
           <div className="mb-8">

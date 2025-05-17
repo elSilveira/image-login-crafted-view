@@ -17,7 +17,7 @@ const UserProfile = () => {
         <h1 className="text-3xl font-bold mb-6">Meu Perfil</h1>
 
         <Tabs defaultValue="personal" className="space-y-4">
-          <TabsList className="bg-muted w-full justify-start overflow-x-auto">
+          <TabsList className="bg-muted w-full justify-start whitespace-nowrap">
             <TabsTrigger value="personal" className="min-w-[150px]">
               Informações Pessoais
             </TabsTrigger>

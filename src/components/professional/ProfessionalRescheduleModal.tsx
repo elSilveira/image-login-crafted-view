@@ -67,39 +67,66 @@ interface Appointment {
 
 interface ProfessionalRescheduleModalProps {
   appointment: Appointment;
-  onComplete: () => void;
-  onCancel: () => void;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const ProfessionalRescheduleModal = ({
   appointment,
-  onComplete,
-  onCancel,
+  isOpen,
+  onClose,
 }: ProfessionalRescheduleModalProps) => {
   const { toast } = useToast();
-  const [date, setDate] = useState<Date | undefined>(new Date(appointment.startTime));
-  const [timeSlot, setTimeSlot] = useState<TimeSlot | null>(() => {
-    const startDate = new Date(appointment.startTime);
-    const hour = getHours(startDate);
-    const minute = getMinutes(startDate);
-    return TIME_SLOTS.find(slot => slot.hour === hour && slot.minute === minute) || null;
+  const [date, setDate] = useState<Date | undefined>(() => {
+    try {
+      // Safely create a date from the appointment startTime
+      if (!appointment.startTime) return new Date();
+      const parsedDate = new Date(appointment.startTime);
+      
+      // Check if the date is valid
+      if (isNaN(parsedDate.getTime())) return new Date();
+      
+      return parsedDate;
+    } catch (error) {
+      console.error("Error parsing appointment date:", error);
+      return new Date();
+    }
   });
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+  
+  const [timeSlot, setTimeSlot] = useState<TimeSlot | null>(() => {
+    try {
+      if (!appointment.startTime) return null;
+      
+      const startDate = new Date(appointment.startTime);
+      
+      // Check if the date is valid
+      if (isNaN(startDate.getTime())) return null;
+      
+      const hour = getHours(startDate);
+      const minute = getMinutes(startDate);
+      return TIME_SLOTS.find(slot => slot.hour === hour && slot.minute === minute) || null;
+    } catch (error) {
+      console.error("Error getting time slot:", error);
+      return null;
+    }
+  });  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-
   // Get appointment duration in minutes
   const getAppointmentDuration = (): number => {
-    if (appointment.service?.duration) {
-      return appointment.service.duration;
-    }
-    
-    if (appointment.services && appointment.services.length > 0) {
-      // Sum of all service durations or default to 60 minutes
-      return appointment.services.reduce(
-        (total, s) => total + (s.service?.duration || 60), 
-        0
-      );
+    try {
+      if (appointment?.service?.duration) {
+        return appointment.service.duration;
+      }
+      
+      if (appointment?.services && appointment.services.length > 0) {
+        // Sum of all service durations or default to 60 minutes
+        return appointment.services.reduce(
+          (total, s) => total + (s.service?.duration || 60), 
+          0
+        );
+      }
+    } catch (error) {
+      console.error("Error calculating appointment duration:", error);
     }
     
     // Default duration: 60 minutes
@@ -111,7 +138,6 @@ const ProfessionalRescheduleModal = ({
     // Clear any previous errors when date changes
     if (error) setError(null);
   }, [date, timeSlot]);
-
   // Handle rescheduling submission
   const handleReschedule = async () => {
     if (!date || !timeSlot) {
@@ -123,31 +149,35 @@ const ProfessionalRescheduleModal = ({
       return;
     }
     
-    // Don't allow scheduling in the past
-    const now = new Date();
-    const selectedDateTime = set(date, { 
-      hours: timeSlot.hour, 
-      minutes: timeSlot.minute,
-      seconds: 0,
-      milliseconds: 0
-    });
-    
-    if (isBefore(selectedDateTime, now)) {
-      setError("Não é possível reagendar para uma data e hora no passado.");
-      return;
-    }
-    
-    // Don't allow same date/time as current appointment
-    const currentStart = new Date(appointment.startTime);
-    if (isEqual(selectedDateTime, currentStart)) {
-      setError("Por favor selecione uma data e hora diferente da atual.");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    setError(null);
-    
     try {
+      // Don't allow scheduling in the past
+      const now = new Date();
+      const selectedDateTime = set(new Date(date), { 
+        hours: timeSlot.hour, 
+        minutes: timeSlot.minute,
+        seconds: 0,
+        milliseconds: 0
+      });
+      
+      if (isBefore(selectedDateTime, now)) {
+        setError("Não é possível reagendar para uma data e hora no passado.");
+        return;
+      }
+      
+      // Don't allow same date/time as current appointment
+      try {
+        const currentStart = new Date(appointment.startTime);
+        if (!isNaN(currentStart.getTime()) && isEqual(selectedDateTime, currentStart)) {
+          setError("Por favor selecione uma data e hora diferente da atual.");
+          return;
+        }
+      } catch (error) {
+        console.error("Error comparing dates:", error);
+      }
+      
+      setIsSubmitting(true);
+      setError(null);
+      
       // Calculate end time based on service duration
       const duration = getAppointmentDuration();
       const endTime = new Date(selectedDateTime.getTime() + duration * 60 * 1000);
@@ -158,15 +188,13 @@ const ProfessionalRescheduleModal = ({
         selectedDateTime.toISOString(),
         endTime.toISOString()
       );
-      
       toast({
         title: "Reagendamento concluído",
         description: "O agendamento foi reagendado com sucesso.",
         variant: "default",
       });
       
-      setIsOpen(false);
-      onComplete();
+      onClose();
     } catch (error: any) {
       console.error("Erro ao reagendar:", error);
       setError(error.message || "Não foi possível reagendar o agendamento.");
@@ -180,11 +208,18 @@ const ProfessionalRescheduleModal = ({
       setIsSubmitting(false);
     }
   };
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (!open) {
-      onCancel();
+  // Safely format date
+  const safeFormat = (date: Date | string | undefined, formatString: string, options?: any): string => {
+    try {
+      if (!date) return "Data não disponível";
+      
+      const parsedDate = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(parsedDate.getTime())) return "Data inválida";
+      
+      return format(parsedDate, formatString, options);
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Erro ao formatar data";
     }
   };
 
@@ -205,9 +240,8 @@ const ProfessionalRescheduleModal = ({
     
     return "Serviço não identificado";
   };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Reagendar Agendamento</DialogTitle>
@@ -234,7 +268,7 @@ const ProfessionalRescheduleModal = ({
           <div>
             <p className="text-sm font-medium mb-1">Data atual</p>
             <p className="text-sm">
-              {format(new Date(appointment.startTime), "dd 'de' MMMM, yyyy 'às' HH:mm", { locale: ptBR })}
+              {safeFormat(appointment.startTime, "dd 'de' MMMM, yyyy 'às' HH:mm", { locale: ptBR })}
             </p>
           </div>
           
@@ -249,10 +283,9 @@ const ProfessionalRescheduleModal = ({
                       "justify-start text-left font-normal",
                       !date && "text-muted-foreground"
                     )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
+                  >                    <CalendarIcon className="mr-2 h-4 w-4" />
                     {date ? (
-                      format(date, "dd 'de' MMMM, yyyy", { locale: ptBR })
+                      safeFormat(date, "dd 'de' MMMM, yyyy", { locale: ptBR })
                     ) : (
                       <span>Selecione uma data</span>
                     )}
@@ -310,9 +343,8 @@ const ProfessionalRescheduleModal = ({
             </Popover>
           </div>
         </div>
-        
-        <DialogFooter>
-          <Button variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Button onClick={handleReschedule} disabled={!date || !timeSlot || isSubmitting}>
