@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BarChart3, Briefcase, Calendar, ClipboardList, FileText, Settings, Star, User } from "lucide-react";
@@ -8,8 +9,7 @@ const professionalMenu = [
   { title: "Perfil", icon: User, path: "/profile/professional", alwaysEnabled: true },
   { title: "Serviços", icon: Briefcase, path: "/profile/professional/services", alwaysEnabled: false },
   { title: "Dashboard", icon: BarChart3, path: "/profile/professional/dashboard", alwaysEnabled: false },
-  { title: "Agenda", icon: Calendar, path: "/profile/professional/calendar", alwaysEnabled: false },
-  { title: "Agendamentos", icon: ClipboardList, path: "/profile/professional/bookings", alwaysEnabled: false },
+  { title: "Agenda", icon: Calendar, path: "/profile/professional/schedule", alwaysEnabled: false }, // Updated path to unified view
   { title: "Avaliações", icon: Star, path: "/profile/professional/reviews", alwaysEnabled: false },
   { title: "Relatórios", icon: FileText, path: "/profile/professional/reports", alwaysEnabled: false },
   { title: "Configurações", icon: Settings, path: "/profile/professional/settings", alwaysEnabled: false },

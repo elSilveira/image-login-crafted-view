@@ -127,6 +127,8 @@ function App() {
               <Route path="/test/bookings" element={<TestBookingsList />} />
               <Route path="/test/debug-bookings" element={<DebugBookingsPage />} />
               
+              <Route path="/profile/professional/schedule" element={<ProfessionalAreaLayout />} />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
