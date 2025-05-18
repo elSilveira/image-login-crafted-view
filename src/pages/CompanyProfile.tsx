@@ -149,7 +149,7 @@ const CompanyProfile = () => {
     return (
       <>
         <Navigation />
-        <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="min-h-screen bg-[#F4F3F2] flex justify-center items-center">
           <Loading text="Carregando perfil da empresa..." size="lg" fullScreen />
         </div>
       </>
@@ -185,7 +185,7 @@ const CompanyProfile = () => {
   const logoImage = company.logoUrl || "https://via.placeholder.com/150?text=Logo";
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       
       {/* Header with cover image */}

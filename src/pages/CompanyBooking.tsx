@@ -14,7 +14,7 @@ const CompanyBooking = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       <div className="container max-w-7xl mx-auto py-8 px-4 pt-20">
         <Card>
@@ -35,7 +35,6 @@ const CompanyBooking = () => {
                   sortBy="rating"
                   ratingFilter={[0, 5]}
                   priceRange="Qualquer preço"
-                  availabilityFilter="Qualquer data"
                   currentPage={currentPage}
                   setCurrentPage={setCurrentPage}
                 />

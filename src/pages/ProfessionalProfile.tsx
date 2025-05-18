@@ -314,8 +314,8 @@ const ProfessionalProfile = () => {
     return (
       <>
         <Navigation />
-        <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-          <Loading text="Carregando perfil do profissional..." size="lg" fullScreen />
+        <div className="min-h-screen bg-[#F4F3F2] flex justify-center items-center">
+          <Loading text="Carregando profissional..." size="lg" fullScreen />
         </div>
       </>
     );
@@ -352,7 +352,7 @@ const ProfessionalProfile = () => {
   const avatarFallback = professional.name.substring(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       {/* Header with cover image */}
       <div className="relative h-48 md:h-64 w-full bg-cover bg-center bg-muted">

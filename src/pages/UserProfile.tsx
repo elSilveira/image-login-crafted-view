@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/Navigation";
@@ -11,7 +10,7 @@ import { UserPrivacy } from "@/components/profile/UserPrivacy";
 
 const UserProfile = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Meu Perfil</h1>

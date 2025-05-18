@@ -219,97 +219,124 @@ const Services = () => {
   };  // Render logic
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#F4F3F2]">
         <Navigation />
         <main className="container mx-auto px-4 pt-20 pb-12">
-          <PageLoading>
-            <Skeleton className="h-8 w-1/4 mb-2" />
-            <Skeleton className="h-4 w-1/2 mb-8" />
-            {/* Skeleton for filters */}
-            <Skeleton className="h-20 w-full mb-8" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-40 w-full" />
-            </div>
-            {/* Skeleton for pagination */}
-            <Skeleton className="h-10 w-1/3 mx-auto" />
-          </PageLoading>
+          <div className="container-padding mt-0 pt-0">
+            <PageLoading>
+              <Skeleton className="h-8 w-1/4 mb-2" />
+              <Skeleton className="h-4 w-1/2 mb-6" />
+              {/* Skeleton for filters */}
+              <Skeleton className="h-16 w-full rounded-lg mb-6" />
+              
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <Skeleton className="h-6 w-36 mb-6" />
+                <div className="space-y-4">
+                  {Array(4).fill(0).map((_, i) => (
+                    <div key={i} className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg">
+                      <Skeleton className="h-24 w-24 rounded-md" />
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-4 w-2/3" />
+                        <div className="flex justify-between mt-4">
+                          <Skeleton className="h-4 w-20" />
+                          <Skeleton className="h-4 w-20" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Skeleton for pagination */}
+                <div className="flex justify-center mt-8">
+                  <Skeleton className="h-10 w-1/3" />
+                </div>
+              </div>
+            </PageLoading>
+          </div>
         </main>
       </div>
     );
-  }
-  if (error) {
+  }  if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#F4F3F2]">
         <Navigation />
         <main className="container mx-auto px-4 pt-20 pb-12">
-           <Alert variant="destructive" className="mt-6">
-            <Terminal className="h-4 w-4" />
-            <AlertTitle>Erro ao Carregar Serviços</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="container-padding mt-0 pt-0">
+            <h1 className="text-2xl font-bold">Explorar Serviços</h1>
+            <p className="text-gray-600 mb-6">
+              Encontre os melhores serviços disponíveis na plataforma
+            </p>
+            
+            <Alert variant="destructive" className="mb-6">
+              <Terminal className="h-4 w-4" />
+              <AlertTitle>Erro ao Carregar Serviços</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </div>
         </main>
       </div>
     );
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
+  }  return (
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       <main className="container mx-auto px-4 pt-20 pb-12">
-        <h1 className="text-3xl font-bold mb-2">Serviços</h1>
-        <p className="text-gray-600 mb-8">
-          Encontre os melhores serviços disponíveis na plataforma
-        </p>
-
-        <ServiceFilters
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          category={category}
-          setCategory={setCategory}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          ratingFilter={ratingFilter}
-          setRatingFilter={setRatingFilter}
-          priceRange={priceRange}
-          setPriceRange={setPriceRange}
-          availabilityFilter={availabilityFilter}
-          setAvailabilityFilter={setAvailabilityFilter}
-        />
-
-        <div className="text-gray-600 mb-4">
-          <p>
-            <span className="font-semibold">{processedServices.length}</span> serviços encontrados
+        <div className="container-padding mt-0 pt-0">
+          <h1 className="text-2xl font-bold">Explorar Serviços</h1>
+          <p className="text-gray-600 mb-6">
+            Encontre os melhores serviços disponíveis na plataforma
           </p>
-        </div>
 
-        {processedServices.length === 0 ? (
-           <div className="text-center text-gray-500 mt-10">
-            <p>Nenhum serviço encontrado com os filtros aplicados.</p>
-          </div>
-        ) : (
-          <>
-            <div className="space-y-4 mb-8">
-              {currentServices.map((service) => (
-                <ServiceCard 
-                  key={service.id} 
-                  service={service}
-                  onEdit={() => handleEditService(service.id)}
-                  onPause={() => handlePauseService(service.id)}
-                  onDelete={() => handleDeleteService(service.id)}
-                />
-              ))}
+          <ServiceFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            category={category}
+            setCategory={setCategory}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            ratingFilter={ratingFilter}
+            setRatingFilter={setRatingFilter}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            availabilityFilter={availabilityFilter}
+            setAvailabilityFilter={setAvailabilityFilter}
+          />
+
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <div className="text-gray-600 mb-4">
+              <p>
+                <span className="font-semibold">{processedServices.length}</span> serviços encontrados
+              </p>
             </div>
 
-            <ServicePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              setCurrentPage={setCurrentPage}
-            />
-          </>
-        )}
+            {processedServices.length === 0 ? (
+              <div className="text-center text-gray-500 mt-10 py-16">
+                <p>Nenhum serviço encontrado com os filtros aplicados.</p>
+                <p className="mt-2 text-sm">Tente ajustar seus filtros ou buscar por outros termos.</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4 mb-8">
+                  {currentServices.map((service) => (
+                    <ServiceCard 
+                      key={service.id} 
+                      service={service}
+                      onEdit={() => handleEditService(service.id)}
+                      onPause={() => handlePauseService(service.id)}
+                      onDelete={() => handleDeleteService(service.id)}
+                    />
+                  ))}
+                </div>
+
+                <ServicePagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  setCurrentPage={setCurrentPage}
+                />
+              </>
+            )}
+          </div>
+        </div>
       </main>
     </div>
   );

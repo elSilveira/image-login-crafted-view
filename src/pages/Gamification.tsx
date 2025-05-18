@@ -1,4 +1,3 @@
-
 import React from "react";
 import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +34,7 @@ const Gamification = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       <div className="container py-6">
         <h1 className="text-3xl font-bold mb-6">Minhas Conquistas</h1>

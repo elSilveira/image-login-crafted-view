@@ -92,9 +92,8 @@ const Home = () => {
       }
     },
     staleTime: 15 * 60 * 1000,
-  });
-  return (
-    <div className="min-h-screen bg-white">
+  });  return (
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       
       <main className="container mx-auto px-0 pt-20 pb-12">

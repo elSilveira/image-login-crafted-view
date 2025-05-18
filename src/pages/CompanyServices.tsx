@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -18,7 +17,7 @@ const CompanyServices = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       <div className="container mx-auto px-4 py-8 mt-6">
         <CompanyServicesHeader 
@@ -33,8 +32,6 @@ const CompanyServices = () => {
           setRatingFilter={setRatingFilter}
           priceRange={priceRange}
           setPriceRange={setPriceRange}
-          availabilityFilter={availabilityFilter}
-          setAvailabilityFilter={setAvailabilityFilter}
         />
 
         <div className="my-8">
@@ -52,7 +49,6 @@ const CompanyServices = () => {
           sortBy={sortBy}
           ratingFilter={ratingFilter}
           priceRange={priceRange}
-          availabilityFilter={availabilityFilter}
           currentPage={currentPage}
           setCurrentPage={setCurrentPage}
         />

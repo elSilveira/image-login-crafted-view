@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
@@ -120,11 +119,11 @@ const Booking = () => {
 
   // Handle loading and error states
   if (serviceIds.length === 0 || serviceQueries.some(q => q.isLoading) || loadingProfessional) {
-    return <div className="min-h-screen bg-gray-50 flex justify-center items-center"><Progress value={0} /></div>;
+    return <div className="min-h-screen bg-[#F4F3F2] flex justify-center items-center"><Progress value={0} /></div>;
   }
   
   if (serviceQueries.some(q => q.isError) || errorProfessionalFlag) {
-    return <div className="min-h-screen bg-gray-50 flex justify-center items-center text-red-500">Erro ao carregar dados.</div>;
+    return <div className="min-h-screen bg-[#F4F3F2] flex justify-center items-center text-red-500">Erro ao carregar dados.</div>;
   }
   
   const professional = professionalData!;

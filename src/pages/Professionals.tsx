@@ -188,7 +188,7 @@ const Professionals = () => {
   const currentProfessionals = sortedProfessionals.slice(indexOfFirstProfessional, indexOfLastProfessional);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       
       <main className="container mx-auto px-4 pt-20 pb-12">

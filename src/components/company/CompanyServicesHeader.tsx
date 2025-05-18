@@ -40,8 +40,6 @@ interface CompanyServicesHeaderProps {
   setRatingFilter: (rating: number[]) => void;
   priceRange: string;
   setPriceRange: (price: string) => void;
-  availabilityFilter: string;
-  setAvailabilityFilter: (availability: string) => void;
 }
 
 interface CompanyDetails {
@@ -81,13 +79,9 @@ export const CompanyServicesHeader = ({
   setRatingFilter,
   priceRange,
   setPriceRange,
-  availabilityFilter,
-  setAvailabilityFilter,
-}: CompanyServicesHeaderProps) => {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+}: CompanyServicesHeaderProps) => {  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [tempRatingFilter, setTempRatingFilter] = useState<number[]>(ratingFilter);
   const [tempPriceRange, setTempPriceRange] = useState<string>(priceRange);
-  const [tempAvailability, setTempAvailability] = useState<string>(availabilityFilter);
 
   // Fetch company details
   const {
@@ -124,20 +118,16 @@ export const CompanyServicesHeader = ({
         return 'Categoria';
       })]
     : ["Todas categorias"];
-
   // Apply filters from the sheet
   const applyFilters = () => {
     setRatingFilter(tempRatingFilter);
     setPriceRange(tempPriceRange);
-    setAvailabilityFilter(tempAvailability);
     setIsFilterOpen(false);
   };
-
   // Reset filters to default values
   const resetFilters = () => {
     setTempRatingFilter([0]);
     setTempPriceRange("Qualquer preço");
-    setTempAvailability("Qualquer data");
   };
 
   // Format rating for display
@@ -159,9 +149,8 @@ export const CompanyServicesHeader = ({
   const handleSortChange = (value: string) => {
     setSortBy(value);
   };
-
   // Check if any filters are active
-  const hasActiveFilters = ratingFilter[0] > 0 || priceRange !== "Qualquer preço" || availabilityFilter !== "Qualquer data";
+  const hasActiveFilters = ratingFilter[0] > 0 || priceRange !== "Qualquer preço";
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
@@ -278,11 +267,9 @@ export const CompanyServicesHeader = ({
                 className="gap-2"
               >
                 Filtros
-                {hasActiveFilters && (
-                  <Badge className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-white text-primary">
+                {hasActiveFilters && (                  <Badge className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-white text-primary">
                     {(ratingFilter[0] > 0 ? 1 : 0) +
-                      (priceRange !== "Qualquer preço" ? 1 : 0) +
-                      (availabilityFilter !== "Qualquer data" ? 1 : 0)}
+                      (priceRange !== "Qualquer preço" ? 1 : 0)}
                   </Badge>
                 )}
               </Button>
@@ -331,28 +318,7 @@ export const CompanyServicesHeader = ({
                       <SelectItem value="R$200 a R$300">R$200 a R$300</SelectItem>
                       <SelectItem value="Acima de R$300">Acima de R$300</SelectItem>
                     </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Availability Filter */}
-                <div>
-                  <h3 className="text-sm font-medium mb-3">Disponibilidade</h3>
-                  <Select
-                    value={tempAvailability}
-                    onValueChange={setTempAvailability}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Selecione a disponibilidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Qualquer data">Qualquer data</SelectItem>
-                      <SelectItem value="Hoje">Hoje</SelectItem>
-                      <SelectItem value="Amanhã">Amanhã</SelectItem>
-                      <SelectItem value="Esta semana">Esta semana</SelectItem>
-                      <SelectItem value="Este mês">Este mês</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                  </Select>                </div>
               </div>
 
               <SheetFooter className="flex-col sm:flex-row gap-3">
@@ -408,26 +374,7 @@ export const CompanyServicesHeader = ({
                     <X className="h-3 w-3" />
                     <span className="sr-only">Remover filtro</span>
                   </Button>
-                </Badge>
-              )}
-
-              {availabilityFilter !== "Qualquer data" && (
-                <Badge
-                  variant="secondary"
-                  className="pl-2 pr-1 py-1 flex items-center gap-1"
-                >
-                  {availabilityFilter}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 p-0 hover:bg-transparent"
-                    onClick={() => setAvailabilityFilter("Qualquer data")}
-                  >
-                    <X className="h-3 w-3" />
-                    <span className="sr-only">Remover filtro</span>
-                  </Button>
-                </Badge>
-              )}
+                </Badge>              )}
 
               <Button
                 variant="ghost"
@@ -436,7 +383,6 @@ export const CompanyServicesHeader = ({
                 onClick={() => {
                   setRatingFilter([0]);
                   setPriceRange("Qualquer preço");
-                  setAvailabilityFilter("Qualquer data");
                 }}
               >
                 Limpar todos
