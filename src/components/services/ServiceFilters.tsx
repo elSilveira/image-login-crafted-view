@@ -73,14 +73,14 @@ export const ServiceFilters = ({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
           <Input 
             placeholder="Buscar por nome, categoria ou empresa..." 
-            className="pl-10 w-full bg-gray-50 border-gray-200 focus:bg-white"
+            className="pl-10 w-full bg-gray-50 border-iazi-border focus:bg-white focus:border-iazi-primary"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-full md:w-60">
+          <SelectTrigger className="w-full md:w-60 bg-white border-iazi-border">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
@@ -93,7 +93,7 @@ export const ServiceFilters = ({
         </Select>
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-full md:w-60">
+          <SelectTrigger className="w-full md:w-60 bg-white border-iazi-border">
             <SelectValue placeholder="Ordenar por" />
           </SelectTrigger>
           <SelectContent>
@@ -108,7 +108,7 @@ export const ServiceFilters = ({
       <div className="mt-4 flex justify-center">
         <Button 
           variant="ghost" 
-          className="text-sm text-gray-600 flex items-center gap-1"
+          className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
         >
           {showAdvancedFilters ? 'Ocultar filtros avançados' : 'Mostrar filtros avançados'}
@@ -117,9 +117,9 @@ export const ServiceFilters = ({
       </div>
 
       {showAdvancedFilters && (
-        <div className="flex flex-col md:flex-row gap-6 pt-4 mt-4 border-t border-gray-100">
+        <div className="flex flex-col md:flex-row gap-6 pt-4 mt-4 border-t border-iazi-border">
           <div className="w-full md:w-1/3">
-            <label className="flex items-center text-sm font-medium mb-2">
+            <label className="flex items-center text-sm font-medium mb-2 text-iazi-text">
               <Filter className="h-4 w-4 mr-2" />
               Avaliação mínima: {ratingFilter[0]}+ estrelas
             </label>
@@ -134,12 +134,12 @@ export const ServiceFilters = ({
           </div>
 
           <div className="w-full md:w-1/3">
-            <label className="flex items-center text-sm font-medium mb-2">
+            <label className="flex items-center text-sm font-medium mb-2 text-iazi-text">
               <Calendar className="h-4 w-4 mr-2" />
               Disponibilidade
             </label>
             <Select value={availabilityFilter} onValueChange={setAvailabilityFilter}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white border-iazi-border">
                 <SelectValue placeholder="Qualquer data" />
               </SelectTrigger>
               <SelectContent>
@@ -153,12 +153,12 @@ export const ServiceFilters = ({
           </div>
 
           <div className="w-full md:w-1/3">
-            <label className="flex items-center text-sm font-medium mb-2">
+            <label className="flex items-center text-sm font-medium mb-2 text-iazi-text">
               <Filter className="h-4 w-4 mr-2" />
               Faixa de preço
             </label>
             <Select value={priceRange} onValueChange={setPriceRange}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-white border-iazi-border">
                 <SelectValue placeholder="Qualquer preço" />
               </SelectTrigger>
               <SelectContent>

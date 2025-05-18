@@ -19,12 +19,21 @@ const CompanyBooking = () => {
       <Navigation />
       <div className="container max-w-7xl mx-auto py-8 px-4 pt-16">
         <PageContainer>
-          <Card>
+          <Card className="shadow-sm border-iazi-border">
             <CardContent className="p-6">
               <Tabs defaultValue="services" className="space-y-4">
-                <TabsList>
-                  <TabsTrigger value="services">1. Escolher Serviço</TabsTrigger>
-                  <TabsTrigger value="calendar" disabled={!selectedService}>
+                <TabsList className="bg-gray-100">
+                  <TabsTrigger 
+                    value="services" 
+                    className={`data-[state=active]:bg-white data-[state=active]:text-primary`}
+                  >
+                    1. Escolher Serviço
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="calendar" 
+                    disabled={!selectedService}
+                    className={`data-[state=active]:bg-white data-[state=active]:text-primary`}
+                  >
                     2. Escolher Horário
                   </TabsTrigger>
                 </TabsList>

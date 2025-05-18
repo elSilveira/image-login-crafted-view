@@ -1,3 +1,4 @@
+
 import React, { ReactNode } from "react";
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -30,42 +31,57 @@ export function SearchTabs({
         <TabsList className="w-full sm:w-auto bg-gray-100 p-1 rounded-md">
           <TabsTrigger 
             value="all" 
-            className={`flex-1 sm:flex-none relative ${viewType === 'all' ? 'bg-white shadow-sm text-[#7E69AB]' : 'text-gray-600 hover:text-[#7E69AB]'}`}
+            className={`flex-1 sm:flex-none relative ${viewType === 'all' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
           >
             Todos
-            <Badge className="ml-1 bg-[#F1F0FB] text-[#7E69AB] hover:bg-[#F1F0FB]">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
               {serviceCount + companyCount + professionalCount}
             </Badge>
           </TabsTrigger>
           <TabsTrigger 
             value="service" 
-            className={`flex-1 sm:flex-none relative ${viewType === 'service' ? 'bg-white shadow-sm text-[#7E69AB]' : 'text-gray-600 hover:text-[#7E69AB]'}`}
+            className={`flex-1 sm:flex-none relative ${viewType === 'service' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
           >
             Serviços
-            <Badge className="ml-1 bg-[#F1F0FB] text-[#7E69AB] hover:bg-[#F1F0FB]">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
               {serviceCount}
             </Badge>
           </TabsTrigger>
           <TabsTrigger 
             value="professional" 
-            className={`flex-1 sm:flex-none relative ${viewType === 'professional' ? 'bg-white shadow-sm text-[#7E69AB]' : 'text-gray-600 hover:text-[#7E69AB]'}`}
+            className={`flex-1 sm:flex-none relative ${viewType === 'professional' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
           >
             Profissionais
-            <Badge className="ml-1 bg-[#F1F0FB] text-[#7E69AB] hover:bg-[#F1F0FB]">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
               {professionalCount}
             </Badge>
           </TabsTrigger>
           <TabsTrigger 
             value="company" 
-            className={`flex-1 sm:flex-none relative ${viewType === 'company' ? 'bg-white shadow-sm text-[#7E69AB]' : 'text-gray-600 hover:text-[#7E69AB]'}`}
+            className={`flex-1 sm:flex-none relative ${viewType === 'company' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
           >
             Empresas
-            <Badge className="ml-1 bg-[#F1F0FB] text-[#7E69AB] hover:bg-[#F1F0FB]">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
               {companyCount}
             </Badge>
           </TabsTrigger>
         </TabsList>
+        
+        <div className="w-full sm:w-auto">
+          <Select value={sortBy} onValueChange={onSortChange}>
+            <SelectTrigger className="w-full sm:w-48 bg-white border-gray-200">
+              <SelectValue placeholder="Ordenar por" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="rating">Melhor avaliação</SelectItem>
+              <SelectItem value="reviews">Mais avaliações</SelectItem>
+              <SelectItem value="price-asc">Menor preço</SelectItem>
+              <SelectItem value="price-desc">Maior preço</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+      
       {/* Render the tab contents and filtros avançados abaixo das abas */}
       {children}
     </div>

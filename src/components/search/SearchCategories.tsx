@@ -27,7 +27,10 @@ export const SearchCategories = ({
           <Button
             variant={selectedCategory === "" ? "default" : "outline"}
             size="sm"
-            className="rounded-full"
+            className={cn(
+              "rounded-full",
+              selectedCategory === "" ? "bg-iazi-primary text-white hover:bg-iazi-primary-hover" : "text-iazi-text hover:text-iazi-primary border-iazi-border"
+            )}
             onClick={() => onCategoryChange("")}
           >
             Todas
@@ -44,7 +47,9 @@ export const SearchCategories = ({
                 size="sm"
                 className={cn(
                   "rounded-full",
-                  selectedCategory === displayName ? "bg-iazi-primary hover:bg-iazi-primary/90" : ""
+                  selectedCategory === displayName 
+                    ? "bg-iazi-primary text-white hover:bg-iazi-primary-hover" 
+                    : "text-iazi-text hover:text-iazi-primary hover:border-iazi-primary border-iazi-border"
                 )}
                 onClick={() => handleCategoryClick(displayName)}
               >

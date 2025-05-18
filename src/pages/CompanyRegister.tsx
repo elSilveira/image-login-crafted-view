@@ -10,7 +10,10 @@ const CompanyRegister = () => {
       <Navigation />
       <div className="container mx-auto px-4 py-8 pt-16">
         <PageContainer>
-          <CompanyRegisterForm />
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <h1 className="text-3xl font-bold mb-6 text-iazi-text border-b pb-4">Registre sua Empresa</h1>
+            <CompanyRegisterForm />
+          </div>
         </PageContainer>
       </div>
     </div>

@@ -62,7 +62,7 @@ interface Service {
     endTime: string;
   }>;
 }
-interface Company { id: string; name: string; specialty: string; rating: number; /* Add other fields CompanyCard expects */ services?: string[]; professionals?: string[]; professional_ids?: number[]; image?: string; reviews?: number; availability?: string; address?: any; /* address can be an object */ }
+interface Company { id: string; name: string; specialty: string; rating: number; services?: string[]; professionals?: string[]; professional_ids?: number[]; image?: string; reviews?: number; availability?: string; address?: any; }
 interface Category { id: number; name: string; icon: string; createdAt: string; updatedAt: string; }
 
 const ITEMS_PER_PAGE = 4;
@@ -143,7 +143,8 @@ const Search = () => {
     queryKey: ["search-api", searchTerm, selectedCategory, sortBy, currentPage, viewType, professionalTipo],
     queryFn: async () => {
       const apiType = getApiType(viewType);
-      if (apiType !== "all" && apiType !== "services" && apiType !== "professionals" && apiType !== "companies") return {};      const params: any = {
+      if (apiType !== "all" && apiType !== "services" && apiType !== "professionals" && apiType !== "companies") return {};      
+      const params: any = {
         q: searchTerm,
         category: selectedCategory,
         sort: sortBy,
@@ -155,7 +156,6 @@ const Search = () => {
         useProfessionalServices: true,
       };
       const result = await fetchSearchResults(params);
-        // Log the structure of the response to help with debugging the format change
       console.log('Search API response structure:', {
         hasServices: !!result.services,
         hasServicesByProfessional: !!result.servicesByProfessional,
@@ -167,11 +167,14 @@ const Search = () => {
       return result;
     },
     enabled: ["all", "service", "professional", "company"].includes(viewType),
-  });  // Use the new structure directly, with fallbacks for backward compatibility
+  });  
+  
+  // Use the new structure directly, with fallbacks for backward compatibility
   const professionals = searchApiResponse?.professionals || [];
   // Prioritize professional_services, then fall back to servicesByProfessional or services
   const services = searchApiResponse?.professional_services || searchApiResponse?.servicesByProfessional || searchApiResponse?.services || [];
   const companies = searchApiResponse?.companies || [];
+
   // Debug: Log the structure of professional_services if available
   if (process.env.NODE_ENV !== 'production' && searchApiResponse?.professional_services) {
     if (searchApiResponse.professional_services.length > 0) {
@@ -225,6 +228,7 @@ const Search = () => {
     (currentPage - 1) * professionalsPerPage, 
     currentPage * professionalsPerPage
   );
+  
   // Services tab
   const filteredServices = services.filter((service: any) => {
     const matchesSearch =
@@ -240,7 +244,9 @@ const Search = () => {
       (service.category && service.category.name === selectedCategory) ||
       (service.category && service.category.categoryName === selectedCategory) ||
       (service.categoryName === selectedCategory);
-    const matchesRating = (service.rating ?? 0) >= ratingFilter[0];    // Handle price for both traditional services and professional_services
+    const matchesRating = (service.rating ?? 0) >= ratingFilter[0];    
+    
+    // Handle price for both traditional services and professional_services
     let priceString = service.price;
     if (typeof priceString !== 'string' && typeof priceString !== 'undefined') {
       priceString = String(priceString);
@@ -331,7 +337,9 @@ const Search = () => {
   const handlePageChange = (page: number) => {
     updateFilters({ page: page.toString() });
   };
-  // --- Rendering Logic ---  // Mostrar loading de página inteira durante o carregamento inicial
+  
+  // --- Rendering Logic ---  
+  // Mostrar loading de página inteira durante o carregamento inicial
   if (isAnyLoading && !searchApiResponse) {
     return (
       <div className="min-h-screen bg-[#F4F3F2]">
@@ -384,7 +392,8 @@ const Search = () => {
         </div>
       </div>
     ))  );
-    // Enhanced loading skeletons that are more visible and consistent
+    
+  // Enhanced loading skeletons that are more visible and consistent
   const renderEnhancedLoadingSkeletons = (count: number, type: 'service' | 'company' | 'professional') => (
     <div className="space-y-4">
       <Loading 
@@ -458,19 +467,21 @@ const Search = () => {
       );
     }
     return null;
-  };  return (
+  };  
+  
+  return (
     <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
       <main className="container mx-auto pt-16 pb-12">
         <PageContainer>
-          {/* Header */}
-          <div className="mb-6">
+          {/* Header with improved styling */}
+          <div className="mb-6 bg-white p-6 rounded-lg shadow-sm">
             {searchTerm ? (
-              <h1 className="text-2xl font-bold mb-2">Resultados para "{searchTerm}"</h1>
+              <h1 className="text-2xl font-bold mb-2 text-iazi-text">Resultados para "{searchTerm}"</h1>
             ) : categoryFilter ? (
-              <h1 className="text-2xl font-bold mb-2">{categoryFilter}</h1>
+              <h1 className="text-2xl font-bold mb-2 text-iazi-text">{categoryFilter}</h1>
             ) : (
-              <h1 className="text-2xl font-bold mb-2">Explorar</h1>
+              <h1 className="text-2xl font-bold mb-2 text-iazi-text">Explorar</h1>
             )}
             
             <div className="text-gray-600">
@@ -511,11 +522,11 @@ const Search = () => {
                   companyCount={totalCompanies}
                   professionalCount={totalProfessionals}
                 >
-                  {/* Compact filter toggle */}
-                  <div className="mb-2 flex justify-end">
+                  {/* Compact filter toggle with nicer styling */}
+                  <div className="mb-4 flex justify-end">
                     <button 
                       onClick={() => setShowFilters(!showFilters)}
-                      className="text-sm text-gray-600 flex items-center gap-1 hover:text-gray-900"
+                      className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1 bg-white/80 px-4 py-2 rounded-full shadow-sm"
                     >
                       {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
                     </button>
@@ -542,10 +553,10 @@ const Search = () => {
                   )}
                   
                   <TabsContent value="all">
-                    <div className="space-y-10">
+                    <div className="space-y-6">
                       {/* Serviços section */}
                       <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Serviços</h2>
+                        <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Serviços</h2>
                         {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'service') : 
                          isErrorSearch ? (
                           <Alert variant="destructive" className="my-4">
@@ -564,7 +575,7 @@ const Search = () => {
                       
                       {/* Profissionais section */}
                       <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Profissionais</h2>
+                        <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Profissionais</h2>
                         {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'professional') : 
                          isErrorSearch ? (
                           <Alert variant="destructive" className="my-4">
@@ -583,7 +594,7 @@ const Search = () => {
 
                       {/* Empresas section */}
                       <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-[#1A1F2C] border-b pb-2">Empresas</h2>
+                        <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Empresas</h2>
                         {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'company') : 
                          isErrorSearch ? (
                           <Alert variant="destructive" className="my-4">
@@ -630,7 +641,7 @@ const Search = () => {
                     
                     {/* Pagination for services */}
                     {!isLoadingSearch && !isErrorSearch && totalPagesServices > 1 && (
-                      <div className="mt-6">
+                      <div className="mt-6 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
                           totalPages={totalPagesServices}
@@ -658,7 +669,7 @@ const Search = () => {
                     
                     {/* Pagination for companies */}
                     {!isLoadingSearch && !isErrorSearch && totalPagesCompanies > 1 && (
-                      <div className="mt-6">
+                      <div className="mt-6 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
                           totalPages={totalPagesCompanies}
@@ -700,7 +711,7 @@ const Search = () => {
                     
                     {/* Pagination for professionals */}
                     {!isLoadingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
-                      <div className="mt-6">
+                      <div className="mt-6 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
                           totalPages={totalPagesProfessionals}
@@ -716,7 +727,7 @@ const Search = () => {
 
           {/* Pagination for all tabs except "all" */}
           {viewType !== "all" && !isAnyLoading && !isAnyError && totalPages > 0 && (
-            <div className="mt-8">
+            <div className="mt-8 flex justify-center">
               <ServicePagination
                 currentPage={currentPage}
                 totalPages={totalPages}

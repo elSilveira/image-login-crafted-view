@@ -2,6 +2,9 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { PageContainer } from "@/components/ui/page-container";
+import Navigation from "@/components/Navigation";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const NotFound = () => {
   const location = useLocation();
@@ -14,16 +17,21 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F4F3F2]">
-      <PageContainer>
-        <div className="text-center py-20">
-          <h1 className="text-4xl font-bold mb-4">404</h1>
-          <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-          <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-            Return to Home
-          </a>
-        </div>
-      </PageContainer>
+    <div className="min-h-screen bg-[#F4F3F2]">
+      <Navigation />
+      <div className="container mx-auto px-4 py-8 pt-16">
+        <PageContainer>
+          <div className="text-center bg-white p-12 rounded-lg shadow-sm">
+            <h1 className="text-6xl font-bold mb-6 text-iazi-primary">404</h1>
+            <p className="text-xl text-gray-600 mb-8">Oops! Página não encontrada</p>
+            <Link to="/">
+              <Button className="bg-iazi-primary hover:bg-iazi-primary-hover text-white">
+                Voltar para Página Inicial
+              </Button>
+            </Link>
+          </div>
+        </PageContainer>
+      </div>
     </div>
   );
 };
