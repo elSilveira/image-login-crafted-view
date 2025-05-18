@@ -23,20 +23,21 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
     const results = await fetchSearchResults({
       q: query,
       quickBooking: true,
-      limit: 5
+      limit: 8 // Increased limit to show more results in the dropdown
     });
     
     // Transform the results into QuickBookingResults
     const quickResults: QuickBookingResult[] = [];
-      // Add directly bookable services first - supporting both new and legacy formats
+    
+    // Add directly bookable services first - supporting both new and legacy formats
     const servicesArray = results.servicesByProfessional || results.services || [];
     if (servicesArray.length > 0) {
-      servicesArray.slice(0, 2).forEach((service: any) => {
+      servicesArray.slice(0, 3).forEach((service: any) => {
         quickResults.push({
           id: service.id,
           type: "services",
           name: service.name || "Serviço sem nome",
-          subtitle: service.company?.name || service.professional?.name,
+          subtitle: service.company?.name || service.professional?.name || service.profissional?.name,
           category: typeof service.category === 'object' ? service.category?.name : service.category,
           price: service.price,
           rating: service.rating,
@@ -48,7 +49,7 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
     
     // Add professionals
     if (results.professionals) {
-      results.professionals.slice(0, 2).forEach((professional: any) => {
+      results.professionals.slice(0, 3).forEach((professional: any) => {
         quickResults.push({
           id: professional.id,
           type: "professional",
@@ -56,14 +57,14 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
           subtitle: professional.company?.name || professional.role,
           rating: professional.rating,
           directBooking: professional.services && professional.services.length > 0,
-          imageUrl: professional.avatarUrl
+          imageUrl: professional.avatarUrl || professional.image
         });
       });
     }
     
     // Add companies
     if (results.companies) {
-      results.companies.slice(0, 1).forEach((company: any) => {
+      results.companies.slice(0, 2).forEach((company: any) => {
         quickResults.push({
           id: company.id,
           type: "company",
@@ -71,7 +72,7 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
           subtitle: company.specialty || company.address?.city,
           rating: company.rating,
           directBooking: false,
-          imageUrl: company.logoUrl
+          imageUrl: company.logoUrl || company.image
         });
       });
     }
@@ -83,5 +84,3 @@ export const getQuickBookingOptions = async (query: string): Promise<QuickBookin
     return [];
   }
 };
-
-// Add more search-related functions as needed

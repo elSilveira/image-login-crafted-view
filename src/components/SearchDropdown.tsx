@@ -1,13 +1,15 @@
 
-// src/components/SearchDropdown.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Loader2 } from "lucide-react"; 
-import { Input } from "./ui/input";
+import { Search, Loader2, ArrowRight } from "lucide-react"; 
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "./ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Badge } from "./ui/badge";
-import { debounce } from "lodash"; // Using lodash for debouncing
+import { SearchInputDebounced } from "./search/SearchInputDebounced";
+import { getQuickBookingOptions } from "@/api/searchResults";
+import { Avatar } from "@/components/ui/avatar";
+import { AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 // Interface for combined search results from API
 export interface SearchResult {
@@ -17,6 +19,7 @@ export interface SearchResult {
   subtitle?: string; 
   category?: string;
   directBooking?: boolean; // Flag for services that can be booked directly
+  imageUrl?: string;
 }
 
 // Popular categories (assuming static for now)
@@ -35,64 +38,48 @@ export function SearchDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Debounced function to update the search query after user stops typing
-  const debouncedSetQuery = useCallback(
-    debounce((query: string) => {
-      setDebouncedQuery(query);
-    }, 400), // 400ms debounce delay
-    []
-  );
-
-  // Handle input change with immediate UI update but debounced API calls
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value); // Update UI immediately
-    debouncedSetQuery(value); // Debounce actual search query
-  };
-
-  // Effect to trigger API fetch when debounced query changes
-  useEffect(() => {
-    const fetchResults = async () => {
-      if (!debouncedQuery.trim()) {
-        setSearchResults([]);
-        setIsLoading(false);
-        setError(null);
-        return;
-      }
-
-      setIsLoading(true);
+  // Effect to trigger API fetch when query changes (using debounce from SearchInputDebounced)
+  const handleSearchChange = async (value: string) => {
+    setSearchQuery(value);
+    
+    if (!value.trim()) {
+      setSearchResults([]);
+      setIsLoading(false);
       setError(null);
-      try {
-        // TODO: Implement this API endpoint in the backend
-        const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(debouncedQuery)}&limit=5`);
-        if (!response.ok) {
-          throw new Error(`Erro HTTP ${response.status}: Falha ao buscar sugestões`);
-        }
-        const data: SearchResult[] = await response.json(); // Assuming API returns SearchResult[]
-        setSearchResults(data ?? []); // Handle null/undefined response
-      } catch (err: any) {
-        console.error("Erro ao buscar sugestões:", err);
-        setError(err.message || "Erro ao buscar sugestões.");
-        setSearchResults([]); // Clear results on error
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      return;
+    }
 
-    fetchResults();
-  }, [debouncedQuery]);
-
-  // Clean up debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedSetQuery.cancel();
-    };
-  }, [debouncedSetQuery]);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Use our API function to get quick booking options
+      const results = await getQuickBookingOptions(value);
+      
+      // Transform results to match SearchResult interface
+      const formattedResults: SearchResult[] = results.map(item => ({
+        id: item.id,
+        title: item.name,
+        type: item.type,
+        subtitle: item.subtitle,
+        category: item.category,
+        directBooking: item.directBooking,
+        imageUrl: item.imageUrl
+      }));
+      
+      setSearchResults(formattedResults);
+    } catch (err: any) {
+      console.error("Error fetching search suggestions:", err);
+      setError(err.message || "Erro ao buscar sugestões.");
+      setSearchResults([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
@@ -127,107 +114,185 @@ export function SearchDropdown() {
     navigate(`/search?category=${encodeURIComponent(categoryName)}&type=${type}`);
   };
 
+  // Group results by type for better categorization
+  const groupedResults = {
+    services: searchResults.filter(result => 
+      result.type === "service" || result.type === "services"
+    ),
+    professionals: searchResults.filter(result => 
+      result.type === "professional"
+    ),
+    companies: searchResults.filter(result => 
+      result.type === "company"
+    )
+  };
+
+  const hasResults = searchResults.length > 0;
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 z-10" />
-          <Input
-            placeholder="Buscar serviços, profissionais..."
+        <div className="relative w-full max-w-md">
+          <SearchInputDebounced
             value={searchQuery}
             onChange={handleSearchChange}
-            className="pl-10 pr-10 w-full bg-gray-50 border-gray-200 focus:bg-white h-9 text-sm"
-            onClick={() => setOpen(true)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSearch();
-              }
-            }}
+            isLoading={isLoading}
+            placeholder="Buscar serviços, profissionais..."
+            className="w-full bg-white border-gray-200 focus:border-iazi-primary rounded-full"
+            delay={400}
           />
-          {isLoading && (
-            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 animate-spin z-10" />
-          )}
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="end">
-        <Command>
+      <PopoverContent className="w-[400px] p-0 rounded-lg border-gray-200 shadow-lg" align="start">
+        <Command className="rounded-lg">
           <CommandList>
-            {debouncedQuery.trim() && isLoading && (
-              <div className="p-3 text-sm text-gray-500 flex items-center justify-center space-x-2">
-                <Loader2 className="animate-spin h-4 w-4" />
+            {searchQuery.trim() && isLoading && (
+              <div className="p-4 text-sm text-gray-500 flex items-center justify-center space-x-2">
+                <Loader2 className="animate-spin h-4 w-4 text-iazi-primary" />
                 <span>Carregando sugestões...</span>
               </div>
             )}
             
             {!isLoading && error && (
-              <div className="p-3 text-sm text-red-600">{error}</div>
+              <div className="p-4 text-sm text-red-600">{error}</div>
             )}
             
-            {!isLoading && !error && debouncedQuery.trim() && searchResults.length === 0 && (
-              <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+            {!isLoading && !error && searchQuery.trim() && !hasResults && (
+              <CommandEmpty className="p-4 text-gray-500">
+                Nenhum resultado encontrado para "{searchQuery}"
+              </CommandEmpty>
             )}
 
-            {debouncedQuery.trim() && !isLoading && !error && searchResults.length > 0 && (
-              <CommandGroup heading="Resultados rápidos">
-                {searchResults.map((result) => (
+            {/* Services section */}
+            {groupedResults.services.length > 0 && (
+              <CommandGroup heading="Serviços" className="px-2">
+                {groupedResults.services.map((result) => (
                   <CommandItem
-                    key={`${result.type}-${result.id}`}
+                    key={`service-${result.id}`}
                     onSelect={() => handleSelect(result)}
-                    className="flex flex-col items-start py-3 cursor-pointer"
+                    className="flex items-start gap-3 py-3 cursor-pointer rounded-md hover:bg-gray-50"
                   >
-                    <div className="flex items-center w-full">
-                      <span className="font-medium truncate" title={result.title}>{result.title}</span>
-                      <div className="ml-auto flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs flex-shrink-0">
-                          {result.type === "company" ? "Empresa" :
-                           result.type === "professional" ? "Profissional" :
-                           "Serviço"}
-                        </Badge>
+                    <div className="flex-shrink-0 w-10 h-10 rounded-md overflow-hidden bg-gray-100">
+                      {result.imageUrl ? (
+                        <img src={result.imageUrl} alt={result.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-iazi-primary/10 text-iazi-primary text-xs font-medium">
+                          Serv
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-medium text-sm truncate" title={result.title}>{result.title}</span>
                         {result.directBooking && (
-                          <Badge variant="default" className="bg-green-600 text-xs">
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px]">
                             Agendar
                           </Badge>
                         )}
                       </div>
+                      {result.subtitle && (
+                        <span className="text-xs text-gray-500 truncate" title={result.subtitle}>{result.subtitle}</span>
+                      )}
+                      {result.category && (
+                        <span className="text-xs text-gray-400 truncate mt-0.5" title={result.category}>{result.category}</span>
+                      )}
                     </div>
-                    {result.subtitle && (
-                      <span className="text-sm text-gray-500 truncate" title={result.subtitle}>{result.subtitle}</span>
-                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>
             )}
 
-            {debouncedQuery.trim() && !isLoading && (
-              <CommandItem
-                onSelect={handleSearch}
-                className="border-t border-gray-100 py-3 text-[#4664EA] font-medium cursor-pointer"
-              >
-                Ver todos os resultados para "{debouncedQuery}"
-              </CommandItem>
+            {/* Professionals section */}
+            {groupedResults.professionals.length > 0 && (
+              <CommandGroup heading="Profissionais" className="px-2">
+                {groupedResults.professionals.map((result) => (
+                  <CommandItem
+                    key={`professional-${result.id}`}
+                    onSelect={() => handleSelect(result)}
+                    className="flex items-start gap-3 py-3 cursor-pointer rounded-md hover:bg-gray-50"
+                  >
+                    <Avatar className="h-10 w-10 flex-shrink-0">
+                      {result.imageUrl ? (
+                        <AvatarImage src={result.imageUrl} alt={result.title} />
+                      ) : (
+                        <AvatarFallback className="bg-iazi-primary/10 text-iazi-primary">
+                          {result.title.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <span className="font-medium text-sm truncate" title={result.title}>{result.title}</span>
+                      </div>
+                      {result.subtitle && (
+                        <span className="text-xs text-gray-500 truncate" title={result.subtitle}>{result.subtitle}</span>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
             )}
 
-            {!debouncedQuery.trim() && (
-              <CommandGroup heading="Categorias populares">
+            {/* Companies section */}
+            {groupedResults.companies.length > 0 && (
+              <CommandGroup heading="Empresas" className="px-2">
+                {groupedResults.companies.map((result) => (
+                  <CommandItem
+                    key={`company-${result.id}`}
+                    onSelect={() => handleSelect(result)}
+                    className="flex items-start gap-3 py-3 cursor-pointer rounded-md hover:bg-gray-50"
+                  >
+                    <div className="flex-shrink-0 w-10 h-10 rounded-md overflow-hidden bg-gray-100 border border-gray-200">
+                      {result.imageUrl ? (
+                        <img src={result.imageUrl} alt={result.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-50 text-gray-400 text-xs font-medium">
+                          {result.title.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <span className="font-medium text-sm truncate" title={result.title}>{result.title}</span>
+                      </div>
+                      {result.subtitle && (
+                        <span className="text-xs text-gray-500 truncate" title={result.subtitle}>{result.subtitle}</span>
+                      )}
+                    </div>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {searchQuery.trim() && !isLoading && (
+              <div className="p-2 border-t border-gray-100">
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-between text-iazi-primary hover:text-iazi-primary-hover hover:bg-iazi-primary/5"
+                  onClick={handleSearch}
+                >
+                  <span>Ver todos os resultados</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {!searchQuery.trim() && (
+              <CommandGroup heading="Categorias populares" className="px-2">
                 <div className="flex flex-wrap gap-2 p-3">
-                  {popularCategories.map((category) => {
-                    // Make sure to extract name as a string
-                    const categoryName = typeof category.name === 'string' ? category.name : 'Categoria';
-                    
-                    return (
-                      <Badge
-                        key={category.id}
-                        variant="outline"
-                        className="hover:bg-gray-100 cursor-pointer px-3 py-1.5"
-                        onClick={() => handleCategorySelect(category)}
-                      >
-                        {categoryName}
-                        <span className="ml-1.5 text-xs text-gray-500">
-                          {category.type === "company" ? "Empresa" : "Serviço"}
-                        </span>
-                      </Badge>
-                    );
-                  })}
+                  {popularCategories.map((category) => (
+                    <Badge
+                      key={category.id}
+                      variant="outline"
+                      className="hover:bg-gray-50 cursor-pointer px-3 py-1.5 transition-colors border-gray-200"
+                      onClick={() => handleCategorySelect(category)}
+                    >
+                      {category.name}
+                      <span className="ml-1.5 text-xs text-gray-400">
+                        {category.type === "company" ? "Empresa" : "Serviço"}
+                      </span>
+                    </Badge>
+                  ))}
                 </div>
               </CommandGroup>
             )}
