@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -17,6 +18,7 @@ import { ProfessionalQuickCard } from "@/components/home/ProfessionalQuickCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ServiceFilters } from "@/components/services/ServiceFilters";
 import { Loading, LoadingInline, PageLoading } from "@/components/ui/loading";
+import { PageContainer } from "@/components/ui/page-container";
 
 // Interfaces
 interface Service { 
@@ -89,6 +91,7 @@ const Search = () => {
   const [priceRange, setPriceRange] = useState("Qualquer preço");
   const [ratingFilter, setRatingFilter] = useState([0]);
   const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     console.log("[Search Final Effect] Updating state from URL params:", { typeFilter, categoryFilter, pageParam });
@@ -333,8 +336,8 @@ const Search = () => {
     return (
       <div className="min-h-screen bg-[#F4F3F2]">
         <Navigation />
-        <main className="container mx-auto pt-20 pb-12">
-          <div className="container-padding mt-0 pt-0">
+        <main className="container mx-auto pt-16 pb-12">
+          <PageContainer>
             <PageLoading>
               <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
                 <Skeleton className="h-8 w-1/4 mb-4" />
@@ -360,7 +363,7 @@ const Search = () => {
                 <Skeleton className="h-10 w-52" />
               </div>
             </PageLoading>
-          </div>
+          </PageContainer>
         </main>
       </div>
     );
@@ -458,8 +461,8 @@ const Search = () => {
   };  return (
     <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
-      <main className="container mx-auto pt-20 pb-12">
-        <div className="container-padding mt-0 pt-0">
+      <main className="container mx-auto pt-16 pb-12">
+        <PageContainer>
           {/* Header */}
           <div className="mb-6">
             {searchTerm ? (
@@ -508,23 +511,37 @@ const Search = () => {
                   companyCount={totalCompanies}
                   professionalCount={totalProfessionals}
                 >
-                  {/* Filtros avançados abaixo das abas */}
-                  <div className="mb-6">
-                    <ServiceFilters
-                      searchTerm={searchTerm}
-                      setSearchTerm={v => updateFilters({ q: v })}
-                      category={selectedCategory}
-                      setCategory={v => updateFilters({ category: v })}
-                      sortBy={sortBy}
-                      setSortBy={v => handleSortChange(v)}
-                      ratingFilter={ratingFilter}
-                      setRatingFilter={setRatingFilter}
-                      priceRange={priceRange}
-                      setPriceRange={setPriceRange}
-                      availabilityFilter={availabilityFilter}
-                      setAvailabilityFilter={setAvailabilityFilter}
-                    />
-                  </div>                  <TabsContent value="all">
+                  {/* Compact filter toggle */}
+                  <div className="mb-2 flex justify-end">
+                    <button 
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="text-sm text-gray-600 flex items-center gap-1 hover:text-gray-900"
+                    >
+                      {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
+                    </button>
+                  </div>
+                  
+                  {/* Conditionally render filters */}
+                  {showFilters && (
+                    <div className="mb-6">
+                      <ServiceFilters
+                        searchTerm={searchTerm}
+                        setSearchTerm={v => updateFilters({ q: v })}
+                        category={selectedCategory}
+                        setCategory={v => updateFilters({ category: v })}
+                        sortBy={sortBy}
+                        setSortBy={v => handleSortChange(v)}
+                        ratingFilter={ratingFilter}
+                        setRatingFilter={setRatingFilter}
+                        priceRange={priceRange}
+                        setPriceRange={setPriceRange}
+                        availabilityFilter={availabilityFilter}
+                        setAvailabilityFilter={setAvailabilityFilter}
+                      />
+                    </div>
+                  )}
+                  
+                  <TabsContent value="all">
                     <div className="space-y-10">
                       {/* Serviços section */}
                       <div className="bg-white rounded-lg p-6 shadow-sm">
@@ -593,7 +610,9 @@ const Search = () => {
                           </div>
                         )}
                     </div>
-                  </TabsContent><TabsContent value="service">
+                  </TabsContent>
+
+                  <TabsContent value="service">
                     <div className="bg-white rounded-lg p-6 shadow-sm">
                       {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'service') : 
                        isErrorSearch ? (
@@ -647,7 +666,9 @@ const Search = () => {
                         />
                       </div>
                     )}
-                  </TabsContent>                  <TabsContent value="professional">
+                  </TabsContent>
+
+                  <TabsContent value="professional">
                     <div className="bg-white rounded-lg p-6 shadow-sm">
                       <div className="mb-4 flex items-center gap-4">
                         <label className="font-medium text-sm">Profissionais:</label>
@@ -691,7 +712,9 @@ const Search = () => {
                 </SearchTabs>
               </Tabs>
             </div>
-          )}          {/* Pagination for all tabs except "all" */}
+          )}
+
+          {/* Pagination for all tabs except "all" */}
           {viewType !== "all" && !isAnyLoading && !isAnyError && totalPages > 0 && (
             <div className="mt-8">
               <ServicePagination
@@ -704,7 +727,7 @@ const Search = () => {
 
           {/* Final Check: If nothing rendered (e.g., category error blocked tabs), show generic empty/error */} 
           {isErrorCategories && <EmptyResults />}
-        </div>
+        </PageContainer>
       </main>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
@@ -5,6 +6,7 @@ import { CompanyServicesHeader } from "@/components/company/CompanyServicesHeade
 import { CompanyServicesList } from "@/components/company/CompanyServicesList";
 import { CompanyFeaturedServices } from "@/components/company/CompanyFeaturedServices";
 import { CompanyPromotions } from "@/components/company/CompanyPromotions";
+import { PageContainer } from "@/components/ui/page-container";
 
 const CompanyServices = () => {
   const { id } = useParams();
@@ -15,43 +17,48 @@ const CompanyServices = () => {
   const [priceRange, setPriceRange] = useState("Qualquer preço");
   const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
 
   return (
     <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
-      <div className="container mx-auto px-4 py-8 mt-6">
-        <CompanyServicesHeader 
-          companyId={id} 
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          category={category}
-          setCategory={setCategory}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          ratingFilter={ratingFilter}
-          setRatingFilter={setRatingFilter}
-          priceRange={priceRange}
-          setPriceRange={setPriceRange}
-        />
+      <div className="container mx-auto px-4 py-8 pt-16">
+        <PageContainer>
+          <CompanyServicesHeader 
+            companyId={id} 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            category={category}
+            setCategory={setCategory}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            ratingFilter={ratingFilter}
+            setRatingFilter={setRatingFilter}
+            priceRange={priceRange}
+            setPriceRange={setPriceRange}
+            showFilters={showFilters}
+            setShowFilters={setShowFilters}
+          />
 
-        <div className="my-8">
-          <CompanyFeaturedServices companyId={id} />
-        </div>
+          <div className="my-8">
+            <CompanyFeaturedServices companyId={id} />
+          </div>
 
-        <div className="my-8">
-          <CompanyPromotions companyId={id} />
-        </div>
+          <div className="my-8">
+            <CompanyPromotions companyId={id} />
+          </div>
 
-        <CompanyServicesList 
-          companyId={id}
-          searchTerm={searchTerm}
-          category={category}
-          sortBy={sortBy}
-          ratingFilter={ratingFilter}
-          priceRange={priceRange}
-          currentPage={currentPage}
-          setCurrentPage={setCurrentPage}
-        />
+          <CompanyServicesList 
+            companyId={id}
+            searchTerm={searchTerm}
+            category={category}
+            sortBy={sortBy}
+            ratingFilter={ratingFilter}
+            priceRange={priceRange}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+          />
+        </PageContainer>
       </div>
     </div>
   );

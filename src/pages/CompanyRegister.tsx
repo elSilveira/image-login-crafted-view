@@ -1,16 +1,17 @@
 
-import React, { useState } from "react";
+import React from "react";
 import Navigation from "@/components/Navigation";
 import { CompanyRegisterForm } from "@/components/company/CompanyRegisterForm";
+import { PageContainer } from "@/components/ui/page-container";
 
 const CompanyRegister = () => {
   return (
     <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="container mx-auto px-4 py-8 pt-16">
+        <PageContainer>
           <CompanyRegisterForm />
-        </div>
+        </PageContainer>
       </div>
     </div>
   );
