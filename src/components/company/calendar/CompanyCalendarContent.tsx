@@ -12,9 +12,12 @@ export const CompanyCalendarContent = () => {
   const [selectedResource, setSelectedResource] = useState<string>("all");
   const [filters, setFilters] = useState<FilterType>({
     status: "all",
-    service: "all",
+    serviceId: "all", // Corrigido para serviceId
     staff: "all",
   });
+  
+  // Adicionando um mock ID de empresa para evitar erros
+  const mockCompanyId = "company-123";
   
   return (
     <div className="space-y-6">
@@ -31,24 +34,26 @@ export const CompanyCalendarContent = () => {
                 onViewChange={setSelectedView}
                 selectedStaff={selectedStaff}
                 onStaffChange={setSelectedStaff}
-                selectedResource={selectedResource}
-                onResourceChange={setSelectedResource}
               />
               
-              <CalendarFilters filters={filters} onFilterChange={setFilters} />
+              <CalendarFilters 
+                filters={filters} 
+                onFilterChange={setFilters}
+                companyId={mockCompanyId}
+              />
             </div>
             
             <CalendarView 
               viewType={selectedView}
               staffFilter={selectedStaff}
-              resourceFilter={selectedResource}
               filters={filters}
+              companyId={mockCompanyId}
             />
           </div>
         </div>
         
         <div className="w-full lg:w-80">
-          <AppointmentSidebar />
+          <AppointmentSidebar companyId={mockCompanyId} />
         </div>
       </div>
     </div>

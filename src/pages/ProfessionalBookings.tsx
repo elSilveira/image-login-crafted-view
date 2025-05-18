@@ -11,11 +11,11 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfessionalBookingsList from "@/components/professional/ProfessionalBookingsList";
 import ProfessionalIdDebugger from "@/components/professional/ProfessionalIdDebugger";
 import DebugOverlay from "@/components/Debug/DebugOverlay";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Calendar } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loading } from "@/components/ui/loading";
 import { PageContainer } from "@/components/ui/page-container";
@@ -85,55 +85,65 @@ const ProfessionalBookings = () => {
 
   return (
     <PageContainer>
-      <h1 className="text-2xl font-semibold">Meus Agendamentos</h1>
+      <div className="flex items-center gap-2 mb-6">
+        <Calendar className="h-6 w-6 text-iazi-primary" />
+        <h1 className="text-2xl font-semibold">Meus Agendamentos</h1>
+      </div>
       
-      <Tabs defaultValue="upcoming" onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
-          <TabsTrigger value="upcoming">Agendamentos Ativos</TabsTrigger>
-          <TabsTrigger value="completed">Concluídos</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelados/Ausentes</TabsTrigger>
-        </TabsList>
-        
-        {isLoading ? (
-          <Card className="w-full">
-            <Loading text="Carregando agendamentos..." size="md" className="h-40" />
-          </Card>
-        ) : isError ? (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Erro</AlertTitle>
-            <AlertDescription>
-              {error instanceof Error ? error.message : "Erro ao carregar agendamentos."}
-            </AlertDescription>
-          </Alert>
-        ) : (
-          <>
-            <TabsContent value="upcoming" className="mt-0 w-full">
-              <ProfessionalBookingsList 
-                appointments={appointments || []} 
-                showActions={true}
-                emptyMessage="Você não tem agendamentos ativos (pendentes, confirmados ou em andamento)."
-              />
-            </TabsContent>
+      <Card className="border-iazi-border">
+        <CardHeader className="bg-muted/30 pb-3">
+          <CardTitle className="text-lg">Agendamentos</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <Tabs defaultValue="upcoming" onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
+              <TabsTrigger value="upcoming" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">Agendamentos Ativos</TabsTrigger>
+              <TabsTrigger value="completed" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">Concluídos</TabsTrigger>
+              <TabsTrigger value="cancelled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">Cancelados/Ausentes</TabsTrigger>
+            </TabsList>
             
-            <TabsContent value="completed" className="mt-0 w-full">
-              <ProfessionalBookingsList 
-                appointments={appointments || []} 
-                showActions={true}
-                emptyMessage="Você não tem agendamentos concluídos."
-              />
-            </TabsContent>
-            
-            <TabsContent value="cancelled" className="mt-0 w-full">
-              <ProfessionalBookingsList 
-                appointments={appointments || []} 
-                showActions={true}
-                emptyMessage="Você não tem agendamentos cancelados ou marcados como 'não compareceu'."
-              />
-            </TabsContent>
-          </>
-        )}
-      </Tabs>
+            {isLoading ? (
+              <div className="w-full">
+                <Loading text="Carregando agendamentos..." size="md" className="h-40" />
+              </div>
+            ) : isError ? (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription>
+                  {error instanceof Error ? error.message : "Erro ao carregar agendamentos."}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                <TabsContent value="upcoming" className="mt-0 w-full">
+                  <ProfessionalBookingsList 
+                    appointments={appointments || []} 
+                    showActions={true}
+                    emptyMessage="Você não tem agendamentos ativos (pendentes, confirmados ou em andamento)."
+                  />
+                </TabsContent>
+                
+                <TabsContent value="completed" className="mt-0 w-full">
+                  <ProfessionalBookingsList 
+                    appointments={appointments || []} 
+                    showActions={true}
+                    emptyMessage="Você não tem agendamentos concluídos."
+                  />
+                </TabsContent>
+                
+                <TabsContent value="cancelled" className="mt-0 w-full">
+                  <ProfessionalBookingsList 
+                    appointments={appointments || []} 
+                    showActions={true}
+                    emptyMessage="Você não tem agendamentos cancelados ou marcados como 'não compareceu'."
+                  />
+                </TabsContent>
+              </>
+            )}
+          </Tabs>
+        </CardContent>
+      </Card>
     </PageContainer>
   );
 };
