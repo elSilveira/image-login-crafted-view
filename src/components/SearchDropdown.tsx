@@ -1,3 +1,4 @@
+
 // src/components/SearchDropdown.tsx
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -34,14 +35,30 @@ export function SearchDropdown() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Debounced function to fetch search results
-  const debouncedFetchResults = useCallback(
-    debounce(async (query: string) => {
-      if (!query.trim()) {
+  // Debounced function to update the search query after user stops typing
+  const debouncedSetQuery = useCallback(
+    debounce((query: string) => {
+      setDebouncedQuery(query);
+    }, 400), // 400ms debounce delay
+    []
+  );
+
+  // Handle input change with immediate UI update but debounced API calls
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value); // Update UI immediately
+    debouncedSetQuery(value); // Debounce actual search query
+  };
+
+  // Effect to trigger API fetch when debounced query changes
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (!debouncedQuery.trim()) {
         setSearchResults([]);
         setIsLoading(false);
         setError(null);
@@ -52,8 +69,7 @@ export function SearchDropdown() {
       setError(null);
       try {
         // TODO: Implement this API endpoint in the backend
-        // Example: /api/search/suggestions?q={query}&limit=5
-        const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(query)}&limit=5`);
+        const response = await fetch(`/api/search/suggestions?q=${encodeURIComponent(debouncedQuery)}&limit=5`);
         if (!response.ok) {
           throw new Error(`Erro HTTP ${response.status}: Falha ao buscar sugestões`);
         }
@@ -66,14 +82,17 @@ export function SearchDropdown() {
       } finally {
         setIsLoading(false);
       }
-    }, 300), // 300ms debounce delay
-    []
-  );
+    };
 
-  // Effect to trigger debounced fetch when searchQuery changes
+    fetchResults();
+  }, [debouncedQuery]);
+
+  // Clean up debounce on unmount
   useEffect(() => {
-    debouncedFetchResults(searchQuery);
-  }, [searchQuery, debouncedFetchResults]);
+    return () => {
+      debouncedSetQuery.cancel();
+    };
+  }, [debouncedSetQuery]);
 
   const handleSelect = (result: SearchResult) => {
     setOpen(false);
@@ -113,13 +132,10 @@ export function SearchDropdown() {
       <PopoverTrigger asChild>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 z-10" />
-          {isLoading && (
-             <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 animate-spin z-10" />
-          )}
           <Input
             placeholder="Buscar serviços, profissionais..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="pl-10 pr-10 w-full bg-gray-50 border-gray-200 focus:bg-white h-9 text-sm"
             onClick={() => setOpen(true)}
             onKeyDown={(e) => {
@@ -128,22 +144,30 @@ export function SearchDropdown() {
               }
             }}
           />
+          {isLoading && (
+            <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4 animate-spin z-10" />
+          )}
         </div>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="end">
         <Command>
           <CommandList>
-            {isLoading && !searchQuery.trim() && (
-                <div className="p-3 text-sm text-gray-500">Carregando...</div>
+            {debouncedQuery.trim() && isLoading && (
+              <div className="p-3 text-sm text-gray-500 flex items-center justify-center space-x-2">
+                <Loader2 className="animate-spin h-4 w-4" />
+                <span>Carregando sugestões...</span>
+              </div>
             )}
+            
             {!isLoading && error && (
-                <div className="p-3 text-sm text-red-600">{error}</div>
+              <div className="p-3 text-sm text-red-600">{error}</div>
             )}
-            {!isLoading && !error && searchQuery.trim() && searchResults.length === 0 && (
-                <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+            
+            {!isLoading && !error && debouncedQuery.trim() && searchResults.length === 0 && (
+              <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
             )}
 
-            {searchQuery.trim() && !isLoading && !error && searchResults.length > 0 && (
+            {debouncedQuery.trim() && !isLoading && !error && searchResults.length > 0 && (
               <CommandGroup heading="Resultados rápidos">
                 {searchResults.map((result) => (
                   <CommandItem
@@ -174,16 +198,16 @@ export function SearchDropdown() {
               </CommandGroup>
             )}
 
-            {searchQuery.trim() && !isLoading && (
-                 <CommandItem
-                  onSelect={handleSearch}
-                  className="border-t border-gray-100 py-3 text-[#4664EA] font-medium cursor-pointer"
-                >
-                  Ver todos os resultados para "{searchQuery}"
-                </CommandItem>
+            {debouncedQuery.trim() && !isLoading && (
+              <CommandItem
+                onSelect={handleSearch}
+                className="border-t border-gray-100 py-3 text-[#4664EA] font-medium cursor-pointer"
+              >
+                Ver todos os resultados para "{debouncedQuery}"
+              </CommandItem>
             )}
 
-            {!searchQuery.trim() && (
+            {!debouncedQuery.trim() && (
               <CommandGroup heading="Categorias populares">
                 <div className="flex flex-wrap gap-2 p-3">
                   {popularCategories.map((category) => {

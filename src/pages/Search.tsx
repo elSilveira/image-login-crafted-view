@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +18,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ServiceFilters } from "@/components/services/ServiceFilters";
 import { Loading, LoadingInline, PageLoading } from "@/components/ui/loading";
 import { PageContainer } from "@/components/ui/page-container";
+import { SearchInputDebounced } from "@/components/search/SearchInputDebounced";
+import { debounce } from "lodash";
 
 // Interfaces
 interface Service { 
@@ -92,13 +93,42 @@ const Search = () => {
   const [ratingFilter, setRatingFilter] = useState([0]);
   const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
   const [showFilters, setShowFilters] = useState(false);
+  
+  // Local state for search input (avoids triggering search API calls on every keystroke)
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+
+  // Debounced function that updates URL parameters
+  const debouncedUpdateSearchParams = debounce((value: string) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (value) { 
+      newSearchParams.set("q", value); 
+    } else { 
+      newSearchParams.delete("q"); 
+    }
+    newSearchParams.set("page", "1");
+    setSearchParams(newSearchParams);
+  }, 500);
+
+  // Search term handler that uses debouncing
+  const handleSearchChange = (value: string) => {
+    setLocalSearchTerm(value);
+    debouncedUpdateSearchParams(value);
+  };
 
   useEffect(() => {
     console.log("[Search Final Effect] Updating state from URL params:", { typeFilter, categoryFilter, pageParam });
     setViewType(typeFilter);
     setSelectedCategory(categoryFilter);
     setCurrentPage(parseInt(pageParam, 10) || 1);
-  }, [typeFilter, categoryFilter, pageParam]);
+    setLocalSearchTerm(searchTerm);
+  }, [typeFilter, categoryFilter, pageParam, searchTerm]);
+  
+  // Clean up the debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedUpdateSearchParams.cancel();
+    };
+  }, []);
 
   const updateFilters = (params: Record<string, string>) => {
     const newSearchParams = new URLSearchParams(searchParams);
@@ -119,6 +149,8 @@ const Search = () => {
     queryFn: fetchCategories,
     staleTime: Infinity,
   });
+  
+  // Extract categories from API response
   const actualCategoriesArray = Array.isArray(categoriesApiResponse) 
     ? categoriesApiResponse 
     : categoriesApiResponse?.data || [];
@@ -138,8 +170,9 @@ const Search = () => {
     if (viewType === "professional") return "professionals";
     return viewType;
   };
-  // Fetch Search Results
-  const { data: searchApiResponse, isLoading: isLoadingSearch, isError: isErrorSearch, error: errorSearch } = useQuery<any, Error>({
+  
+  // Fetch Search Results - with improved caching strategy and fetch behavior
+  const { data: searchApiResponse, isLoading: isLoadingSearch, isFetching: isFetchingSearch, isError: isErrorSearch, error: errorSearch } = useQuery<any, Error>({
     queryKey: ["search-api", searchTerm, selectedCategory, sortBy, currentPage, viewType, professionalTipo],
     queryFn: async () => {
       const apiType = getApiType(viewType);
@@ -155,6 +188,13 @@ const Search = () => {
         // Request professional_services instead of services
         useProfessionalServices: true,
       };
+      
+      // Only fetch if we have search terms or filters to avoid unnecessary initial requests
+      if (!searchTerm && !selectedCategory && viewType === "all") {
+        console.log("Skipping search API call - no search params");
+        return { services: [], companies: [], professionals: [] };
+      }
+      
       const result = await fetchSearchResults(params);
       console.log('Search API response structure:', {
         hasServices: !!result.services,
@@ -167,6 +207,7 @@ const Search = () => {
       return result;
     },
     enabled: ["all", "service", "professional", "company"].includes(viewType),
+    staleTime: 60000, // Cache results for 1 minute
   });  
   
   // Use the new structure directly, with fallbacks for backward compatibility
@@ -304,8 +345,10 @@ const Search = () => {
   );
 
   // Combine loading and error states
-  const isAnyLoading = isLoadingCategories || (isLoadingSearch && (viewType === 'all' || viewType === 'service' || viewType === 'professional' || viewType === 'company'));
-  const isAnyError = isErrorCategories || (isErrorSearch && (viewType === 'all' || viewType === 'service' || viewType === 'professional' || viewType === 'company'));
+  const isInitialLoading = isLoadingCategories || (isLoadingSearch && !searchApiResponse);
+  const isAnyLoading = isLoadingCategories || isLoadingSearch;
+  const isAnyFetching = isFetchingSearch;
+  const isAnyError = isErrorCategories || isErrorSearch;
   const combinedErrorMessages = [
       isErrorCategories ? `Categories: ${errorCategories?.message}` : null,
       isErrorSearch ? `Search: ${errorSearch?.message}` : null
@@ -340,37 +383,28 @@ const Search = () => {
   
   // --- Rendering Logic ---  
   // Mostrar loading de página inteira durante o carregamento inicial
-  if (isAnyLoading && !searchApiResponse) {
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-[#F4F3F2]">
         <Navigation />
         <main className="container mx-auto pt-16 pb-12">
           <PageContainer>
-            <PageLoading>
-              <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-                <Skeleton className="h-8 w-1/4 mb-4" />
-                <Skeleton className="h-4 w-1/2 mb-8" />
-                <div className="space-y-4">
-                  {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={`skeleton-${index}`} className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
-                      <div className="flex space-x-4">
-                        <Skeleton className="h-24 w-24 rounded-md" />
-                        <div className="space-y-2 flex-1">
-                          <Skeleton className="h-4 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                          <Skeleton className="h-4 w-1/4" />
-                          <Skeleton className="h-4 w-2/4 mt-2" />
-                        </div>
-                      </div>
+            <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+              <Skeleton className="h-8 w-1/4 mb-4" />
+              <Skeleton className="h-4 w-1/2 mb-8" />
+              <div className="flex flex-col gap-6">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={`skeleton-${index}`} className="flex space-x-4 p-4 border rounded-lg">
+                    <Skeleton className="h-24 w-24 rounded-md flex-shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                      <Skeleton className="h-4 w-1/4" />
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-              
-              <div className="flex justify-center mt-4">
-                <Skeleton className="h-10 w-52" />
-              </div>
-            </PageLoading>
+            </div>
           </PageContainer>
         </main>
       </div>
@@ -379,36 +413,38 @@ const Search = () => {
 
   // Function to render loading skeletons for specific content types
   const renderLoadingSkeletons = (count: number, type: 'service' | 'company' | 'professional') => (
-    Array.from({ length: count }).map((_, index) => (
-      <div key={`skeleton-${type}-${index}`} className="mb-4 p-4 border rounded-lg bg-white shadow-sm">
-        <div className="flex space-x-4">
-          <Skeleton className="h-24 w-24 rounded-md" />
+    <div className="animate-pulse space-y-4">
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={`skeleton-${type}-${index}`} className="flex space-x-4 p-4 border rounded-lg">
+          <Skeleton className="h-24 w-24 rounded-md flex-shrink-0" />
           <div className="space-y-2 flex-1">
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-4 w-2/4 mt-2" />
           </div>
         </div>
-      </div>
-    ))  );
+      ))}
+    </div>
+  );
     
   // Enhanced loading skeletons that are more visible and consistent
-  const renderEnhancedLoadingSkeletons = (count: number, type: 'service' | 'company' | 'professional') => (
+  const renderEnhancedLoadingState = (count: number, type: 'service' | 'company' | 'professional') => (
     <div className="space-y-4">
-      <Loading 
-        text={type === 'service' ? 'Carregando serviços...' : 
-              type === 'company' ? 'Carregando empresas...' : 
-              'Carregando profissionais...'}
-        size="md"
-      />
+      <div className="flex items-center justify-center py-4 text-iazi-primary">
+        <Loader2 className="animate-spin mr-2 h-5 w-5" />
+        <span className="font-medium text-sm">
+          {type === 'service' ? 'Carregando serviços...' : 
+           type === 'company' ? 'Carregando empresas...' : 
+           'Carregando profissionais...'}
+        </span>
+      </div>
       {renderLoadingSkeletons(count, type)}
     </div>
   );
   
   // Function to render content or empty state for a specific type
   const renderTypedContent = (isLoading: boolean, isError: boolean, data: any[], type: 'service' | 'company' | 'professional') => {
-    if (isLoading) return renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, type);
+    if (isLoading) return renderEnhancedLoadingState(ITEMS_PER_PAGE, type);
     if (isError) return null;
     if (data.length === 0) return null; // Não renderiza a área se não houver resultados
     
@@ -484,9 +520,12 @@ const Search = () => {
               <h1 className="text-2xl font-bold mb-2 text-iazi-text">Explorar</h1>
             )}
             
-            <div className="text-gray-600">
-              {isAnyLoading ? (
-                <LoadingInline text="Buscando resultados..." />
+            <div className="text-gray-600 mb-4">
+              {isAnyFetching ? (
+                <div className="flex items-center">
+                  <Loader2 className="animate-spin mr-2 h-4 w-4 text-iazi-primary" />
+                  <span>Atualizando resultados...</span>
+                </div>
               ) : isAnyError ? (
                 "Erro ao buscar resultados."
               ) : searchTerm || categoryFilter ? (
@@ -494,6 +533,17 @@ const Search = () => {
               ) : (
                 'Explore empresas e serviços disponíveis'
               )}
+            </div>
+            
+            {/* Improved search input with debouncing */}
+            <div className="mt-4">
+              <SearchInputDebounced
+                value={localSearchTerm}
+                onChange={handleSearchChange}
+                isLoading={isAnyFetching}
+                placeholder="Buscar serviços, profissionais ou empresas..."
+                className="bg-gray-50 border-gray-200 focus:bg-white"
+              />
             </div>
           </div>
 
@@ -526,7 +576,7 @@ const Search = () => {
                   <div className="mb-4 flex justify-end">
                     <button 
                       onClick={() => setShowFilters(!showFilters)}
-                      className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1 bg-white/80 px-4 py-2 rounded-full shadow-sm"
+                      className="text-sm text-iazi-primary hover:text-iazi-primary-hover transition-colors flex items-center gap-1 bg-white/80 px-4 py-2 rounded-full shadow-sm"
                     >
                       {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
                     </button>
@@ -536,8 +586,8 @@ const Search = () => {
                   {showFilters && (
                     <div className="mb-6">
                       <ServiceFilters
-                        searchTerm={searchTerm}
-                        setSearchTerm={v => updateFilters({ q: v })}
+                        searchTerm={localSearchTerm}
+                        setSearchTerm={handleSearchChange}
                         category={selectedCategory}
                         setCategory={v => updateFilters({ category: v })}
                         sortBy={sortBy}
@@ -557,7 +607,7 @@ const Search = () => {
                       {/* Serviços section */}
                       <div className="bg-white rounded-lg p-6 shadow-sm">
                         <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Serviços</h2>
-                        {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'service') : 
+                        {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'service') : 
                          isErrorSearch ? (
                           <Alert variant="destructive" className="my-4">
                             <AlertCircle className="h-4 w-4" />
@@ -576,7 +626,7 @@ const Search = () => {
                       {/* Profissionais section */}
                       <div className="bg-white rounded-lg p-6 shadow-sm">
                         <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Profissionais</h2>
-                        {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'professional') : 
+                        {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'professional') : 
                          isErrorSearch ? (
                           <Alert variant="destructive" className="my-4">
                             <AlertCircle className="h-4 w-4" />
@@ -595,7 +645,7 @@ const Search = () => {
                       {/* Empresas section */}
                       <div className="bg-white rounded-lg p-6 shadow-sm">
                         <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Empresas</h2>
-                        {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'company') : 
+                        {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'company') : 
                          isErrorSearch ? (
                           <Alert variant="destructive" className="my-4">
                             <AlertCircle className="h-4 w-4" />
@@ -612,7 +662,7 @@ const Search = () => {
                       </div>
                       
                       {/* Global empty state if all sections are empty and not in loading/error state */}
-                      {!isAnyLoading && !isAnyError &&
+                      {!isAnyFetching && !isAnyError &&
                         paginatedServices.length === 0 &&
                         paginatedCompanies.length === 0 &&
                         paginatedProfessionals.length === 0 && (
@@ -625,7 +675,7 @@ const Search = () => {
 
                   <TabsContent value="service">
                     <div className="bg-white rounded-lg p-6 shadow-sm">
-                      {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'service') : 
+                      {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'service') : 
                        isErrorSearch ? (
                         <Alert variant="destructive" className="my-4">
                           <AlertCircle className="h-4 w-4" />
@@ -640,7 +690,7 @@ const Search = () => {
                     </div>
                     
                     {/* Pagination for services */}
-                    {!isLoadingSearch && !isErrorSearch && totalPagesServices > 1 && (
+                    {!isFetchingSearch && !isErrorSearch && totalPagesServices > 1 && (
                       <div className="mt-6 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
@@ -653,7 +703,7 @@ const Search = () => {
                   
                   <TabsContent value="company">
                     <div className="bg-white rounded-lg p-6 shadow-sm">
-                      {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'company') : 
+                      {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'company') : 
                        isErrorSearch ? (
                         <Alert variant="destructive" className="my-4">
                           <AlertCircle className="h-4 w-4" />
@@ -668,7 +718,7 @@ const Search = () => {
                     </div>
                     
                     {/* Pagination for companies */}
-                    {!isLoadingSearch && !isErrorSearch && totalPagesCompanies > 1 && (
+                    {!isFetchingSearch && !isErrorSearch && totalPagesCompanies > 1 && (
                       <div className="mt-6 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
@@ -695,7 +745,7 @@ const Search = () => {
                         </Select>
                       </div>
                       
-                      {isLoadingSearch ? renderEnhancedLoadingSkeletons(ITEMS_PER_PAGE, 'professional') : 
+                      {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'professional') : 
                        isErrorSearch ? (
                         <Alert variant="destructive" className="my-4">
                           <AlertCircle className="h-4 w-4" />
@@ -710,7 +760,7 @@ const Search = () => {
                     </div>
                     
                     {/* Pagination for professionals */}
-                    {!isLoadingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
+                    {!isFetchingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
                       <div className="mt-6 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
@@ -726,7 +776,7 @@ const Search = () => {
           )}
 
           {/* Pagination for all tabs except "all" */}
-          {viewType !== "all" && !isAnyLoading && !isAnyError && totalPages > 0 && (
+          {viewType !== "all" && !isAnyFetching && !isAnyError && totalPages > 0 && (
             <div className="mt-8 flex justify-center">
               <ServicePagination
                 currentPage={currentPage}
