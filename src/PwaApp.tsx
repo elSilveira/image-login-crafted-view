@@ -32,6 +32,8 @@ const Gamification = lazy(() => import("./pages/Gamification"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Professionals = lazy(() => import("./pages/Professionals"));
 const CompanyBooking = lazy(() => import("./pages/CompanyBooking"));
+const NewPublication = lazy(() => import("./pages/NewPublication"));
+const ProfessionalSchedule = lazy(() => import("./pages/ProfessionalSchedule"));
 
 // Company Admin Routes
 const CompanyDashboard = lazy(() => import("./pages/CompanyDashboard"));
@@ -52,10 +54,6 @@ const ProfessionalCalendar = lazy(() => import("./pages/ProfessionalCalendar"));
 const ProfessionalBookings = lazy(() => import("./pages/ProfessionalBookings"));
 const ProfessionalReports = lazy(() => import("./pages/ProfessionalReports"));
 const ProfessionalSettings = lazy(() => import("./pages/ProfessionalSettings"));
-
-// Test pages
-const TestBookingsList = lazy(() => import("./pages/TestBookingsList"));
-const DebugBookingsPage = lazy(() => import("./pages/DebugBookingsPage"));
 
 // Simple fallback component for loading
 function Loading() {
@@ -181,13 +179,11 @@ function PwaApp() {
               <Route path="/company/my-company/reviews" element={<ProtectedRoute><CompanyReviewsAdmin /></ProtectedRoute>} />
               <Route path="/company/my-company/reports" element={<ProtectedRoute><CompanyReportsAdmin /></ProtectedRoute>} />
               <Route path="/company/my-company/staff" element={<ProtectedRoute><CompanyStaff /></ProtectedRoute>} />
-              <Route path="/company/my-company/calendar" element={<ProtectedRoute><CompanyCalendar /></ProtectedRoute>} />
-              <Route path="/company/my-company/staff/:staffId/calendar" element={<ProtectedRoute><StaffCalendar /></ProtectedRoute>} />
-              <Route path="/company/:id/services" element={<ProtectedRoute><CompanyServices /></ProtectedRoute>} />
+              <Route path="/company/my-company/calendar" element={<ProtectedRoute><CompanyCalendar /></ProtectedRoute>} />              <Route path="/company/my-company/staff/:staffId/calendar" element={<ProtectedRoute><StaffCalendar /></ProtectedRoute>} />              <Route path="/company/:id/services" element={<ProtectedRoute><CompanyServices /></ProtectedRoute>} />
               
-              {/* Test routes */}
-              <Route path="/test/bookings" element={<ProtectedRoute><TestBookingsList /></ProtectedRoute>} />
-              <Route path="/test/debug-bookings" element={<ProtectedRoute><DebugBookingsPage /></ProtectedRoute>} />
+              {/* Additional routes */}
+              <Route path="/new-publication" element={<ProtectedRoute><NewPublication /></ProtectedRoute>} />
+              <Route path="/professional/schedule" element={<ProtectedRoute><ProfessionalSchedule /></ProtectedRoute>} />
               <Route path="/profile/professional/schedule" element={<ProtectedRoute><ProfessionalAreaLayout /></ProtectedRoute>} />
               
               {/* 404 route */}

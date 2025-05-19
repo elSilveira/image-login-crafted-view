@@ -2,11 +2,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-// import App from './App.tsx';
-// import TestApp from './TestApp.tsx';
-// import SimpleApp from './SimpleApp.tsx';
-// import GradualApp from './GradualApp.tsx';
-// import WorkingApp from './WorkingApp.tsx';
 import PwaApp from './PwaApp.tsx';
 import './index.css';
 
