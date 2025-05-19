@@ -9,7 +9,7 @@ interface SearchTabsProps {
   onTabChange: (value: string) => void;
   serviceCount: number;
   companyCount: number;
-  professionalCount?: number; // Added professional count
+  professionalCount?: number;
   sortBy: string;
   onSortChange: (value: string) => void;
   children: ReactNode;
@@ -20,48 +20,52 @@ export function SearchTabs({
   onTabChange, 
   serviceCount, 
   companyCount,
-  professionalCount = 0, // Default to 0 if not provided
+  professionalCount = 0,
   sortBy, 
   onSortChange, 
   children 
 }: SearchTabsProps) {
   return (
-    <div className="mb-6 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-lg shadow-sm">
+    <div className="mb-4 space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-3 rounded-lg shadow-sm">
         <TabsList className="w-full sm:w-auto bg-gray-100 p-1 rounded-md">
           <TabsTrigger 
             value="all" 
             className={`flex-1 sm:flex-none relative ${viewType === 'all' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
+            onClick={() => onTabChange('all')}
           >
             Todos
-            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2 text-xs">
               {serviceCount + companyCount + professionalCount}
             </Badge>
           </TabsTrigger>
           <TabsTrigger 
             value="service" 
             className={`flex-1 sm:flex-none relative ${viewType === 'service' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
+            onClick={() => onTabChange('service')}
           >
             Serviços
-            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2 text-xs">
               {serviceCount}
             </Badge>
           </TabsTrigger>
           <TabsTrigger 
             value="professional" 
             className={`flex-1 sm:flex-none relative ${viewType === 'professional' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
+            onClick={() => onTabChange('professional')}
           >
             Profissionais
-            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2 text-xs">
               {professionalCount}
             </Badge>
           </TabsTrigger>
           <TabsTrigger 
             value="company" 
             className={`flex-1 sm:flex-none relative ${viewType === 'company' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-primary'}`}
+            onClick={() => onTabChange('company')}
           >
             Empresas
-            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2">
+            <Badge className="ml-1 bg-iazi-rosa-1 text-iazi-text hover:bg-iazi-rosa-2 text-xs">
               {companyCount}
             </Badge>
           </TabsTrigger>
@@ -69,7 +73,7 @@ export function SearchTabs({
         
         <div className="w-full sm:w-auto">
           <Select value={sortBy} onValueChange={onSortChange}>
-            <SelectTrigger className="w-full sm:w-48 bg-white border-gray-200">
+            <SelectTrigger className="w-full sm:w-44 bg-white border-gray-200 h-9 text-sm">
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
@@ -82,7 +86,7 @@ export function SearchTabs({
         </div>
       </div>
       
-      {/* Render the tab contents and filtros avançados abaixo das abas */}
+      {/* Render the tab contents */}
       {children}
     </div>
   );

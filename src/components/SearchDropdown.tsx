@@ -147,32 +147,32 @@ export function SearchDropdown() {
         <Command className="rounded-lg">
           <CommandList>
             {searchQuery.trim() && isLoading && (
-              <div className="p-4 text-sm text-gray-500 flex items-center justify-center space-x-2">
+              <div className="p-3 text-sm text-gray-500 flex items-center justify-center space-x-2">
                 <Loader2 className="animate-spin h-4 w-4 text-iazi-primary" />
                 <span>Carregando sugestões...</span>
               </div>
             )}
             
             {!isLoading && error && (
-              <div className="p-4 text-sm text-red-600">{error}</div>
+              <div className="p-3 text-sm text-red-600">{error}</div>
             )}
             
             {!isLoading && !error && searchQuery.trim() && !hasResults && (
-              <CommandEmpty className="p-4 text-gray-500">
+              <CommandEmpty className="p-3 text-gray-500">
                 Nenhum resultado encontrado para "{searchQuery}"
               </CommandEmpty>
             )}
 
-            {/* Services section */}
+            {/* Services section - only show if results exist */}
             {groupedResults.services.length > 0 && (
               <CommandGroup heading="Serviços" className="px-2">
                 {groupedResults.services.map((result) => (
                   <CommandItem
                     key={`service-${result.id}`}
                     onSelect={() => handleSelect(result)}
-                    className="flex items-start gap-3 py-3 cursor-pointer rounded-md hover:bg-gray-50"
+                    className="flex items-start gap-3 py-2 cursor-pointer rounded-md hover:bg-gray-50"
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-md overflow-hidden bg-gray-100">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-md overflow-hidden bg-gray-100">
                       {result.imageUrl ? (
                         <img src={result.imageUrl} alt={result.title} className="w-full h-full object-cover" />
                       ) : (
@@ -202,16 +202,16 @@ export function SearchDropdown() {
               </CommandGroup>
             )}
 
-            {/* Professionals section */}
+            {/* Professionals section - only show if results exist */}
             {groupedResults.professionals.length > 0 && (
               <CommandGroup heading="Profissionais" className="px-2">
                 {groupedResults.professionals.map((result) => (
                   <CommandItem
                     key={`professional-${result.id}`}
                     onSelect={() => handleSelect(result)}
-                    className="flex items-start gap-3 py-3 cursor-pointer rounded-md hover:bg-gray-50"
+                    className="flex items-start gap-3 py-2 cursor-pointer rounded-md hover:bg-gray-50"
                   >
-                    <Avatar className="h-10 w-10 flex-shrink-0">
+                    <Avatar className="h-9 w-9 flex-shrink-0">
                       {result.imageUrl ? (
                         <AvatarImage src={result.imageUrl} alt={result.title} />
                       ) : (
@@ -233,16 +233,16 @@ export function SearchDropdown() {
               </CommandGroup>
             )}
 
-            {/* Companies section */}
+            {/* Companies section - only show if results exist */}
             {groupedResults.companies.length > 0 && (
               <CommandGroup heading="Empresas" className="px-2">
                 {groupedResults.companies.map((result) => (
                   <CommandItem
                     key={`company-${result.id}`}
                     onSelect={() => handleSelect(result)}
-                    className="flex items-start gap-3 py-3 cursor-pointer rounded-md hover:bg-gray-50"
+                    className="flex items-start gap-3 py-2 cursor-pointer rounded-md hover:bg-gray-50"
                   >
-                    <div className="flex-shrink-0 w-10 h-10 rounded-md overflow-hidden bg-gray-100 border border-gray-200">
+                    <div className="flex-shrink-0 w-9 h-9 rounded-md overflow-hidden bg-gray-100 border border-gray-200">
                       {result.imageUrl ? (
                         <img src={result.imageUrl} alt={result.title} className="w-full h-full object-cover" />
                       ) : (
@@ -268,7 +268,7 @@ export function SearchDropdown() {
               <div className="p-2 border-t border-gray-100">
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-between text-iazi-primary hover:text-iazi-primary-hover hover:bg-iazi-primary/5"
+                  className="w-full justify-between text-iazi-primary hover:text-iazi-primary-hover hover:bg-iazi-primary/5 py-1.5 h-auto"
                   onClick={handleSearch}
                 >
                   <span>Ver todos os resultados</span>
@@ -279,16 +279,16 @@ export function SearchDropdown() {
 
             {!searchQuery.trim() && (
               <CommandGroup heading="Categorias populares" className="px-2">
-                <div className="flex flex-wrap gap-2 p-3">
+                <div className="flex flex-wrap gap-2 p-2">
                   {popularCategories.map((category) => (
                     <Badge
                       key={category.id}
                       variant="outline"
-                      className="hover:bg-gray-50 cursor-pointer px-3 py-1.5 transition-colors border-gray-200"
+                      className="hover:bg-gray-50 cursor-pointer px-2 py-1 transition-colors border-gray-200"
                       onClick={() => handleCategorySelect(category)}
                     >
                       {category.name}
-                      <span className="ml-1.5 text-xs text-gray-400">
+                      <span className="ml-1 text-xs text-gray-400">
                         {category.type === "company" ? "Empresa" : "Serviço"}
                       </span>
                     </Badge>

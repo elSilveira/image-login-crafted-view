@@ -10,8 +10,8 @@ import { ServicePagination } from "@/components/services/ServicePagination";
 import { EmptyResults } from "@/components/search/EmptyResults";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { fetchServices, fetchCompanies, fetchCategories, fetchSearchResults } from "@/lib/api";
-import { Skeleton } from "@/components/ui/skeleton"; // For loading state
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"; // For error state
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { ProfessionalQuickCard } from "@/components/home/ProfessionalQuickCard";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -387,19 +387,18 @@ const Search = () => {
     return (
       <div className="min-h-screen bg-[#F4F3F2]">
         <Navigation />
-        <main className="container mx-auto pt-16 pb-12">
+        <main className="container mx-auto pt-8 pb-8">
           <PageContainer>
-            <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-              <Skeleton className="h-8 w-1/4 mb-4" />
-              <Skeleton className="h-4 w-1/2 mb-8" />
-              <div className="flex flex-col gap-6">
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div key={`skeleton-${index}`} className="flex space-x-4 p-4 border rounded-lg">
-                    <Skeleton className="h-24 w-24 rounded-md flex-shrink-0" />
+            <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+              <Skeleton className="h-7 w-1/4 mb-3" />
+              <Skeleton className="h-4 w-1/2 mb-6" />
+              <div className="flex flex-col gap-4">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <div key={`skeleton-${index}`} className="flex space-x-4 p-3 border rounded-lg">
+                    <Skeleton className="h-20 w-20 rounded-md flex-shrink-0" />
                     <div className="space-y-2 flex-1">
                       <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-4 w-1/4" />
+                      <Skeleton className="h-3 w-1/2" />
                     </div>
                   </div>
                 ))}
@@ -508,22 +507,22 @@ const Search = () => {
   return (
     <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
-      <main className="container mx-auto pt-16 pb-12">
+      <main className="container mx-auto pt-6 pb-8">
         <PageContainer>
-          {/* Header with improved styling */}
-          <div className="mb-6 bg-white p-6 rounded-lg shadow-sm">
+          {/* Condensed header with improved spacing */}
+          <div className="mb-4 bg-white p-4 rounded-lg shadow-sm">
             {searchTerm ? (
-              <h1 className="text-2xl font-bold mb-2 text-iazi-text">Resultados para "{searchTerm}"</h1>
+              <h1 className="text-xl font-bold mb-1 text-iazi-text">Resultados para "{searchTerm}"</h1>
             ) : categoryFilter ? (
-              <h1 className="text-2xl font-bold mb-2 text-iazi-text">{categoryFilter}</h1>
+              <h1 className="text-xl font-bold mb-1 text-iazi-text">{categoryFilter}</h1>
             ) : (
-              <h1 className="text-2xl font-bold mb-2 text-iazi-text">Explorar</h1>
+              <h1 className="text-xl font-bold mb-1 text-iazi-text">Explorar</h1>
             )}
             
-            <div className="text-gray-600 mb-4">
+            <div className="text-gray-600 text-sm mb-3">
               {isAnyFetching ? (
                 <div className="flex items-center">
-                  <Loader2 className="animate-spin mr-2 h-4 w-4 text-iazi-primary" />
+                  <Loader2 className="animate-spin mr-2 h-3 w-3 text-iazi-primary" />
                   <span>Atualizando resultados...</span>
                 </div>
               ) : isAnyError ? (
@@ -536,15 +535,13 @@ const Search = () => {
             </div>
             
             {/* Improved search input with debouncing */}
-            <div className="mt-4">
-              <SearchInputDebounced
-                value={localSearchTerm}
-                onChange={handleSearchChange}
-                isLoading={isAnyFetching}
-                placeholder="Buscar serviços, profissionais ou empresas..."
-                className="bg-gray-50 border-gray-200 focus:bg-white"
-              />
-            </div>
+            <SearchInputDebounced
+              value={localSearchTerm}
+              onChange={handleSearchChange}
+              isLoading={isAnyFetching}
+              placeholder="Buscar serviços, profissionais ou empresas..."
+              className="bg-gray-50 border-gray-200 focus:bg-white"
+            />
           </div>
 
           {/* Global Error Display (if not category error) */}
@@ -573,10 +570,10 @@ const Search = () => {
                   professionalCount={totalProfessionals}
                 >
                   {/* Compact filter toggle with nicer styling */}
-                  <div className="mb-4 flex justify-end">
+                  <div className="mb-3 flex justify-end">
                     <button 
                       onClick={() => setShowFilters(!showFilters)}
-                      className="text-sm text-iazi-primary hover:text-iazi-primary-hover transition-colors flex items-center gap-1 bg-white/80 px-4 py-2 rounded-full shadow-sm"
+                      className="text-sm text-iazi-primary hover:text-iazi-primary-hover transition-colors flex items-center gap-1 bg-white/80 px-3 py-1.5 rounded-full shadow-sm"
                     >
                       {showFilters ? 'Ocultar filtros' : 'Mostrar filtros'}
                     </button>
@@ -584,7 +581,7 @@ const Search = () => {
                   
                   {/* Conditionally render filters */}
                   {showFilters && (
-                    <div className="mb-6">
+                    <div className="mb-4">
                       <ServiceFilters
                         searchTerm={localSearchTerm}
                         setSearchTerm={handleSearchChange}
@@ -603,70 +600,61 @@ const Search = () => {
                   )}
                   
                   <TabsContent value="all">
-                    <div className="space-y-6">
-                      {/* Serviços section */}
-                      <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Serviços</h2>
-                        {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'service') : 
-                         isErrorSearch ? (
-                          <Alert variant="destructive" className="my-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Erro ao buscar serviços</AlertTitle>
-                            <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
-                          </Alert>
-                         ) :
-                         paginatedServices.length === 0 ? (
-                          <div className="py-4 text-center text-muted-foreground">
-                            Nenhum serviço encontrado para esta busca.
-                          </div>
-                         ) : 
-                         renderTypedContent(false, false, paginatedServices, 'service')}
-                      </div>
+                    <div className="space-y-4">
+                      {/* Only show services section if there are results */}
+                      {paginatedServices.length > 0 && (
+                        <div className="bg-white rounded-lg p-4 shadow-sm">
+                          <h2 className="text-lg font-semibold mb-3 text-iazi-text border-b pb-2">Serviços</h2>
+                          {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'service') : 
+                           isErrorSearch ? (
+                            <Alert variant="destructive" className="my-3">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Erro ao buscar serviços</AlertTitle>
+                              <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
+                            </Alert>
+                           ) : 
+                           renderTypedContent(false, false, paginatedServices, 'service')}
+                        </div>
+                      )}
                       
-                      {/* Profissionais section */}
-                      <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Profissionais</h2>
-                        {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'professional') : 
-                         isErrorSearch ? (
-                          <Alert variant="destructive" className="my-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Erro ao buscar profissionais</AlertTitle>
-                            <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
-                          </Alert>
-                         ) :
-                         paginatedProfessionals.length === 0 ? (
-                          <div className="py-4 text-center text-muted-foreground">
-                            Nenhum profissional encontrado para esta busca.
-                          </div>
-                         ) : 
-                         renderTypedContent(false, false, paginatedProfessionals, 'professional')}
-                      </div>
+                      {/* Only show professionals section if there are results */}
+                      {paginatedProfessionals.length > 0 && (
+                        <div className="bg-white rounded-lg p-4 shadow-sm">
+                          <h2 className="text-lg font-semibold mb-3 text-iazi-text border-b pb-2">Profissionais</h2>
+                          {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'professional') : 
+                           isErrorSearch ? (
+                            <Alert variant="destructive" className="my-3">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Erro ao buscar profissionais</AlertTitle>
+                              <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
+                            </Alert>
+                           ) : 
+                           renderTypedContent(false, false, paginatedProfessionals, 'professional')}
+                        </div>
+                      )}
 
-                      {/* Empresas section */}
-                      <div className="bg-white rounded-lg p-6 shadow-sm">
-                        <h2 className="text-xl font-semibold mb-5 text-iazi-text border-b pb-2">Empresas</h2>
-                        {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'company') : 
-                         isErrorSearch ? (
-                          <Alert variant="destructive" className="my-4">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Erro ao buscar empresas</AlertTitle>
-                            <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
-                          </Alert>
-                         ) :
-                         paginatedCompanies.length === 0 ? (
-                          <div className="py-4 text-center text-muted-foreground">
-                            Nenhuma empresa encontrada para esta busca.
-                          </div>
-                         ) : 
-                         renderTypedContent(false, false, paginatedCompanies, 'company')}
-                      </div>
+                      {/* Only show companies section if there are results */}
+                      {paginatedCompanies.length > 0 && (
+                        <div className="bg-white rounded-lg p-4 shadow-sm">
+                          <h2 className="text-lg font-semibold mb-3 text-iazi-text border-b pb-2">Empresas</h2>
+                          {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'company') : 
+                           isErrorSearch ? (
+                            <Alert variant="destructive" className="my-3">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Erro ao buscar empresas</AlertTitle>
+                              <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
+                            </Alert>
+                           ) : 
+                           renderTypedContent(false, false, paginatedCompanies, 'company')}
+                        </div>
+                      )}
                       
                       {/* Global empty state if all sections are empty and not in loading/error state */}
                       {!isAnyFetching && !isAnyError &&
                         paginatedServices.length === 0 &&
                         paginatedCompanies.length === 0 &&
                         paginatedProfessionals.length === 0 && (
-                          <div className="mt-8">
+                          <div className="mt-6">
                             <EmptyResults />
                           </div>
                         )}
@@ -674,10 +662,10 @@ const Search = () => {
                   </TabsContent>
 
                   <TabsContent value="service">
-                    <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
                       {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'service') : 
                        isErrorSearch ? (
-                        <Alert variant="destructive" className="my-4">
+                        <Alert variant="destructive" className="my-3">
                           <AlertCircle className="h-4 w-4" />
                           <AlertTitle>Erro ao buscar serviços</AlertTitle>
                           <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
@@ -691,7 +679,7 @@ const Search = () => {
                     
                     {/* Pagination for services */}
                     {!isFetchingSearch && !isErrorSearch && totalPagesServices > 1 && (
-                      <div className="mt-6 flex justify-center">
+                      <div className="mt-4 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
                           totalPages={totalPagesServices}
@@ -702,10 +690,10 @@ const Search = () => {
                   </TabsContent>
                   
                   <TabsContent value="company">
-                    <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
                       {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'company') : 
                        isErrorSearch ? (
-                        <Alert variant="destructive" className="my-4">
+                        <Alert variant="destructive" className="my-3">
                           <AlertCircle className="h-4 w-4" />
                           <AlertTitle>Erro ao buscar empresas</AlertTitle>
                           <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
@@ -719,7 +707,7 @@ const Search = () => {
                     
                     {/* Pagination for companies */}
                     {!isFetchingSearch && !isErrorSearch && totalPagesCompanies > 1 && (
-                      <div className="mt-6 flex justify-center">
+                      <div className="mt-4 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
                           totalPages={totalPagesCompanies}
@@ -730,7 +718,7 @@ const Search = () => {
                   </TabsContent>
 
                   <TabsContent value="professional">
-                    <div className="bg-white rounded-lg p-6 shadow-sm">
+                    <div className="bg-white rounded-lg p-4 shadow-sm">
                       <div className="mb-4 flex items-center gap-4">
                         <label className="font-medium text-sm">Profissionais:</label>
                         <Select value={professionalTipo} onValueChange={v => setProfessionalTipo(v as any)}>
@@ -747,7 +735,7 @@ const Search = () => {
                       
                       {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'professional') : 
                        isErrorSearch ? (
-                        <Alert variant="destructive" className="my-4">
+                        <Alert variant="destructive" className="my-3">
                           <AlertCircle className="h-4 w-4" />
                           <AlertTitle>Erro ao buscar profissionais</AlertTitle>
                           <AlertDescription>Tente novamente ou refine sua busca.</AlertDescription>
@@ -761,7 +749,7 @@ const Search = () => {
                     
                     {/* Pagination for professionals */}
                     {!isFetchingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
-                      <div className="mt-6 flex justify-center">
+                      <div className="mt-4 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
                           totalPages={totalPagesProfessionals}
