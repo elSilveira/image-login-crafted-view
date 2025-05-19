@@ -9,6 +9,23 @@ const PRECACHE_URLS = [
   '/favicon.ico',
 ];
 
+// Added routes that should be handled by the SPA
+const KNOWN_ROUTES = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/profile',
+  '/services',
+  '/settings',
+  '/notifications',
+  '/professionals',
+  '/search',
+  '/booking-history',
+  '/company',
+  '/gamification',
+  '/reviews'
+];
+
 // Service Worker Install Event
 self.addEventListener('install', event => {
   console.log('Service Worker instalado ✅');
@@ -51,8 +68,10 @@ self.addEventListener('activate', event => {
 
 // Service Worker Fetch Event - Network first, then cache, with fallback
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  
   // Skip cross-origin requests like API calls
-  if (!event.request.url.startsWith(self.location.origin)) {
+  if (!url.origin.startsWith(self.location.origin)) {
     return;
   }
   
@@ -61,41 +80,87 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network first strategy
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        // If we got a valid response, clone it and put it in the cache
-        if (response && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // If the network fails, try from the cache
-        return caches.match(event.request).then(cachedResponse => {
+  // For navigation requests or known routes, serve index.html
+  const isNavigationRequest = event.request.mode === 'navigate';
+  const isKnownRoute = KNOWN_ROUTES.some(route => 
+    url.pathname === route || url.pathname.startsWith(`${route}/`)
+  );
+
+  if (isNavigationRequest || isKnownRoute) {
+    event.respondWith(
+      caches.match('/index.html')
+        .then(cachedResponse => {
+          // Return cached index.html if available
           if (cachedResponse) {
             return cachedResponse;
           }
-
-          // If this is a HTML navigation and it's not in the cache,
-          // return the cached index.html as a fallback
-          if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
           
-          // If the request failed and it wasn't a navigation, fallback to a default response
-          return new Response('Não foi possível carregar o recurso. Por favor, verifique sua conexão.', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: new Headers({
-              'Content-Type': 'text/plain'
+          // Otherwise fetch from network
+          return fetch('/index.html')
+            .then(response => {
+              // Cache the index.html response for future use
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put('/index.html', responseClone);
+              });
+              return response;
             })
+            .catch(() => {
+              // If all else fails, return a generic offline page
+              return new Response(
+                '<html><body><h1>App Offline</h1><p>Por favor, verifique sua conexão.</p></body></html>',
+                {
+                  status: 503,
+                  statusText: 'Service Unavailable',
+                  headers: new Headers({
+                    'Content-Type': 'text/html'
+                  })
+                }
+              );
+            });
+        })
+    );
+    return;
+  }
+
+  // For static assets, use a cache-first approach
+  event.respondWith(
+    caches.match(event.request)
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        // If not in cache, try network
+        return fetch(event.request)
+          .then(response => {
+            // If we got a valid response, clone it and put it in the cache
+            if (response && response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            // If the request is for an image, you could return a placeholder
+            if (event.request.url.match(/\.(jpg|jpeg|png|gif|svg)$/)) {
+              return caches.match('/placeholder.svg');
+            }
+            
+            // For other resources, return a simple offline message
+            return new Response(
+              'Recurso indisponível offline',
+              {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: new Headers({
+                  'Content-Type': 'text/plain'
+                })
+              }
+            );
           });
-        });
       })
   );
 });
@@ -105,7 +170,7 @@ self.addEventListener('push', event => {
   const title = 'iAzi';
   const options = {
     body: event.data && event.data.text() || 'Notificação iAzi',
-    icon: '/public/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png',
+    icon: '/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png',
     badge: '/favicon.ico'
   };
 
