@@ -1,0 +1,49 @@
+{
+  "name": "IAZI - Conectando pessoas e serviços",
+  "short_name": "IAZI",
+  "description": "Encontre profissionais e agende serviços de forma rápida e fácil",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4664EA",
+  "icons": [
+    {
+      "src": "/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "portrait",
+  "categories": ["business", "productivity", "lifestyle"],
+  "shortcuts": [
+    {
+      "name": "Agendar Serviço",
+      "short_name": "Agendar",
+      "description": "Agende um novo serviço",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Meus Agendamentos",
+      "short_name": "Agendamentos",
+      "description": "Veja seus agendamentos",
+      "url": "/booking-history",
+      "icons": [
+        {
+          "src": "/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { Mail, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingInline } from "@/components/ui/loading";
+import Navigation from "@/components/Navigation";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -22,10 +22,11 @@ const Login = () => {
       console.error("Login error", error);
     }
   };
-
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white p-4 pt-16">
-      <Card className="w-full max-w-md shadow-lg border-iazi-border">
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="flex items-center justify-center p-4 pt-20">
+        <Card className="w-full max-w-md shadow-lg border-iazi-border">
         <CardHeader className="space-y-3">
           <CardTitle className="text-3xl font-playfair text-center text-iazi-text">
             Bem-vindo de volta
@@ -89,9 +90,9 @@ const Login = () => {
                 </Link>
               </p>
             </div>
-          </form>
-        </CardContent>
+          </form>        </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

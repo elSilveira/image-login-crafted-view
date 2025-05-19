@@ -4,6 +4,9 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import ProfessionalAreaLayout from "@/components/ProfessionalAreaLayout";
+import { InstallAppBanner } from "@/components/ui/install-app-banner";
+import { PwaUpdateNotification } from "@/components/ui/pwa-update-notification";
+import { NetworkStatus } from "@/components/ui/network-status";
 
 // Routes
 const Home = lazy(() => import("./pages/Home"));
@@ -128,9 +131,11 @@ function App() {
               <Route path="/test/debug-bookings" element={<DebugBookingsPage />} />
               
               <Route path="/profile/professional/schedule" element={<ProfessionalAreaLayout />} />
-              
-              <Route path="*" element={<NotFound />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
+            <InstallAppBanner />
+            <PwaUpdateNotification />
+            <NetworkStatus />
             <Toaster />
           </Suspense>
         </AuthProvider>

@@ -11,13 +11,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList, FileText } from "lucide-react";
+import { Bell, LogOut, User, Star, Award, Briefcase, Building, LayoutDashboard, Settings, ClipboardList, FileText, Download } from "lucide-react";
 import { InviteModal } from "@/components/InviteModal";
 import apiClient from "@/lib/api";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 
 export default function Navigation() {
   const { user, logout } = useAuth();
   const userRole = getEffectiveUserRole(user);
+  const isMobile = useIsMobile();
+  const { canInstall, handleInstallPWA, isPWA } = usePwaInstall();
 
   // Debug: Log user whenever it changes
   React.useEffect(() => {
@@ -80,8 +84,19 @@ export default function Navigation() {
           <div className="flex-1 mx-4 md:mx-8 max-w-md">
             <SearchDropdown />
           </div>
-          
-          <div className="flex items-center justify-end space-x-4">
+            <div className="flex items-center justify-end space-x-4">
+            {isMobile && canInstall && !isPWA && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center text-primary border-primary hover:bg-primary/10"
+                onClick={handleInstallPWA}
+              >
+                <Download className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Baixar App</span>
+              </Button>
+            )}
+            
             {user ? (
               <div className="flex items-center space-x-4">
                 <Link to="/notifications" className="text-sm font-medium transition-colors hover:text-primary">
