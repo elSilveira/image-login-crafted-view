@@ -85,65 +85,73 @@ const ProfessionalBookings = () => {
 
   return (
     <PageContainer>
-      <div className="flex items-center gap-2 mb-6">
-        <Calendar className="h-6 w-6 text-iazi-primary" />
-        <h1 className="text-2xl font-semibold">Meus Agendamentos</h1>
+      <div className="space-y-6 w-full">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-6 w-6 text-iazi-primary" />
+          <h1 className="text-2xl font-semibold">Meus Agendamentos</h1>
+        </div>
+        
+        <Card className="border-iazi-border">
+          <CardHeader className="bg-muted/30 pb-3">
+            <CardTitle className="text-lg">Agendamentos</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <Tabs defaultValue="upcoming" onValueChange={handleTabChange} className="w-full">
+              <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
+                <TabsTrigger value="upcoming" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
+                  Agendamentos Ativos
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
+                  Concluídos
+                </TabsTrigger>
+                <TabsTrigger value="cancelled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">
+                  Cancelados/Ausentes
+                </TabsTrigger>
+              </TabsList>
+              
+              {isLoading ? (
+                <div className="w-full">
+                  <Loading text="Carregando agendamentos..." size="md" className="h-40" />
+                </div>
+              ) : isError ? (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Erro</AlertTitle>
+                  <AlertDescription>
+                    {error instanceof Error ? error.message : "Erro ao carregar agendamentos."}
+                  </AlertDescription>
+                </Alert>
+              ) : (
+                <>
+                  <TabsContent value="upcoming" className="mt-0 w-full">
+                    <ProfessionalBookingsList 
+                      appointments={appointments || []} 
+                      showActions={true}
+                      emptyMessage="Você não tem agendamentos ativos (pendentes, confirmados ou em andamento)."
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="completed" className="mt-0 w-full">
+                    <ProfessionalBookingsList 
+                      appointments={appointments || []} 
+                      showActions={true}
+                      emptyMessage="Você não tem agendamentos concluídos."
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="cancelled" className="mt-0 w-full">
+                    <ProfessionalBookingsList 
+                      appointments={appointments || []} 
+                      showActions={true}
+                      emptyMessage="Você não tem agendamentos cancelados ou marcados como 'não compareceu'."
+                    />
+                  </TabsContent>
+                </>
+              )}
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
-      
-      <Card className="border-iazi-border">
-        <CardHeader className="bg-muted/30 pb-3">
-          <CardTitle className="text-lg">Agendamentos</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <Tabs defaultValue="upcoming" onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid grid-cols-3 w-full max-w-md mb-6">
-              <TabsTrigger value="upcoming" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">Agendamentos Ativos</TabsTrigger>
-              <TabsTrigger value="completed" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">Concluídos</TabsTrigger>
-              <TabsTrigger value="cancelled" className="data-[state=active]:bg-iazi-primary data-[state=active]:text-white">Cancelados/Ausentes</TabsTrigger>
-            </TabsList>
-            
-            {isLoading ? (
-              <div className="w-full">
-                <Loading text="Carregando agendamentos..." size="md" className="h-40" />
-              </div>
-            ) : isError ? (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erro</AlertTitle>
-                <AlertDescription>
-                  {error instanceof Error ? error.message : "Erro ao carregar agendamentos."}
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <>
-                <TabsContent value="upcoming" className="mt-0 w-full">
-                  <ProfessionalBookingsList 
-                    appointments={appointments || []} 
-                    showActions={true}
-                    emptyMessage="Você não tem agendamentos ativos (pendentes, confirmados ou em andamento)."
-                  />
-                </TabsContent>
-                
-                <TabsContent value="completed" className="mt-0 w-full">
-                  <ProfessionalBookingsList 
-                    appointments={appointments || []} 
-                    showActions={true}
-                    emptyMessage="Você não tem agendamentos concluídos."
-                  />
-                </TabsContent>
-                
-                <TabsContent value="cancelled" className="mt-0 w-full">
-                  <ProfessionalBookingsList 
-                    appointments={appointments || []} 
-                    showActions={true}
-                    emptyMessage="Você não tem agendamentos cancelados ou marcados como 'não compareceu'."
-                  />
-                </TabsContent>
-              </>
-            )}
-          </Tabs>
-        </CardContent>
-      </Card>
     </PageContainer>
   );
 };
