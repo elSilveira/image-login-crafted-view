@@ -4,9 +4,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import ProfessionalAreaLayout from "@/components/ProfessionalAreaLayout";
-import { InstallAppBanner } from "@/components/ui/install-app-banner";
-import { PwaUpdateNotification } from "@/components/ui/pwa-update-notification";
-import { NetworkStatus } from "@/components/ui/network-status";
 
 // Routes
 const Home = lazy(() => import("./pages/Home"));
@@ -67,8 +64,7 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <Router>
+    <QueryClientProvider client={queryClient}>      <Router>
         <AuthProvider>
           <Suspense fallback={<div className="h-screen w-screen flex items-center justify-center">Carregando...</div>}>
             <Routes>
@@ -126,16 +122,11 @@ function App() {
               <Route path="/company/my-company/staff" element={<CompanyStaff />} />
               <Route path="/company/my-company/calendar" element={<CompanyCalendar />} />              <Route path="/company/my-company/staff/:staffId/calendar" element={<StaffCalendar />} />
               <Route path="/company/:id/services" element={<CompanyServices />} />
-                {/* Test routes */}
+              {/* Test routes */}
               <Route path="/test/bookings" element={<TestBookingsList />} />
               <Route path="/test/debug-bookings" element={<DebugBookingsPage />} />
-              
-              <Route path="/profile/professional/schedule" element={<ProfessionalAreaLayout />} />
-                <Route path="*" element={<NotFound />} />
+              <Route path="/profile/professional/schedule" element={<ProfessionalAreaLayout />} />              <Route path="*" element={<NotFound />} />
             </Routes>
-            <InstallAppBanner />
-            <PwaUpdateNotification />
-            <NetworkStatus />
             <Toaster />
           </Suspense>
         </AuthProvider>

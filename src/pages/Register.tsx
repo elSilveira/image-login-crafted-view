@@ -1,5 +1,4 @@
 import { useState } from "react";
-import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,10 +57,8 @@ const Register = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-  return (
+  };  return (
     <>
-      <Navigation />
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white to-iazi-rosa-1/20 p-4">
         <Card className="w-full max-w-md shadow-lg border-iazi-border">
           <CardHeader className="space-y-3">

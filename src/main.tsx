@@ -2,10 +2,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import App from './App.tsx';
+// import App from './App.tsx';
+// import TestApp from './TestApp.tsx';
+// import SimpleApp from './SimpleApp.tsx';
+// import GradualApp from './GradualApp.tsx';
+// import WorkingApp from './WorkingApp.tsx';
+import PwaApp from './PwaApp.tsx';
 import './index.css';
-import { registerServiceWorker } from './lib/register-sw';
-import './lib/pwa-global';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
@@ -20,14 +23,11 @@ const queryClient = new QueryClient({
   },
 });
 
-// Register service worker for PWA
-registerServiceWorker();
-
 const root = createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <PwaApp />
     </QueryClientProvider>
   </React.StrictMode>
 );

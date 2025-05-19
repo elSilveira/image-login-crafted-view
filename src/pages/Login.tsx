@@ -6,7 +6,6 @@ import { Mail, Lock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { LoadingInline } from "@/components/ui/loading";
-import Navigation from "@/components/Navigation";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -21,11 +20,9 @@ const Login = () => {
       // Error handling is done in the AuthContext
       console.error("Login error", error);
     }
-  };
-  return (
+  };  return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      <div className="flex items-center justify-center p-4 pt-20">
+      <div className="flex items-center justify-center p-4 h-screen">
         <Card className="w-full max-w-md shadow-lg border-iazi-border">
         <CardHeader className="space-y-3">
           <CardTitle className="text-3xl font-playfair text-center text-iazi-text">

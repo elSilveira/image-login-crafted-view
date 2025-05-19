@@ -20,4 +20,12 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Uncomment to use test-main.tsx for debugging
+  // build: {
+  //   rollupOptions: {
+  //     input: {
+  //       main: path.resolve(__dirname, 'index.html'),
+  //     },
+  //   },
+  // },
 }));
