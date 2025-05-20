@@ -6,6 +6,7 @@ import ProfessionalAreaLayout from "@/components/ProfessionalAreaLayout";
 import { NetworkStatus } from "@/components/ui/network-status";
 import { PwaUpdateNotification } from "@/components/ui/pwa-update-notification";
 import { InstallAppBanner } from "@/components/ui/install-app-banner";
+import { ClearCacheButton } from "@/components/ui/clear-cache-button";
 import { registerServiceWorker } from "@/lib/register-sw";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -199,6 +200,13 @@ function PwaApp() {
             <NetworkStatus />
             <PwaUpdateNotification />
             <InstallAppBanner />
+            
+            {/* Botão para limpeza de cache - Visível apenas em Settings */}
+            {window.location.pathname === '/settings' && (
+              <div className="fixed bottom-28 right-4 z-50">
+                <ClearCacheButton />
+              </div>
+            )}
           </Suspense>
         </ErrorBoundary>
       </AuthProvider>

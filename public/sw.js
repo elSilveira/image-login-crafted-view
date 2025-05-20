@@ -1,5 +1,12 @@
 // This is the Service Worker file for the iAzi PWA
-const CACHE_NAME = 'iazi-app-v1.1';
+const CACHE_VERSION = '2';
+const CACHE_NAME = `iazi-app-v${CACHE_VERSION}`;
+
+// Lista de versões antigas para serem excluídas
+const OLD_CACHES = [
+  'iazi-app-v1',
+  'iazi-app-v1.1',
+];
 
 // Resources to cache immediately when SW installs
 const PRECACHE_URLS = [
@@ -23,7 +30,7 @@ const APP_SHELL_URLS = [
 
 // Service Worker Install Event
 self.addEventListener('install', event => {
-  console.log('Service Worker instalado ✅');
+  console.log('Service Worker instalado ✅ - Nova versão:', CACHE_VERSION);
   
   // Skip waiting forces the waiting service worker to become the active service worker
   self.skipWaiting();
@@ -42,100 +49,124 @@ self.addEventListener('install', event => {
 
 // Service Worker Activate Event - Clean up old caches
 self.addEventListener('activate', event => {
-  console.log('Service Worker ativado ✅');
+  console.log('Service Worker ativado ✅ - Versão:', CACHE_VERSION);
   
+  // Limpar todos os caches antigos
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.filter(cacheName => {
-          return cacheName !== CACHE_NAME;
-        }).map(cacheName => {
-          console.log('Removendo cache antigo:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-    }).then(() => {
-      // Claim any clients that match the worker's scope
-      return self.clients.claim();
-    })
+    caches.keys()
+      .then(cacheNames => {
+        console.log('Caches existentes:', cacheNames);
+        return Promise.all(
+          cacheNames
+            .filter(cacheName => {
+              // Remover caches antigos conhecidos e qualquer outro que não seja o atual
+              return (OLD_CACHES.includes(cacheName) || cacheName !== CACHE_NAME);
+            })
+            .map(cacheName => {
+              console.log('Removendo cache antigo:', cacheName);
+              return caches.delete(cacheName);
+            })
+        );
+      })
+      .then(() => {
+        console.log('Limpeza de cache concluída');
+        // Claim any clients that match the worker's scope
+        return self.clients.claim();
+      })
   );
 });
 
-// Service Worker Fetch Event - Estratégia otimizada para iOS
+// Service Worker Fetch Event - Estratégia otimizada para evitar problemas de cache
 self.addEventListener('fetch', event => {
-  // Pular solicitações não-GET e chamadas de API
-  if (event.request.method !== 'GET' || 
-      event.request.url.includes('/api/') ||
-      !event.request.url.startsWith(self.location.origin)) {
+  // Ignorar solicitações não-GET, APIs, e cross-origin
+  if (
+    event.request.method !== 'GET' || 
+    event.request.url.includes('/api/') ||
+    !event.request.url.startsWith(self.location.origin)
+  ) {
     return;
   }
   
-  // Criar uma URL para comparar sem query parameters para navegação
   const requestURL = new URL(event.request.url);
-  const isNavigationRequest = 
-    event.request.mode === 'navigate' || 
-    (event.request.headers.get('accept') && 
-     event.request.headers.get('accept').includes('text/html'));
   
-  // Estratégia para solicitações de navegação (HTML)
-  if (isNavigationRequest) {
+  // Adicionar parâmetro de versão para evitar cache do navegador
+  // para recursos importantes como HTML e JavaScript
+  const shouldBypassCache = (
+    requestURL.pathname.endsWith('.html') || 
+    requestURL.pathname.endsWith('.js') || 
+    requestURL.pathname.endsWith('.json') ||
+    requestURL.pathname === '/'
+  );
+  
+  if (shouldBypassCache) {
+    // Para recursos críticos, sempre verificar a rede primeiro
+    const networkFirstStrategy = async () => {
+      try {
+        // Tentar buscar da rede com cabeçalho cache-control para evitar cache
+        const networkRequest = new Request(event.request.url, {
+          cache: 'no-store',
+          headers: new Headers({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+          })
+        });
+        
+        const networkResponse = await fetch(networkRequest);
+        
+        // Se tiver sucesso, atualizar o cache
+        if (networkResponse && networkResponse.status === 200) {
+          const responseClone = networkResponse.clone();
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(event.request, responseClone);
+        }
+        
+        return networkResponse;
+      } catch (error) {
+        // Se falhar, tentar o cache
+        const cachedResponse = await caches.match(event.request);
+        return cachedResponse || caches.match('/index.html');
+      }
+    };
+    
+    event.respondWith(networkFirstStrategy());
+  } else {
+    // Para outros recursos, usar estratégia de cache first
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          if (!response || response.status !== 200) {
-            throw new Error('Navigation fetch failed');
+      caches.match(event.request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            // Retornar do cache, mas também atualizar em segundo plano
+            const fetchPromise = fetch(event.request)
+              .then(networkResponse => {
+                if (networkResponse && networkResponse.status === 200) {
+                  const responseClone = networkResponse.clone();
+                  caches.open(CACHE_NAME)
+                    .then(cache => cache.put(event.request, responseClone));
+                }
+                return networkResponse;
+              })
+              .catch(() => cachedResponse);
+            
+            // Usar o que está em cache enquanto atualiza em segundo plano
+            return cachedResponse;
           }
           
-          // Clone a resposta para o cache
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
-          
-          return response;
-        })
-        .catch(() => {
-          // Se a navegação falhar, tente encontrar no cache
-          return caches.match(event.request)
-            .then(cachedResponse => {
-              if (cachedResponse) {
-                return cachedResponse;
+          // Se não estiver no cache, buscar da rede
+          return fetch(event.request)
+            .then(response => {
+              if (!response || response.status !== 200) {
+                return response;
               }
               
-              // Se não encontrar no cache, retorne a página inicial como fallback
-              return caches.match('/index.html');
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(event.request, responseClone));
+              
+              return response;
             });
         })
     );
-    return;
   }
-  
-  // Estratégia para recursos estáticos - Cache First com Network Fallback
-  event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          // Retorna do cache primeiro
-          return cachedResponse;
-        }
-        
-        // Se não estiver no cache, tente a rede
-        return fetch(event.request)
-          .then(response => {
-            if (!response || response.status !== 200) {
-              return response;
-            }
-            
-            // Clone a resposta antes de usar
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseClone);
-            });
-            
-            return response;
-          });
-      })
-  );
 });
 
 // Listen for push notifications
@@ -143,7 +174,7 @@ self.addEventListener('push', event => {
   const title = 'iAzi';
   const options = {
     body: event.data && event.data.text() || 'Notificação iAzi',
-    icon: '/public/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png',
+    icon: '/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png',
     badge: '/favicon.ico'
   };
 
@@ -164,6 +195,7 @@ self.addEventListener('notificationclick', event => {
 // Evento para lidar com mensagens, incluindo skip waiting
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('Recebido comando para pular waiting');
     self.skipWaiting();
   }
 });
