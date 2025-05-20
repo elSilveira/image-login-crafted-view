@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -13,17 +14,21 @@ interface ReviewFormProps {
   serviceId?: string;
   professionalId?: string;
   companyId?: string;
-  appointmentId?: string; // Para associar a avaliação a um agendamento específico
-  onSuccess?: () => void; // Função chamada após enviar com sucesso
+  userId?: string;
+  appointmentId?: string;
+  onSuccess?: () => void;
+  reviewType?: "professional" | "user";
 }
 
 const ReviewForm = ({ 
   onClose, 
   serviceId, 
   professionalId, 
-  companyId, 
+  companyId,
+  userId,
   appointmentId, 
-  onSuccess 
+  onSuccess,
+  reviewType = "professional"
 }: ReviewFormProps) => {
   const [rating, setRating] = useState<Rating | null>(null);
   const [comment, setComment] = useState("");
@@ -32,7 +37,10 @@ const ReviewForm = ({
   const { toast } = useToast();
 
   // Verifica se pelo menos um ID foi fornecido
-  const hasValidId = Boolean(serviceId || professionalId || companyId);
+  const hasValidId = Boolean(
+    (reviewType === "professional" && (serviceId || professionalId || companyId)) ||
+    (reviewType === "user" && userId)
+  );
 
   const handleRatingHover = (hoverRating: Rating) => {
     setHoveredRating(hoverRating);
@@ -88,7 +96,9 @@ const ReviewForm = ({
     if (!hasValidId) {
       toast({
         title: "Erro na avaliação",
-        description: "É necessário fornecer serviceId, professionalId ou companyId para criar a avaliação.",
+        description: reviewType === "user" 
+          ? "É necessário fornecer userId para criar a avaliação."
+          : "É necessário fornecer serviceId, professionalId ou companyId para criar a avaliação.",
         variant: "destructive",
       });
       return;
@@ -103,6 +113,9 @@ const ReviewForm = ({
         serviceId,
         professionalId,
         companyId,
+        userId,
+        appointmentId,
+        reviewType,
       };
       
       // Adicionar comentário se não estiver vazio

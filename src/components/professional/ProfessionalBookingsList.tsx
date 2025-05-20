@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -5,11 +6,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Clock, Calendar, User, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { AlertCircle, Clock, Calendar, User, CheckCircle, XCircle, AlertTriangle, Star } from "lucide-react";
 import { updateAppointmentStatus } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import ProfessionalRescheduleModal from "./ProfessionalRescheduleModal";
 import AppointmentDetailsModal from "../booking/AppointmentDetailsModal";
+import AppointmentReviewDialog from "../reviews/AppointmentReviewDialog";
+import { AppointmentReviewStatus } from "@/types/reviews";
 
 // This follows the API's APPOINTMENT_STATUS documentation
 const STATUS_COLORS = {
@@ -57,6 +60,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState<Record<string, boolean>>({});
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   const handleStatusUpdate = async (appointmentId: string, newStatus: string) => {
     setIsUpdating(prev => ({ ...prev, [appointmentId]: true }));
@@ -96,6 +100,12 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
     setIsDetailsModalOpen(true);
   };
 
+  const openReviewModal = (appointment: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedAppointment(appointment);
+    setIsReviewModalOpen(true);
+  };
+
   // Helper to format client name
   const getClientName = (appointment: any) => {
     if (appointment.user?.name) {
@@ -119,6 +129,12 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
     }
     
     return "Serviço não especificado";
+  };
+
+  // Helper to check if appointment can be reviewed (mock - should be replaced with API call)
+  const canReviewAppointment = (appointment: any): boolean => {
+    // Check if appointment is completed
+    return appointment.status === "COMPLETED";
   };
 
   // Helper to get status color and label
@@ -146,6 +162,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
         const serviceName = getServiceName(appointment);
         const clientName = getClientName(appointment);
         const { statusLabel, statusColor } = getStatusInfo(appointment.status);
+        const canReview = canReviewAppointment(appointment);
         
         return (
           <Card 
@@ -268,6 +285,19 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                       Finalizar
                     </Button>
                   )}
+
+                  {/* Add review button for completed appointments */}
+                  {canReview && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1 text-xs bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
+                      onClick={(e) => openReviewModal(appointment, e)}
+                    >
+                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                      Avaliar Cliente
+                    </Button>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -308,6 +338,26 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
             status: selectedAppointment.status.toLowerCase(),
             location: selectedAppointment.location || "Local não especificado",
             notes: selectedAppointment.notes || ""
+          }}
+        />
+      )}
+
+      {/* Review Modal */}
+      {selectedAppointment && (
+        <AppointmentReviewDialog
+          open={isReviewModalOpen}
+          onOpenChange={setIsReviewModalOpen}
+          appointmentData={{
+            id: selectedAppointment.id,
+            serviceId: selectedAppointment.serviceId || selectedAppointment.service?.id,
+            serviceName: getServiceName(selectedAppointment),
+            professionalId: selectedAppointment.professionalId,
+            userId: selectedAppointment.userId || selectedAppointment.user?.id,
+            userName: getClientName(selectedAppointment),
+            reviewType: "user" // This is a professional reviewing a user
+          }}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["professionalBookings"] });
           }}
         />
       )}

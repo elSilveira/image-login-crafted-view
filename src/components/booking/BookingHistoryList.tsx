@@ -16,6 +16,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import AppointmentDetailsModal, { AppointmentDetails } from "./AppointmentDetailsModal";
+import AppointmentReviewDialog from "../reviews/AppointmentReviewDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface BookingHistoryListProps {
   status: AppointmentStatus | "all";
@@ -41,6 +43,7 @@ interface FormattedAppointment {
   status: AppointmentStatus;
   notes?: string;
   location?: string;
+  canReview?: boolean;
 }
 
 const BookingHistoryList = ({ 
@@ -55,7 +58,10 @@ const BookingHistoryList = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentDetails | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [appointmentToReview, setAppointmentToReview] = useState<any | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -147,6 +153,9 @@ const BookingHistoryList = ({
           // Map API status to our internal status
           const mappedStatus = mapApiStatusToInternal(appointment.status.toString());
           
+          // Check if appointment can be reviewed (completed and not yet reviewed)
+          const canReview = mappedStatus === "completed";
+          
           return {
             id: appointment.id,
             services: appointmentServices,
@@ -157,7 +166,8 @@ const BookingHistoryList = ({
             totalPrice: totalPrice,
             status: mappedStatus,
             notes: appointment.notes || '',
-            location: appointment.location || ''
+            location: appointment.location || '',
+            canReview: canReview
           };
         });
         
@@ -277,6 +287,12 @@ const BookingHistoryList = ({
     setIsModalOpen(true);
   };
 
+  const handleReviewClick = (appointment: FormattedAppointment, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAppointmentToReview(appointment);
+    setIsReviewModalOpen(true);
+  };
+
   const getStatusBadge = (status: AppointmentStatus) => {
     switch (status) {
       case "scheduled":
@@ -333,7 +349,22 @@ const BookingHistoryList = ({
                     </Link>
                     
                     <div className="flex items-center justify-between mt-2">
-                      {getStatusBadge(appointment.status)}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(appointment.status)}
+                        
+                        {/* Add review button for completed appointments that can be reviewed */}
+                        {appointment.canReview && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="gap-1 text-xs bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
+                            onClick={(e) => handleReviewClick(appointment, e)}
+                          >
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            Avaliar
+                          </Button>
+                        )}
+                      </div>
                       <span className="font-medium text-iazi-text">
                         R$ {typeof appointment.totalPrice === 'number' ? 
                             appointment.totalPrice.toFixed(2).replace('.', ',') : 
@@ -358,6 +389,31 @@ const BookingHistoryList = ({
         onClose={() => setIsModalOpen(false)}
         appointment={selectedAppointment}
       />
+
+      {/* Review Modal */}
+      {appointmentToReview && (
+        <AppointmentReviewDialog
+          open={isReviewModalOpen}
+          onOpenChange={setIsReviewModalOpen}
+          appointmentData={{
+            id: appointmentToReview.id.toString(),
+            serviceId: appointmentToReview.services[0]?.id,
+            serviceName: appointmentToReview.services.map(s => s.name).join(", "),
+            professionalId: appointmentToReview.professionalId,
+            professionalName: appointmentToReview.professional,
+            reviewType: "professional" // This is a user reviewing a professional
+          }}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["appointments"] });
+            
+            // Show success toast
+            toast({
+              title: "Avaliação enviada",
+              description: "Obrigado por compartilhar sua experiência!",
+            });
+          }}
+        />
+      )}
     </div>
   );
 };

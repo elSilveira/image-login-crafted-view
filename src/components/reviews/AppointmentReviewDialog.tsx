@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   Dialog,
@@ -19,6 +20,9 @@ interface AppointmentReviewDialogProps {
     professionalName?: string;
     companyId?: string;
     companyName?: string;
+    userId?: string;
+    userName?: string;
+    reviewType?: "professional" | "user";
   };
   onSuccess?: () => void;
 }
@@ -29,16 +33,34 @@ const AppointmentReviewDialog = ({
   appointmentData,
   onSuccess,
 }: AppointmentReviewDialogProps) => {
-  const { serviceId, professionalId, companyId, serviceName } = appointmentData;
+  const { 
+    serviceId, 
+    professionalId, 
+    companyId, 
+    serviceName, 
+    userId, 
+    userName, 
+    reviewType = "professional" 
+  } = appointmentData;
+
+  const isUserReview = reviewType === "user";
+  
+  // Determine title and description based on review type
+  const title = isUserReview 
+    ? "Avaliar Cliente" 
+    : "Avaliar Serviço";
+  
+  const description = isUserReview
+    ? `Compartilhe sua experiência sobre o atendimento a ${userName || "este cliente"}.`
+    : `Compartilhe sua experiência sobre ${serviceName || "este serviço"}. Sua avaliação ajuda outros usuários e o profissional a melhorar.`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Avaliar Serviço</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Compartilhe sua experiência sobre {serviceName || "este serviço"}.
-            Sua avaliação ajuda outros usuários e o profissional a melhorar.
+            {description}
           </DialogDescription>
         </DialogHeader>
         <ReviewForm
@@ -46,12 +68,14 @@ const AppointmentReviewDialog = ({
           serviceId={serviceId}
           professionalId={professionalId}
           companyId={companyId}
+          userId={isUserReview ? userId : undefined}
           appointmentId={appointmentData.id}
           onSuccess={onSuccess}
+          reviewType={reviewType}
         />
       </DialogContent>
     </Dialog>
   );
 };
 
-export default AppointmentReviewDialog; 
+export default AppointmentReviewDialog;

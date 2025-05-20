@@ -1,9 +1,13 @@
+
 /**
  * Tipos para API de Avaliações
  */
 
 // Rating deve estar entre 1 e 5
 export type Rating = 1 | 2 | 3 | 4 | 5;
+
+// Tipo de avaliação (profissional ou usuário)
+export type ReviewType = "professional" | "user";
 
 // Interface para criação de uma avaliação
 export interface CreateReviewData {
@@ -12,6 +16,9 @@ export interface CreateReviewData {
   serviceId?: string;
   professionalId?: string;
   companyId?: string;
+  userId?: string;
+  appointmentId?: string;
+  reviewType?: ReviewType;
 }
 
 // Interface para atualização de uma avaliação
@@ -29,6 +36,7 @@ export interface Review {
   serviceId?: string;
   professionalId?: string;
   companyId?: string;
+  reviewType?: ReviewType;
   updatedAt: string;
   user: {
     id: string;
@@ -72,10 +80,12 @@ export interface ReviewQueryParams {
   serviceId?: string;
   professionalId?: string;
   companyId?: string;
+  userId?: string;
+  reviewType?: ReviewType;
   rating?: Rating;
   startDate?: string;
   endDate?: string;
   sort?: 'createdAt_desc' | 'createdAt_asc' | 'rating_desc' | 'rating_asc';
   limit?: number;
   page?: number;
-} 
+}
