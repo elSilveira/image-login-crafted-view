@@ -1,5 +1,5 @@
 // This is the Service Worker file for the iAzi PWA
-const CACHE_NAME = 'iazi-app-v1';
+const CACHE_NAME = 'iazi-app-v1.1';
 
 // Resources to cache immediately when SW installs
 const PRECACHE_URLS = [
@@ -7,6 +7,18 @@ const PRECACHE_URLS = [
   '/index.html',
   '/manifest.json',
   '/favicon.ico',
+  // Adicionando estilos e scripts principais
+  '/src/index.css',
+  '/src/main.tsx',
+];
+
+// Lista de páginas principais para cache de fallback
+const APP_SHELL_URLS = [
+  '/',
+  '/login',
+  '/register',
+  '/search',
+  '/booking-history',
 ];
 
 // Service Worker Install Event
@@ -49,53 +61,79 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Service Worker Fetch Event - Network first, then cache, with fallback
+// Service Worker Fetch Event - Estratégia otimizada para iOS
 self.addEventListener('fetch', event => {
-  // Skip cross-origin requests like API calls
-  if (!event.request.url.startsWith(self.location.origin)) {
+  // Pular solicitações não-GET e chamadas de API
+  if (event.request.method !== 'GET' || 
+      event.request.url.includes('/api/') ||
+      !event.request.url.startsWith(self.location.origin)) {
     return;
   }
   
-  // Skip non-HTTP(S) requests (e.g., websocket)
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Network first strategy
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        // If we got a valid response, clone it and put it in the cache
-        if (response && response.status === 200) {
+  // Criar uma URL para comparar sem query parameters para navegação
+  const requestURL = new URL(event.request.url);
+  const isNavigationRequest = 
+    event.request.mode === 'navigate' || 
+    (event.request.headers.get('accept') && 
+     event.request.headers.get('accept').includes('text/html'));
+  
+  // Estratégia para solicitações de navegação (HTML)
+  if (isNavigationRequest) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          if (!response || response.status !== 200) {
+            throw new Error('Navigation fetch failed');
+          }
+          
+          // Clone a resposta para o cache
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, responseClone);
           });
-        }
-        return response;
-      })
-      .catch(() => {
-        // If the network fails, try from the cache
-        return caches.match(event.request).then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-
-          // If this is a HTML navigation and it's not in the cache,
-          // return the cached index.html as a fallback
-          if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
-          }
           
-          // If the request failed and it wasn't a navigation, fallback to a default response
-          return new Response('Não foi possível carregar o recurso. Por favor, verifique sua conexão.', {
-            status: 503,
-            statusText: 'Service Unavailable',
-            headers: new Headers({
-              'Content-Type': 'text/plain'
-            })
+          return response;
+        })
+        .catch(() => {
+          // Se a navegação falhar, tente encontrar no cache
+          return caches.match(event.request)
+            .then(cachedResponse => {
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              
+              // Se não encontrar no cache, retorne a página inicial como fallback
+              return caches.match('/index.html');
+            });
+        })
+    );
+    return;
+  }
+  
+  // Estratégia para recursos estáticos - Cache First com Network Fallback
+  event.respondWith(
+    caches.match(event.request)
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          // Retorna do cache primeiro
+          return cachedResponse;
+        }
+        
+        // Se não estiver no cache, tente a rede
+        return fetch(event.request)
+          .then(response => {
+            if (!response || response.status !== 200) {
+              return response;
+            }
+            
+            // Clone a resposta antes de usar
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+            
+            return response;
           });
-        });
       })
   );
 });
@@ -121,4 +159,11 @@ self.addEventListener('notificationclick', event => {
   event.waitUntil(
     clients.openWindow('/')
   );
+});
+
+// Evento para lidar com mensagens, incluindo skip waiting
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
