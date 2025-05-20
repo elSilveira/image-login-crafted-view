@@ -41,15 +41,27 @@ export type AppointmentStatus = "scheduled" | "completed" | "cancelled" | "no-sh
 
 // Map API status to our internal status
 export const mapApiStatusToInternal = (apiStatus: string): AppointmentStatus => {
-  const statusMap: Record<string, AppointmentStatus> = {
-    "PENDING": "scheduled",
-    "CONFIRMED": "scheduled",
-    "COMPLETED": "completed",
-    "CANCELLED": "cancelled",
-    "NO_SHOW": "no-show"
-  };
+  // Normalizar o status para comparação
+  const status = apiStatus?.toUpperCase() || "";
   
-  return statusMap[apiStatus] || "scheduled";
+  if (status === "PENDING" || status === "CONFIRMED" || 
+      status === "IN_PROGRESS" || status === "INPROGRESS" || status === "IN-PROGRESS") {
+    return "scheduled";
+  }
+  
+  if (status === "COMPLETED") {
+    return "completed";
+  }
+  
+  if (status === "CANCELLED") {
+    return "cancelled";
+  }
+  
+  if (status === "NO_SHOW" || status === "NOSHOW" || status === "NO-SHOW") {
+    return "no-show";
+  }
+  
+  return "scheduled"; // Default fallback
 };
 
 export interface ServiceData {

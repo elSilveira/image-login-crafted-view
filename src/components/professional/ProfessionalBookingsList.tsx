@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -13,6 +12,7 @@ import ProfessionalRescheduleModal from "./ProfessionalRescheduleModal";
 import AppointmentDetailsModal from "../booking/AppointmentDetailsModal";
 import AppointmentReviewDialog from "../reviews/AppointmentReviewDialog";
 import { AppointmentReviewStatus } from "@/types/reviews";
+import { mapApiStatusToInternal } from "@/lib/api-services";
 
 // This follows the API's APPOINTMENT_STATUS documentation
 const STATUS_COLORS = {
@@ -131,9 +131,11 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
     return "Serviço não especificado";
   };
 
-  // Helper to check if appointment can be reviewed (mock - should be replaced with API call)
+  // Helper to check if appointment can be reviewed
   const canReviewAppointment = (appointment: any): boolean => {
     // Check if appointment is completed
+    // Em uma implementação real, pode ser útil verificar se o agendamento já foi avaliado
+    // através de uma chamada à API ou de dados no próprio objeto appointment
     return appointment.status === "COMPLETED";
   };
 
@@ -202,11 +204,11 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                 </div>
               </div>
               
-              {/* Action buttons - only shown if showActions is true */}
-              {showActions && (
+              {/* Action buttons - conditional based on showActions or completed status */}
+              {(showActions || appointment.status === "COMPLETED") && (
                 <div className="bg-muted/30 p-2 flex flex-wrap gap-2 justify-end border-t">
                   {/* Show actions based on current appointment status */}
-                  {(appointment.status === "PENDING") && (
+                  {showActions && appointment.status === "PENDING" && (
                     <>
                       <Button
                         size="sm"
@@ -238,7 +240,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                     </>
                   )}
                   
-                  {(appointment.status === "CONFIRMED") && (
+                  {showActions && appointment.status === "CONFIRMED" && (
                     <>
                       <Button
                         size="sm"
@@ -270,7 +272,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                     </>
                   )}
                   
-                  {(appointment.status === "IN_PROGRESS" || appointment.status === "INPROGRESS" || appointment.status === "IN-PROGRESS") && (
+                  {showActions && (appointment.status === "IN_PROGRESS" || appointment.status === "INPROGRESS" || appointment.status === "IN-PROGRESS") && (
                     <Button
                       size="sm"
                       variant="outline"
@@ -332,12 +334,16 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
               price: selectedAppointment.service?.price || 0
             }],
             professional: selectedAppointment.professional?.name || "Profissional",
+            professionalId: selectedAppointment.professionalId,
             date: format(parseISO(selectedAppointment.startTime), "yyyy-MM-dd"),
             time: format(parseISO(selectedAppointment.startTime), "HH:mm"),
             price: selectedAppointment.price || selectedAppointment.service?.price || 0,
-            status: selectedAppointment.status.toLowerCase(),
+            status: mapApiStatusToInternal(selectedAppointment.status),
             location: selectedAppointment.location || "Local não especificado",
-            notes: selectedAppointment.notes || ""
+            notes: selectedAppointment.notes || "",
+            canBeReviewed: selectedAppointment.status === "COMPLETED",
+            hasBeenReviewed: selectedAppointment.hasBeenReviewed || false,
+            userRole: "professional"
           }}
         />
       )}

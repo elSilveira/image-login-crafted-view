@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Dialog,
@@ -7,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Star } from "lucide-react";
 import ReviewForm from "./ReviewForm";
 
 interface AppointmentReviewDialogProps {
@@ -38,6 +38,8 @@ const AppointmentReviewDialog = ({
     professionalId, 
     companyId, 
     serviceName, 
+    professionalName,
+    companyName,
     userId, 
     userName, 
     reviewType = "professional" 
@@ -52,27 +54,32 @@ const AppointmentReviewDialog = ({
   
   const description = isUserReview
     ? `Compartilhe sua experiência sobre o atendimento a ${userName || "este cliente"}.`
-    : `Compartilhe sua experiência sobre ${serviceName || "este serviço"}. Sua avaliação ajuda outros usuários e o profissional a melhorar.`;
+    : `Compartilhe sua experiência sobre ${serviceName || "este serviço"}${professionalName ? ` com ${professionalName}` : ''}${companyName ? ` na ${companyName}` : ''}.`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
+        <DialogHeader className="pb-2">
+          <div className="flex items-center gap-2 text-iazi-primary mb-1">
+            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+            <DialogTitle className="text-xl">{title}</DialogTitle>
+          </div>
+          <DialogDescription className="text-base">
             {description}
           </DialogDescription>
         </DialogHeader>
-        <ReviewForm
-          onClose={() => onOpenChange(false)}
-          serviceId={serviceId}
-          professionalId={professionalId}
-          companyId={companyId}
-          userId={isUserReview ? userId : undefined}
-          appointmentId={appointmentData.id}
-          onSuccess={onSuccess}
-          reviewType={reviewType}
-        />
+        <div className="border-t pt-4 mt-2">
+          <ReviewForm
+            onClose={() => onOpenChange(false)}
+            serviceId={serviceId}
+            professionalId={professionalId}
+            companyId={companyId}
+            userId={isUserReview ? userId : undefined}
+            appointmentId={appointmentData.id}
+            onSuccess={onSuccess}
+            reviewType={reviewType}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

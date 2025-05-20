@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Star, Clock, Calendar, MapPin, User } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AppointmentReviewDialog from "@/components/reviews/AppointmentReviewDialog";
 
 interface CompletedAppointmentCardProps {
@@ -104,15 +105,24 @@ const CompletedAppointmentCard = ({
 
             <div className="flex justify-between items-center pt-2">
               {isCompletedAndReviewable ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1"
-                  onClick={() => setIsReviewDialogOpen(true)}
-                >
-                  <Star className="h-4 w-4" />
-                  Avaliar
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1 border-iazi-primary text-iazi-primary hover:bg-iazi-primary hover:text-white"
+                        onClick={() => setIsReviewDialogOpen(true)}
+                      >
+                        <Star className="h-4 w-4" />
+                        Avaliar
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Compartilhe sua experiência e ajude outros usuários!</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ) : appointment.hasBeenReviewed ? (
                 <Badge variant="outline" className="gap-1 border-green-200 text-green-600">
                   <Star className="h-3 w-3 fill-green-500" />

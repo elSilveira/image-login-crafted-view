@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import AppointmentDetailsModal, { AppointmentDetails } from "./AppointmentDetailsModal";
 import AppointmentReviewDialog from "../reviews/AppointmentReviewDialog";
 import { useQueryClient } from "@tanstack/react-query";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface BookingHistoryListProps {
   status: AppointmentStatus | "all";
@@ -354,15 +354,24 @@ const BookingHistoryList = ({
                         
                         {/* Add review button for completed appointments that can be reviewed */}
                         {appointment.canReview && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1 text-xs bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
-                            onClick={(e) => handleReviewClick(appointment, e)}
-                          >
-                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                            Avaliar
-                          </Button>
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="gap-1 text-xs border-iazi-primary text-iazi-primary hover:bg-iazi-primary hover:text-white"
+                                  onClick={(e) => handleReviewClick(appointment, e)}
+                                >
+                                  <Star className="h-3.5 w-3.5" />
+                                  Avaliar
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Compartilhe sua experiência e ajude outros usuários!</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         )}
                       </div>
                       <span className="font-medium text-iazi-text">

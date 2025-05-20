@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -65,14 +64,14 @@ const ReviewForm = ({
           key={value}
           variant="ghost"
           size="sm"
-          className="p-2 relative"
+          className="p-1 relative"
           onMouseEnter={() => handleRatingHover(starValue)}
           onMouseLeave={handleRatingLeave}
           onClick={() => handleRatingClick(starValue)}
           type="button"
         >
           <Star 
-            className={`h-6 w-6 transition-all duration-150 ${
+            className={`h-7 w-7 transition-all duration-150 ${
               isActive ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted-foreground"
             }`} 
           />
@@ -148,14 +147,14 @@ const ReviewForm = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label className="block mb-2">Sua avaliação</Label>
-        <div className="flex gap-1 mb-1">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="text-center">
+        <Label className="block mb-3 font-medium">Como você avalia sua experiência?</Label>
+        <div className="flex justify-center gap-1 mb-3">
           {renderStars()}
         </div>
-        <div className="text-sm text-muted-foreground">
-          {rating ? `Você selecionou ${rating} estrela${rating !== 1 ? 's' : ''}` : 'Selecione uma classificação'}
+        <div className={`text-sm font-medium transition-opacity duration-200 ${rating ? 'opacity-100' : 'opacity-0'}`}>
+          {rating ? `${rating} estrela${rating !== 1 ? 's' : ''}` : ''}
         </div>
       </div>
       
@@ -164,17 +163,21 @@ const ReviewForm = ({
         <Textarea
           id="comment"
           placeholder="Conte-nos sobre sua experiência..."
-          className="min-h-[100px]"
+          className="min-h-[120px] resize-none"
           value={comment}
           onChange={(e) => setComment(e.target.value)}
         />
       </div>
       
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex justify-end gap-3 pt-2">
         <Button variant="outline" onClick={onClose} type="button" disabled={isSubmitting}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting || !rating || !hasValidId}>
+        <Button 
+          type="submit" 
+          disabled={isSubmitting || !rating || !hasValidId}
+          className="bg-iazi-primary hover:bg-iazi-primary-hover"
+        >
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

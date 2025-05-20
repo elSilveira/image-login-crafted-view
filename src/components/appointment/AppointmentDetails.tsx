@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, User, Briefcase, CreditCard, MessageSquare, Star } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import AppointmentReviewDialog from "@/components/reviews/AppointmentReviewDialog";
 
 interface AppointmentDetailsProps {
@@ -168,15 +169,24 @@ const AppointmentDetails: React.FC<AppointmentDetailsProps> = ({ appointment, on
         
         <CardFooter className="flex justify-between pt-0">
           {canReview && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-1"
-              onClick={handleOpenReviewDialog}
-            >
-              <Star className="h-4 w-4" />
-              Avaliar Serviço
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1 border-iazi-primary text-iazi-primary hover:bg-iazi-primary hover:text-white"
+                    onClick={handleOpenReviewDialog}
+                  >
+                    <Star className="h-4 w-4" />
+                    Avaliar Serviço
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Compartilhe sua experiência e ajude outros usuários!</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {appointment.hasBeenReviewed && (
             <Badge variant="outline" className="gap-1 border-green-200 text-green-600">

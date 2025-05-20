@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, ChevronLeft, ChevronRight, Info, CheckCircle, XCircle, AlertTriangle, CalendarDays } from "lucide-react";
+import { Terminal, ChevronLeft, ChevronRight, Info, CheckCircle, XCircle, AlertTriangle, CalendarDays, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { 
@@ -22,10 +22,11 @@ import { ListCalendarView } from "@/components/company/calendar/ListCalendarView
 import { ViewType, FilterType, AppointmentType, AppointmentStatus } from "@/components/company/calendar/types";
 import { useAuth } from "@/contexts/AuthContext";
 import apiClient from "@/lib/api";
-import { updateAppointmentStatus } from "@/lib/api";
+import { updateAppointmentStatus, checkAppointmentReviewStatus } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import ProfessionalRescheduleModal from "./ProfessionalRescheduleModal";
+import AppointmentReviewDialog from "../reviews/AppointmentReviewDialog";
 
 // Define the structure expected from the API for an appointment
 interface ApiAppointment {
@@ -95,7 +96,8 @@ const statusLabels: Record<AppointmentStatus, string> = {
   "confirmed": "Confirmado",
   "in-progress": "Em Andamento",
   "completed": "Concluído",
-  "cancelled": "Cancelado"
+  "cancelled": "Cancelado",
+  "no-show": "Não Compareceu"
 };
 
 const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
@@ -118,11 +120,52 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(false);
   const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState<boolean>(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState<boolean>(false);
+  const [reviewStatus, setReviewStatus] = useState<{ hasBeenReviewed: boolean; rating?: number }>({
+    hasBeenReviewed: false
+  });
 
   // Handle opening appointment details
   const handleOpenAppointmentDetails = (appointment: AppointmentType) => {
     setSelectedAppointment(appointment);
     setIsDetailsOpen(true);
+    
+    // Verificar o status da avaliação para este agendamento quando abrir detalhes
+    const status = appointment.status.toString();
+    if (status === "completed" || status === "no-show") {
+      fetchReviewStatus(appointment.id);
+    }
+  };
+
+  // Buscar o status da avaliação de um agendamento
+  const fetchReviewStatus = async (appointmentId: string) => {
+    try {
+      const result = await checkAppointmentReviewStatus(appointmentId);
+      setReviewStatus({
+        hasBeenReviewed: result.hasBeenReviewed || false,
+        rating: result.rating
+      });
+    } catch (error) {
+      console.error("Erro ao verificar status de avaliação:", error);
+      setReviewStatus({ hasBeenReviewed: false });
+    }
+  };
+
+  // Abrir o modal de avaliação
+  const handleOpenReviewModal = () => {
+    setIsDetailsOpen(false);
+    setIsReviewModalOpen(true);
+  };
+
+  // Função executada quando a avaliação é concluída com sucesso
+  const handleReviewSuccess = () => {
+    setReviewStatus({ hasBeenReviewed: true, rating: 5 }); // O rating real será obtido ao reabrir o modal
+    toast({
+      title: "Avaliação enviada",
+      description: "Sua avaliação foi registrada com sucesso.",
+    });
+    // Invalidar consultas para atualizar dados
+    queryClient.invalidateQueries({ queryKey: ["professionalBookings"] });
   };
 
   // Determine date range based on viewType and selectedDate
@@ -451,7 +494,7 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium">{selectedAppointment.serviceName}</h3>
                 <Badge className={statusColors[selectedAppointment.status]}>
-                  {statusLabels[selectedAppointment.status]}
+                  {statusLabels[selectedAppointment.status] || "Status Desconhecido"}
                 </Badge>
               </div>
               
@@ -559,18 +602,83 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
                   </div>
                 )}
                 
+                {selectedAppointment.status === "no-show" && (
+                  <div className="flex flex-wrap gap-2 justify-end w-full">
+                    {reviewStatus.hasBeenReviewed ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 bg-gray-100 hover:bg-gray-100 border-gray-200 text-gray-500"
+                              disabled={true}
+                            >
+                              <div className="flex items-center">
+                                {Array.from({ length: reviewStatus.rating || 5 }).map((_, i) => (
+                                  <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                ))}
+                                <span className="ml-1">Avaliado</span>
+                              </div>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Cliente avaliado com {reviewStatus.rating || 5} estrelas</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
+                        disabled={isUpdating}
+                        onClick={handleOpenReviewModal}
+                      >
+                        <Star className="h-3.5 w-3.5 mr-1 fill-amber-400" />
+                        Avaliar Cliente
+                      </Button>
+                    )}
+                  </div>
+                )}
+                
                 {selectedAppointment.status === "completed" && (
                   <div className="flex flex-wrap gap-2 justify-end w-full">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      disabled={isUpdating}
-                      onClick={() => handleStatusUpdate(selectedAppointment.id, "no-show")}
-                    >
-                      <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-                      Não Compareceu
-                    </Button>
+                    {reviewStatus.hasBeenReviewed ? (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1 bg-gray-100 hover:bg-gray-100 border-gray-200 text-gray-500"
+                              disabled={true}
+                            >
+                              <div className="flex items-center">
+                                {Array.from({ length: reviewStatus.rating || 5 }).map((_, i) => (
+                                  <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                                ))}
+                                <span className="ml-1">Avaliado</span>
+                              </div>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Cliente avaliado com {reviewStatus.rating || 5} estrelas</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1 bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
+                        disabled={isUpdating}
+                        onClick={handleOpenReviewModal}
+                      >
+                        <Star className="h-3.5 w-3.5 mr-1 fill-amber-400" />
+                        Avaliar Cliente
+                      </Button>
+                    )}
                   </div>
                 )}
                 
@@ -593,7 +701,25 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
         <ProfessionalRescheduleModal
           isOpen={isRescheduleModalOpen}
           onClose={() => setIsRescheduleModalOpen(false)}
-          appointment={selectedAppointment}
+          appointment={selectedAppointment as any}
+        />
+      )}
+
+      {/* Review Modal */}
+      {selectedAppointment && (
+        <AppointmentReviewDialog
+          open={isReviewModalOpen}
+          onOpenChange={setIsReviewModalOpen}
+          appointmentData={{
+            id: selectedAppointment.id,
+            serviceId: selectedAppointment.serviceId,
+            serviceName: selectedAppointment.serviceName,
+            professionalId: selectedAppointment.staffId,
+            userId: selectedAppointment.clientId,
+            userName: selectedAppointment.clientName,
+            reviewType: "user" // Profissional avaliando o cliente
+          }}
+          onSuccess={handleReviewSuccess}
         />
       )}
     </div>

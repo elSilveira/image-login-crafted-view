@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -174,7 +173,7 @@ export const ProfessionalBookingsView = () => {
         <div className="w-full">
           <ProfessionalBookingsList 
             appointments={currentAppointments} 
-            showActions={activeTab === "upcoming"}
+            showActions={activeTab === "upcoming" || activeTab === "completed"}
             emptyMessage={`Você não tem agendamentos ${
               activeTab === "upcoming" ? "ativos" : 
               activeTab === "completed" ? "concluídos" : "cancelados"
