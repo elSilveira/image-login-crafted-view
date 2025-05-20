@@ -6,140 +6,136 @@ import { Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createReview } from "@/lib/api";
 import { Loader2 } from "lucide-react";
-import { Rating, CreateReviewData } from "@/types/reviews";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ReviewFormProps {
   onClose: () => void;
   serviceId?: string;
   professionalId?: string;
   companyId?: string;
-  userId?: string;
   appointmentId?: string;
   onSuccess?: () => void;
   reviewType?: "professional" | "user";
 }
 
-const ReviewForm = ({ 
+const ReviewForm: React.FC<ReviewFormProps> = ({ 
   onClose, 
   serviceId, 
   professionalId, 
   companyId,
-  userId,
-  appointmentId, 
+  appointmentId,
   onSuccess,
   reviewType = "professional"
-}: ReviewFormProps) => {
-  const [rating, setRating] = useState<Rating | null>(null);
-  const [comment, setComment] = useState("");
-  const [hoveredRating, setHoveredRating] = useState<Rating | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+}) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [rating, setRating] = useState<number | null>(null);
+  const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Verifica se pelo menos um ID foi fornecido
-  const hasValidId = Boolean(
-    (reviewType === "professional" && (serviceId || professionalId || companyId)) ||
-    (reviewType === "user" && userId)
-  );
-
-  const handleRatingHover = (hoverRating: Rating) => {
-    setHoveredRating(hoverRating);
-  };
-
-  const handleRatingLeave = () => {
-    setHoveredRating(null);
-  };
-
-  const handleRatingClick = (selectedRating: Rating) => {
-    setRating(selectedRating);
-  };
-
+  // Verifica se temos pelo menos um ID válido
+  const hasValidId = !!(serviceId || professionalId || companyId);
+  
+  // Função para renderizar as estrelas interativas
   const renderStars = () => {
-    return [1, 2, 3, 4, 5].map((value) => {
-      const starValue = value as Rating;
-      const isActive = (hoveredRating !== null && starValue <= hoveredRating) || 
-                      (hoveredRating === null && rating !== null && starValue <= rating);
+    return Array.from({ length: 5 }).map((_, index) => {
+      const starValue = index + 1;
+      const isFilled = rating !== null && starValue <= rating;
       
       return (
-        <Button
-          key={value}
-          variant="ghost"
-          size="sm"
-          className="p-1 relative"
-          onMouseEnter={() => handleRatingHover(starValue)}
-          onMouseLeave={handleRatingLeave}
-          onClick={() => handleRatingClick(starValue)}
+        <button
+          key={index}
           type="button"
+          onClick={() => setRating(starValue)}
+          className="focus:outline-none"
+          aria-label={`Avaliar ${starValue} estrela${starValue !== 1 ? 's' : ''}`}
         >
           <Star 
-            className={`h-7 w-7 transition-all duration-150 ${
-              isActive ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted-foreground"
+            className={`h-8 w-8 transition-all ${
+              isFilled 
+                ? "fill-yellow-400 text-yellow-400" 
+                : "fill-gray-200 text-gray-200 hover:fill-yellow-200 hover:text-yellow-200"
             }`} 
           />
-        </Button>
+        </button>
       );
     });
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!rating) {
       toast({
-        title: "Avaliação necessária",
+        title: "Avaliação obrigatória",
         description: "Por favor, selecione uma classificação de 1 a 5 estrelas.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
-
+    
     if (!hasValidId) {
       toast({
-        title: "Erro na avaliação",
-        description: reviewType === "user" 
-          ? "É necessário fornecer userId para criar a avaliação."
-          : "É necessário fornecer serviceId, professionalId ou companyId para criar a avaliação.",
-        variant: "destructive",
+        title: "Erro de configuração",
+        description: "Não foi possível identificar o item a ser avaliado.",
+        variant: "destructive"
       });
       return;
     }
-
+    
+    setIsSubmitting(true);
+    
     try {
-      setIsSubmitting(true);
-      
-      // Preparar os dados conforme a documentação
-      const reviewData: CreateReviewData = {
+      // Criar objeto de dados da avaliação com apenas os campos necessários
+      const reviewData = {
         rating,
+        comment: comment.trim() || undefined, // Não enviar comentário vazio
         serviceId,
         professionalId,
-        companyId,
-        userId,
-        appointmentId,
-        reviewType,
+        companyId
       };
       
-      // Adicionar comentário se não estiver vazio
-      if (comment.trim()) {
-        reviewData.comment = comment.trim();
-      }
+      // Remover campos undefined
+      Object.keys(reviewData).forEach(key => {
+        if (reviewData[key as keyof typeof reviewData] === undefined) {
+          delete reviewData[key as keyof typeof reviewData];
+        }
+      });
       
       await createReview(reviewData);
       
-      toast({
-        title: "Avaliação enviada",
-        description: "Sua avaliação foi registrada com sucesso!",
-      });
-      
-      if (onSuccess) {
-        onSuccess();
+      // Invalidar queries relevantes para forçar recarregamento dos dados
+      if (professionalId) {
+        queryClient.invalidateQueries({ queryKey: ["reviews", professionalId] });
+        queryClient.invalidateQueries({ queryKey: ["professionalDetails", professionalId] });
+      }
+      if (serviceId) {
+        queryClient.invalidateQueries({ queryKey: ["reviews", serviceId] });
+        queryClient.invalidateQueries({ queryKey: ["serviceDetails", serviceId] });
+      }
+      if (companyId) {
+        queryClient.invalidateQueries({ queryKey: ["reviews", companyId] });
+        queryClient.invalidateQueries({ queryKey: ["companyDetails", companyId] });
       }
       
-      onClose();
-    } catch (error: any) {
+      toast({
+        title: "Avaliação enviada",
+        description: "Obrigado pelo seu feedback!",
+      });
+      
+      // Chamar callback de sucesso se fornecido
+      if (onSuccess) {
+        onSuccess();
+      } else {
+        onClose();
+      }
+      
+    } catch (error) {
       console.error("Erro ao enviar avaliação:", error);
       toast({
         title: "Erro ao enviar avaliação",
-        description: error.message || "Ocorreu um erro ao enviar sua avaliação. Tente novamente.",
-        variant: "destructive",
+        description: error instanceof Error ? error.message : "Tente novamente mais tarde.",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);

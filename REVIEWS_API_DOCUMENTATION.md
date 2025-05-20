@@ -9,6 +9,7 @@ This document provides comprehensive details about the Reviews feature in the IA
 3. [Endpoints](#endpoints)
    - [Get Reviews](#get-reviews)
    - [Get Review by ID](#get-review-by-id)
+   - [Get Professional Reviews](#get-professional-reviews)
    - [Create Review](#create-review)
    - [Update Review](#update-review)
    - [Delete Review](#delete-review)
@@ -144,6 +145,68 @@ Retrieves a single review by its ID.
   ```json
   {
     "message": "Avaliação não encontrada"
+  }
+  ```
+
+### Get Professional Reviews
+
+Retrieves all reviews for a specific professional, along with professional details.
+
+**URL:** `/reviews/professional/:professionalId`
+
+**Method:** `GET`
+
+**Authentication:** Not required
+
+**URL Parameters:**
+- `professionalId`: UUID of the professional to get reviews for
+
+**Success Response:**
+- **Code:** 200 OK
+- **Content:**
+```json
+{
+  "professional": {
+    "id": "prof-uuid-string",
+    "name": "Professional Name",
+    "image": "image-url",
+    "coverImage": "cover-image-url",
+    "bio": "Professional biography",
+    "rating": 4.8,
+    "totalReviews": 42,
+    "role": "Hair Stylist"
+  },
+  "reviews": [
+    {
+      "id": "review-uuid-string",
+      "rating": 5,
+      "comment": "Excellent service!",
+      "userId": "user-uuid-string",
+      "professionalId": "prof-uuid-string",
+      "updatedAt": "2025-05-18T15:30:00Z",
+      "user": {
+        "id": "user-uuid-string",
+        "name": "User Name",
+        "avatar": "avatar-url"
+      }
+    },
+    // ... more reviews
+  ],
+  "count": 42
+}
+```
+
+**Error Responses:**
+- **Code:** 400 BAD REQUEST
+  ```json
+  {
+    "message": "Formato de ID do profissional inválido."
+  }
+  ```
+- **Code:** 404 NOT FOUND
+  ```json
+  {
+    "message": "Profissional não encontrado"
   }
   ```
 

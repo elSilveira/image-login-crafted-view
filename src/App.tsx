@@ -58,7 +58,9 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1, // Retry failed queries once
+      retry: 3, // Limitar a 3 tentativas
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Backoff exponencial com máximo de 30 segundos
+      refetchOnWindowFocus: false, // Evitar refetch quando a janela ganha foco
     },
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProfessionalDetails, fetchProfessionalMe, fetchProfessionalAvailableDates, fetchProfessionalAppointments } from "@/lib/api"; // Import API function
@@ -43,6 +43,8 @@ import { format } from "date-fns";
 import { pt } from 'date-fns/locale';
 import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import ProfessionalReviewStats from "@/components/reviews/ProfessionalReviewStats";
+import ProfessionalReviewsList from "@/components/reviews/ProfessionalReviewsList";
 
 // Define interfaces based on expected API response (adjust as needed)
 interface Service {
@@ -101,7 +103,9 @@ export interface Professional {
   title?: string | null; // e.g., "Dermatologista"
   bio?: string | null;
   avatarUrl?: string | null;
+  image?: string | null; // Adicionar nome alternativo para a imagem de perfil
   coverImageUrl?: string | null;
+  coverImage?: string | null; // Adicionar nome alternativo para a imagem de capa
   averageRating?: number;
   reviewCount?: number;
   specialties?: string[]; // Assuming simple strings for now
@@ -203,6 +207,10 @@ const ProfessionalProfile = () => {
   const [selectedServicesForSlot, setSelectedServicesForSlot] = useState<string[]>([]);
   const [serviceFilter, setServiceFilter] = useState<string>("");
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  // Contador para evitar requisições infinitas
+  const [apiErrorCount, setApiErrorCount] = useState(0);
+  // Referência para controlar se o componente está montado
+  const isMounted = useRef(true);
 
   // Se não houver id na URL, buscar dados do próprio profissional logado
   const isOwnProfile = !id && user?.isProfessional;
@@ -222,30 +230,72 @@ const ProfessionalProfile = () => {
     setSearchParams({ tab: activeTab }, { replace: true });
   }, [activeTab, setSearchParams]);
 
-  // Fetch available dates when professional loads
   useEffect(() => {
-    if (!professional?.id) return;
+    // Função de limpeza para quando o componente for desmontado
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Fetch available dates when professional loads - com tratamento de erro aprimorado
+  useEffect(() => {
+    if (!professional?.id || apiErrorCount > 3) return;
+    
     setLoadingDates(true);
     fetchProfessionalAvailableDates(professional.id)
-      .then(dates => setAvailableDates(dates))
-      .catch(err => console.error(err))
-      .finally(() => setLoadingDates(false));
-  }, [professional?.id]);
+      .then(dates => {
+        if (isMounted.current) {
+          setAvailableDates(dates);
+          // Resetar contador de erros em caso de sucesso
+          setApiErrorCount(0);
+        }
+      })
+      .catch(err => {
+        console.error("Erro ao buscar datas disponíveis:", err);
+        if (isMounted.current) {
+          // Incrementar contador de erros
+          setApiErrorCount(prev => prev + 1);
+        }
+      })
+      .finally(() => {
+        if (isMounted.current) {
+          setLoadingDates(false);
+        }
+      });
+  }, [professional?.id, apiErrorCount]);
 
-  // Fetch slots when date changes
+  // Fetch slots when date changes - com tratamento de erro aprimorado
   useEffect(() => {
-    if (!date || !professional?.id) {
+    if (!date || !professional?.id || apiErrorCount > 3) {
       setAppointments([]);
       return;
     }
+    
     setLoadingSlots(true);
     const iso = date.toISOString().split('T')[0];
     // Fetch all appointments for the selected day
     fetchProfessionalAppointments(professional.id, iso, iso)
-      .then(data => setAppointments(data?.data || []))
-      .catch(err => console.error(err))
-      .finally(() => setLoadingSlots(false));
-  }, [date, professional?.id]);
+      .then(data => {
+        if (isMounted.current) {
+          setAppointments(data?.data || []);
+          // Resetar contador de erros em caso de sucesso
+          setApiErrorCount(0);
+        }
+      })
+      .catch(err => {
+        console.error("Erro ao buscar agendamentos:", err);
+        if (isMounted.current) {
+          // Incrementar contador de erros
+          setApiErrorCount(prev => prev + 1);
+        }
+      })
+      .finally(() => {
+        if (isMounted.current) {
+          setLoadingSlots(false);
+        }
+      });
+  }, [date, professional?.id, apiErrorCount]);
+
   // Debug: log professional.services and availableDates
   useEffect(() => {
     if (professional) {
@@ -332,7 +382,7 @@ const ProfessionalProfile = () => {
               <AlertCircle className="h-10 w-10 mb-4" />
               <h2 className="text-xl font-semibold mb-2">Erro ao Carregar Profissional</h2>
               <p className="text-sm mb-4">
-                Não foi possível carregar os detalhes do profissional. Tente novamente mais tarde.
+                Não foi possível carregar os detalhes do profissional. Verifique sua conexão e tente novamente mais tarde.
               </p>
               {error && <p className="text-xs">Detalhes: {error instanceof Error ? error.message : String(error)}</p>}
               <Button variant="destructive" asChild className="mt-4">
@@ -345,10 +395,53 @@ const ProfessionalProfile = () => {
     );
   }
 
+  // Exibir mensagem quando a API está fora e atingiu o limite de tentativas
+  if (apiErrorCount > 3) {
+    return (
+      <>
+        <Navigation />
+        <div className="container mx-auto px-4 py-6 mt-6">
+          <Card className="border-destructive bg-destructive/10">
+            <CardContent className="p-6 flex flex-col items-center text-center text-destructive">
+              <AlertCircle className="h-10 w-10 mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Erro de Conexão</h2>
+              <p className="text-sm mb-4">
+                Não foi possível conectar ao servidor. Verifique sua conexão com a internet.
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => setApiErrorCount(0)} 
+                className="mt-4"
+              >
+                Tentar Novamente
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  }
+
   // --- Success State --- 
   // Todas as referências a 'professional' abaixo estão seguras
-  const coverImage = professional.coverImageUrl || "https://via.placeholder.com/1200x300?text=Sem+Imagem+de+Capa";
-  const avatarImage = professional.avatarUrl;
+  const isValidImageUrl = (url?: string | null) => {
+    if (!url) return false;
+    // Verifica se é uma URL válida começando com http ou https
+    return url.startsWith('http://') || url.startsWith('https://');
+  };
+
+  const coverImage = isValidImageUrl(professional.coverImageUrl) 
+    ? professional.coverImageUrl 
+    : isValidImageUrl(professional.coverImage) 
+      ? professional.coverImage 
+      : "https://via.placeholder.com/1200x300?text=Sem+Imagem+de+Capa";
+      
+  const avatarImage = isValidImageUrl(professional.avatarUrl) 
+    ? professional.avatarUrl 
+    : isValidImageUrl(professional.image) 
+      ? professional.image 
+      : null;
+  
   const avatarFallback = professional.name.substring(0, 2).toUpperCase();
 
   return (
@@ -1115,65 +1208,79 @@ const ProfessionalProfile = () => {
           <TabsContent value="reviews" className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">Avaliações ({professional.reviewCount || 0})</h2>
-              {/* TODO: Add button functionality if user can review */}
-              {/* <Button variant="outline">Deixar avaliação</Button> */}
+              
+              {user && user.id !== professional.id && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate(`/reviews?professionalId=${professional.id}`)}
+                  className="flex items-center gap-2"
+                >
+                  <Star className="h-4 w-4" />
+                  Avaliar profissional
+                </Button>
+              )}
             </div>
             
-            {professional.reviews && professional.reviews.length > 0 ? (
-              <div className="space-y-6">
-                {professional.reviews.map((review) => (
-                  <Card key={review.id} className="border-l-4 border-l-iazi-primary/50">
-                     <CardContent className="p-4">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={review.user.avatar || undefined} alt={review.user.name} />
-                          <AvatarFallback>{review.user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-semibold">{review.user.name}</span>
-                            <span className="text-xs text-gray-500">
-                              {formatDate(review.createdAt)}
-                            </span>
-                          </div>
-                          <div className="flex mb-2">
-                            {renderStars(review.rating)}
-                          </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-wrap">{review.comment}</p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {/* Add pagination or "load more" if needed */} 
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="col-span-1 md:col-span-1">
+                <ProfessionalReviewStats professionalId={professional.id} />
               </div>
-            ) : (
-              <p className="text-gray-500 italic">Este profissional ainda não possui avaliações.</p>
-            )}
+              
+              <div className="col-span-1 md:col-span-2">
+                <ProfessionalReviewsList 
+                  professionalId={professional.id} 
+                  limit={5} 
+                  showSeeAllButton={professional.reviewCount && professional.reviewCount > 5}
+                  onSeeAllClick={() => navigate(`/reviews?professionalId=${professional.id}`)}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="portfolio" className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-6">Portfólio</h2>
             {professional.portfolioItems && professional.portfolioItems.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {professional.portfolioItems.map((item) => (
-                  <Card key={item.id} className="overflow-hidden group relative">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.description || "Portfolio Item"}
-                      className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/300?text=Imagem+Indisponível"; }}
-                    />
-                    {item.description && (
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                        <p className="text-white text-sm line-clamp-2">{item.description}</p>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {professional.portfolioItems.map((item) => (
+                    <Card key={item.id} className="overflow-hidden group relative hover:shadow-lg transition-all duration-300">
+                      <div className="aspect-square relative overflow-hidden">
+                        <img
+                          src={item.imageUrl}
+                          alt={item.description || "Portfolio Item"}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => { e.currentTarget.src = "https://via.placeholder.com/300?text=Imagem+Indisponível"; }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                          <div className="p-4 w-full">
+                            {item.description && (
+                              <p className="text-white text-sm font-medium line-clamp-3">{item.description}</p>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+                
+                {/* Galeria expandida */}
+                {professional.portfolioItems.length > 6 && (
+                  <div className="flex justify-center mt-8">
+                    <Button 
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      <Image className="h-4 w-4" />
+                      Ver galeria completa
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
-              <p className="text-gray-500 italic">Nenhum item no portfólio.</p>
+              <div className="text-center py-12">
+                <Image className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 italic">Nenhum item no portfólio.</p>
+              </div>
             )}
           </TabsContent>
           

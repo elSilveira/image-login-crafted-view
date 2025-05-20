@@ -427,7 +427,27 @@ export const fetchProfessionals = async (params: any = {}) => { // Added functio
 }
 export const fetchProfessionalDetails = async (professionalId:string) => {
   const response = await apiClient.get(`/professionals/${professionalId}`);
-  return response.data;
+  // Debug para identificar os campos de imagem na resposta
+  console.log("Resposta da API do profissional:", response.data);
+  
+  // Normalizar campos de imagem
+  const data = response.data;
+  
+  // Garantir que tanto avatarUrl quanto image estejam disponíveis
+  if (data.image && !data.avatarUrl) {
+    data.avatarUrl = data.image;
+  } else if (data.avatarUrl && !data.image) {
+    data.image = data.avatarUrl;
+  }
+  
+  // Garantir que tanto coverImageUrl quanto coverImage estejam disponíveis
+  if (data.coverImage && !data.coverImageUrl) {
+    data.coverImageUrl = data.coverImage;
+  } else if (data.coverImageUrl && !data.coverImage) {
+    data.coverImage = data.coverImageUrl;
+  }
+  
+  return data;
 }
 export const fetchProfessionalServices = async (professionalId: string) => {
   const response = await apiClient.get(`/professionals/${professionalId}/services`);
@@ -452,7 +472,25 @@ export const fetchAvailability = async (professionalId: string, _serviceId: stri
 };
 export const fetchProfessionalMe = async () => {
   const response = await apiClient.get("/professionals/me");
-  return response.data;
+  
+  // Normalizar campos de imagem
+  const data = response.data;
+  
+  // Garantir que tanto avatarUrl quanto image estejam disponíveis
+  if (data.image && !data.avatarUrl) {
+    data.avatarUrl = data.image;
+  } else if (data.avatarUrl && !data.image) {
+    data.image = data.avatarUrl;
+  }
+  
+  // Garantir que tanto coverImageUrl quanto coverImage estejam disponíveis
+  if (data.coverImage && !data.coverImageUrl) {
+    data.coverImageUrl = data.coverImage;
+  } else if (data.coverImageUrl && !data.coverImage) {
+    data.coverImage = data.coverImageUrl;
+  }
+  
+  return data;
 };
 // --- New: Fetch all professionals with services (for search) ---
 export const fetchAllProfessionalsWithServices = async (tipo: "all" | "only-linked" | "only-unlinked" = "all") => {
@@ -625,6 +663,18 @@ export const fetchReviews = async (params: any = {}) => {
   const response = await apiClient.get("/reviews", { params });
   
   // A API retorna um array de reviews
+  return response.data;
+};
+
+export const fetchProfessionalReviewsWithStats = async (professionalId: string) => {
+  if (!professionalId) {
+    throw new Error("ID do profissional é obrigatório");
+  }
+  
+  // Usa o endpoint específico que retorna dados do profissional junto com as avaliações
+  const response = await apiClient.get(`/reviews/professional/${professionalId}`);
+  
+  // A API retorna um objeto com professional, reviews e count
   return response.data;
 };
 

@@ -3,14 +3,16 @@ description:
 globs: 
 alwaysApply: true
 ---
--be consistent in layout with entire project
--be sure the component exists before any implementation
--think calmly and create step-by-step plan before implementing
--implement clean structures
--keep small files
--be sure the project works before finalize
--use best practices
--use best patterns
--always clear your trash
++be consistent in layout with entire project
++be sure the component exists before any implementation
++think calmly and create step+by+step plan before implementing
++implement clean structures
++keep small files
++be sure the project works before finalize
++use best practices
++use best patterns
++always clear your trash
 
--refactor when necessary for a better pattern or practice
++refactor when necessary for a better pattern or practice
+
++avoid create new layouts if possible, everything should already be there.
