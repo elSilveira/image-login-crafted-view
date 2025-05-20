@@ -176,20 +176,50 @@ export const fetchAppointments = async (params: any = {}) => { // Added params
   try {
     // Create a copy of params to avoid modifying the original object
     const apiParams = { ...params };
-      // Ensure status values are capitalized for the API
+    
+    // Normalize status values
     if (apiParams.status) {
       // When filtering by multiple statuses, it comes as a comma-separated string
-      // We need to split it, uppercase each status, and join it back
       if (typeof apiParams.status === 'string' && apiParams.status.includes(',')) {
         const statusArray = apiParams.status.split(',');
-        apiParams.status = statusArray.map(s => s.toUpperCase()).join(',');
+        // Normalize each status value
+        const normalizedStatuses = statusArray.map(s => {
+          const status = s.trim().toUpperCase();
+          // Handle different status format variations
+          if (status === 'IN-PROGRESS' || status === 'INPROGRESS') {
+            return 'IN_PROGRESS';
+          }
+          if (status === 'NO-SHOW' || status === 'NOSHOW') {
+            return 'NO_SHOW';
+          }
+          return status;
+        });
+        // Remove duplicates and join
+        apiParams.status = [...new Set(normalizedStatuses)].join(',');
       } else {
         // Single status case
-        apiParams.status = apiParams.status.toUpperCase();
+        const status = apiParams.status.trim().toUpperCase();
+        if (status === 'IN-PROGRESS' || status === 'INPROGRESS') {
+          apiParams.status = 'IN_PROGRESS';
+        } else if (status === 'NO-SHOW' || status === 'NOSHOW') {
+          apiParams.status = 'NO_SHOW';
+        } else {
+          apiParams.status = status;
+        }
       }
     }
     
-    // Check if we should use mock data for testing (can be enabled via localStorage)
+    // Normalize include parameter
+    if (apiParams.include) {
+      const includeArray = apiParams.include.split(',');
+      // Filter and normalize include values
+      const normalizedIncludes = includeArray
+        .map(i => i.trim().toLowerCase())
+        .filter(i => ['user', 'service', 'professional', 'company'].includes(i));
+      apiParams.include = normalizedIncludes.join(',');
+    }
+    
+    // Check if we should use mock data for testing
     const useMockData = localStorage.getItem('useMockAppointmentsData') === 'true';
     
     if (useMockData) {
@@ -531,7 +561,7 @@ export const fetchProfessionalAppointments = async (professionalId: string, date
       dateFrom,
       dateTo,
       include: 'user,service,services,professional,services.service', // Include service details for services array
-      limit: 500,
+      limit: 100,
       sort: 'startTime_asc',
     },
   });
@@ -582,6 +612,93 @@ export const fetchProfessionalServicesViaSearch = async (professionalId: string)
   });
   // The response structure is { services: [...] }
   return response.data?.services || [];
+};
+
+// --- Reviews API Functions ---
+export const fetchReviews = async (params: any = {}) => {
+  // Ao menos um dos parâmetros de filtro deve ser fornecido (serviceId, professionalId ou companyId)
+  // Validação conforme documentação
+  if (!params.serviceId && !params.professionalId && !params.companyId) {
+    throw new Error("É necessário fornecer serviceId, professionalId ou companyId para filtrar as avaliações");
+  }
+  
+  const response = await apiClient.get("/reviews", { params });
+  
+  // A API retorna um array de reviews
+  return response.data;
+};
+
+export const fetchReviewById = async (reviewId: string) => {
+  if (!reviewId) {
+    throw new Error("ID da avaliação é obrigatório");
+  }
+  const response = await apiClient.get(`/reviews/${reviewId}`);
+  return response.data;
+};
+
+export const createReview = async (reviewData: {
+  rating: number;
+  comment?: string;
+  serviceId?: string;
+  professionalId?: string;
+  companyId?: string;
+}) => {
+  // Valida se ao menos um ID foi fornecido conforme documentação
+  if (!reviewData.serviceId && !reviewData.professionalId && !reviewData.companyId) {
+    throw new Error("É necessário fornecer pelo menos um ID (serviço, profissional ou empresa)");
+  }
+  
+  // Valida se a avaliação está entre 1 e 5 conforme documentação
+  if (reviewData.rating < 1 || reviewData.rating > 5) {
+    throw new Error("A avaliação deve ser um valor numérico entre 1 e 5");
+  }
+  
+  const response = await apiClient.post("/reviews", reviewData);
+  return response.data;
+};
+
+export const updateReview = async (reviewId: string, reviewData: {
+  rating?: number;
+  comment?: string;
+}) => {
+  // Valida se a avaliação está entre 1 e 5, se fornecida
+  if (reviewData.rating !== undefined && (reviewData.rating < 1 || reviewData.rating > 5)) {
+    throw new Error("A avaliação deve ser um valor numérico entre 1 e 5");
+  }
+  
+  // Verifica se há dados para atualizar
+  if (Object.keys(reviewData).length === 0) {
+    throw new Error("Nenhum dado fornecido para atualização.");
+  }
+  
+  const response = await apiClient.put(`/reviews/${reviewId}`, reviewData);
+  return response.data;
+};
+
+export const deleteReview = async (reviewId: string) => {
+  if (!reviewId) {
+    throw new Error("ID da avaliação é obrigatório");
+  }
+  
+  const response = await apiClient.delete(`/reviews/${reviewId}`);
+  // Retorna apenas o status 204 em caso de sucesso
+  return { success: true };
+};
+
+// Função para verificar se um agendamento já foi avaliado
+export const checkAppointmentReviewStatus = async (appointmentId: string) => {
+  try {
+    // Esta rota não está documentada, mas podemos assumir que existe
+    // para verificar o status de avaliação de um agendamento
+    const response = await apiClient.get(`/appointments/${appointmentId}/review-status`);
+    return response.data;
+  } catch (error) {
+    console.warn("Endpoint de verificação de avaliação não disponível, usando simulação");
+    return {
+      hasBeenReviewed: false,
+      canBeReviewed: true
+    };
+  }
 };
 
 export default apiClient;

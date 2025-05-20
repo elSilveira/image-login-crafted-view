@@ -119,7 +119,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           dateFrom: dateRange.start.toISOString().substring(0, 10), // YYYY-MM-DD
           dateTo: dateRange.end.toISOString().substring(0, 10),     // YYYY-MM-DD
           include: "user,professional,service",
-          limit: "500", // Fetch a larger number for calendar views
+          limit: "100", // Fetch a larger number for calendar views
         });
 
         // Add filters to query params if not "all"

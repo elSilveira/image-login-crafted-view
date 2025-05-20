@@ -48,6 +48,7 @@ const ProfessionalCalendar = lazy(() => import("./pages/ProfessionalCalendar"));
 const ProfessionalBookings = lazy(() => import("./pages/ProfessionalBookings"));
 const ProfessionalReports = lazy(() => import("./pages/ProfessionalReports"));
 const ProfessionalSettings = lazy(() => import("./pages/ProfessionalSettings"));
+const ProfessionalReviews = lazy(() => import("./pages/ProfessionalReviews"));
 
 // Test pages
 const TestBookingsList = lazy(() => import("./pages/TestBookingsList"));
@@ -102,7 +103,7 @@ function App() {
                 {/* Agendamentos tab */}
                 <Route path="bookings" element={<ProfessionalBookings />} />
                 {/* Avaliações tab */}
-                <Route path="reviews" element={<Reviews />} />
+                <Route path="reviews" element={<ProfessionalReviews />} />
                 {/* Relatórios tab */}
                 <Route path="reports" element={<ProfessionalReports />} />
                 {/* Configurações tab */}

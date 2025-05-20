@@ -32,7 +32,7 @@ interface AppointmentFilters {
   sort?: string;          // Campo para ordenação (ex: "startTime_asc", "startTime_desc")
   
   // Parâmetros de Paginação
-  limit?: number;         // Limite de registros por página
+  limit?: number;         // Limite de registros por página (mín: 1, máx: 100)
   page?: number;          // Número da página
   
   // Filtros de Busca
@@ -79,7 +79,27 @@ GET /appointments?limit=10&page=1
 - A ordenação deve suportar sufixos `_asc` e `_desc`
 - Os filtros de data devem ser tratados como inclusivos (incluindo o dia inicial e final)
 
-## 5. Resposta Esperada
+## 5. Limitações da API
+
+### 5.1 Paginação
+- O parâmetro `limit` deve ser um número entre 1 e 100
+- Se não especificado, o valor padrão é 10
+- Para buscar mais de 100 registros, use paginação com o parâmetro `page`
+
+### 5.2 Ordenação
+- Campos disponíveis para ordenação:
+  - `startTime_asc` ou `startTime_desc`
+  - `createdAt_asc` ou `createdAt_desc`
+  - `updatedAt_asc` ou `updatedAt_desc`
+
+### 5.3 Inclusão de Relacionamentos
+- Relacionamentos disponíveis:
+  - `user`: Dados do cliente
+  - `service`: Dados do serviço
+  - `professional`: Dados do profissional
+  - `company`: Dados da empresa
+
+## 6. Resposta Esperada
 
 ```typescript
 interface AppointmentResponse {
@@ -116,5 +136,55 @@ interface AppointmentResponse {
     limit: number;
     totalPages: number;
   };
+}
+```
+
+## 7. Códigos de Erro
+
+```typescript
+interface ErrorResponse {
+  message: string;
+  errors?: Array<{
+    field: string;
+    message: string;
+    value?: any;
+  }>;
+}
+
+// Exemplos de erros comuns:
+// 1. Limite inválido
+{
+  "message": "Erro de validação",
+  "errors": [
+    {
+      "field": "limit",
+      "message": "Limite deve ser um número entre 1 e 100.",
+      "value": "500"
+    }
+  ]
+}
+
+// 2. Data inválida
+{
+  "message": "Erro de validação",
+  "errors": [
+    {
+      "field": "dateFrom",
+      "message": "Data inválida. Use o formato YYYY-MM-DD.",
+      "value": "2024/03/01"
+    }
+  ]
+}
+
+// 3. Status inválido
+{
+  "message": "Erro de validação",
+  "errors": [
+    {
+      "field": "status",
+      "message": "Status inválido. Valores permitidos: PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW",
+      "value": "INVALID_STATUS"
+    }
+  ]
 }
 ``` 

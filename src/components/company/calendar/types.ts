@@ -1,6 +1,6 @@
 export type ViewType = "day" | "week" | "month" | "list";
 
-export type AppointmentStatus = "confirmed" | "pending" | "in-progress" | "completed" | "cancelled";
+export type AppointmentStatus = "pending" | "confirmed" | "in-progress" | "completed" | "cancelled" | "no-show";
 
 export type FilterType = {
   status: string;
@@ -42,4 +42,8 @@ export type AppointmentType = {
   resourceId?: string;
   preparationTime?: number; // in minutes
   finalizationTime?: number; // in minutes
+  clientEmail?: string;
+  clientPhone?: string;
+  servicePrice?: number;
+  serviceDuration?: string;
 };

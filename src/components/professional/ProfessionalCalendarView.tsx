@@ -167,8 +167,8 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
           professionalId: professionalId,
           dateFrom: dateRange.start.toISOString().substring(0, 10),
           dateTo: dateRange.end.toISOString().substring(0, 10),
-          include: "user,service",
-          limit: "500",
+          include: "user,service,professional",
+          limit: "100",
           sort: "startTime_asc"
         });
 
@@ -183,7 +183,7 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
         
         if (filters.service !== "all") {
           queryParams.append("serviceId", filters.service);
-        }
+        }        
 
         const response = await apiClient.get(`/appointments?${queryParams.toString()}`);
         const result = response.data;
@@ -228,8 +228,8 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
         professionalId: professionalId || '',
         dateFrom: dateRange.start.toISOString().substring(0, 10),
         dateTo: dateRange.end.toISOString().substring(0, 10),
-        include: "user,service",
-        limit: "500",
+        include: "user,service,professional",
+        limit: "100",
         sort: "startTime_asc"
       });
 
@@ -559,17 +559,17 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
                   </div>
                 )}
                 
-                {selectedAppointment.status === "in-progress" && (
+                {selectedAppointment.status === "completed" && (
                   <div className="flex flex-wrap gap-2 justify-end w-full">
                     <Button
                       size="sm"
                       variant="outline"
                       className="gap-1"
                       disabled={isUpdating}
-                      onClick={() => handleStatusUpdate(selectedAppointment.id, "completed")}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "no-show")}
                     >
-                      <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                      Finalizar
+                      <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                      Não Compareceu
                     </Button>
                   </div>
                 )}
