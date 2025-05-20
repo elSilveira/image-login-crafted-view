@@ -93,6 +93,7 @@ const Search = () => {
   const [ratingFilter, setRatingFilter] = useState([0]);
   const [availabilityFilter, setAvailabilityFilter] = useState("Qualquer data");
   const [showFilters, setShowFilters] = useState(false);
+  const [previousData, setPreviousData] = useState<any>(null); // Para manter dados anteriores durante carregamento
   
   // Local state for search input (avoids triggering search API calls on every keystroke)
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
@@ -185,36 +186,30 @@ const Search = () => {
         limit: ITEMS_PER_PAGE,
         type: apiType,
         professionalTipo,
-        // Request professional_services instead of services
         useProfessionalServices: true,
       };
       
-      // Only fetch if we have search terms or filters to avoid unnecessary initial requests
-      if (!searchTerm && !selectedCategory && viewType === "all") {
-        console.log("Skipping search API call - no search params");
-        return { services: [], companies: [], professionals: [] };
-      }
-      
+      // Sempre faz a busca, mesmo sem parâmetros
       const result = await fetchSearchResults(params);
-      console.log('Search API response structure:', {
-        hasServices: !!result.services,
-        hasServicesByProfessional: !!result.servicesByProfessional,
-        hasProfessionalServices: !!result.professional_services,
-        professionals: Array.isArray(result.professionals) ? result.professionals.length : 'N/A',
-        companies: Array.isArray(result.companies) ? result.companies.length : 'N/A'
-      });
+      
+      // Atualiza dados anteriores apenas quando temos novos dados
+      if (result) {
+        setPreviousData(result);
+      }
       
       return result;
     },
-    enabled: ["all", "service", "professional", "company"].includes(viewType),
+    enabled: true, // Sempre habilitado para fazer a busca
     staleTime: 60000, // Cache results for 1 minute
+    refetchOnWindowFocus: false, // Evita refetch desnecessário ao focar na janela
   });  
   
-  // Use the new structure directly, with fallbacks for backward compatibility
-  const professionals = searchApiResponse?.professionals || [];
-  // Prioritize professional_services, then fall back to servicesByProfessional or services
-  const services = searchApiResponse?.professional_services || searchApiResponse?.servicesByProfessional || searchApiResponse?.services || [];
-  const companies = searchApiResponse?.companies || [];
+  // Use previous data during loading to prevent content flashing
+  const professionals = (isFetchingSearch ? previousData?.professionals : searchApiResponse?.professionals) || [];
+  const services = (isFetchingSearch ? previousData?.professional_services : searchApiResponse?.professional_services) || 
+                  (isFetchingSearch ? previousData?.servicesByProfessional : searchApiResponse?.servicesByProfessional) || 
+                  (isFetchingSearch ? previousData?.services : searchApiResponse?.services) || [];
+  const companies = (isFetchingSearch ? previousData?.companies : searchApiResponse?.companies) || [];
 
   // Debug: Log the structure of professional_services if available
   if (process.env.NODE_ENV !== 'production' && searchApiResponse?.professional_services) {
@@ -382,34 +377,6 @@ const Search = () => {
   };
   
   // --- Rendering Logic ---  
-  // Mostrar loading de página inteira durante o carregamento inicial
-  if (isInitialLoading) {
-    return (
-      <div className="min-h-screen bg-[#F4F3F2]">
-        <Navigation />
-        <main className="container mx-auto pt-8 pb-8">
-          <PageContainer>
-            <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
-              <Skeleton className="h-7 w-1/4 mb-3" />
-              <Skeleton className="h-4 w-1/2 mb-6" />
-              <div className="flex flex-col gap-4">
-                {Array.from({ length: 2 }).map((_, index) => (
-                  <div key={`skeleton-${index}`} className="flex space-x-4 p-3 border rounded-lg">
-                    <Skeleton className="h-20 w-20 rounded-md flex-shrink-0" />
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-3 w-1/2" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </PageContainer>
-        </main>
-      </div>
-    );
-  }
-
   // Function to render loading skeletons for specific content types
   const renderLoadingSkeletons = (count: number, type: 'service' | 'company' | 'professional') => (
     <div className="animate-pulse space-y-4">
@@ -502,12 +469,13 @@ const Search = () => {
       );
     }
     return null;
-  };  
-  
+  };
+
+  // Removido o loading de página inteira
   return (
     <div className="min-h-screen bg-[#F4F3F2]">
       <Navigation />
-      <main className="container mx-auto pt-6 pb-8">
+      <main className="container mx-auto px-4 pt-8 pb-8">
         <PageContainer>
           {/* Condensed header with improved spacing */}
           <div className="mb-4 bg-white p-4 rounded-lg shadow-sm">
@@ -534,14 +502,29 @@ const Search = () => {
               )}
             </div>
             
-            {/* Improved search input with debouncing */}
-            <SearchInputDebounced
-              value={localSearchTerm}
-              onChange={handleSearchChange}
-              isLoading={isAnyFetching}
-              placeholder="Buscar serviços, profissionais ou empresas..."
-              className="bg-gray-50 border-gray-200 focus:bg-white"
-            />
+            <div className="flex flex-col md:flex-row gap-4">
+              <SearchInputDebounced
+                value={localSearchTerm}
+                onChange={handleSearchChange}
+                isLoading={isAnyFetching}
+                placeholder="Buscar serviços, profissionais ou empresas..."
+                className="flex-1 bg-gray-50 border-gray-200 focus:bg-white"
+              />
+              
+              <Select value={sortBy} onValueChange={handleSortChange}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rating">Melhor avaliação</SelectItem>
+                  <SelectItem value="price_asc">Menor preço</SelectItem>
+                  <SelectItem value="price_desc">Maior preço</SelectItem>
+                  <SelectItem value="name_asc">Nome A-Z</SelectItem>
+                  <SelectItem value="name_desc">Nome Z-A</SelectItem>
+                  <SelectItem value="recent">Mais recentes</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Global Error Display (if not category error) */}
@@ -601,11 +584,11 @@ const Search = () => {
                   
                   <TabsContent value="all">
                     <div className="space-y-4">
-                      {/* Only show services section if there are results */}
-                      {paginatedServices.length > 0 && (
+                      {/* Only show services section if there are results or loading */}
+                      {(paginatedServices.length > 0 || isAnyLoading) && (
                         <div className="bg-white rounded-lg p-4 shadow-sm">
                           <h2 className="text-lg font-semibold mb-3 text-iazi-text border-b pb-2">Serviços</h2>
-                          {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'service') : 
+                          {isAnyLoading ? renderEnhancedLoadingState(2, 'service') : 
                            isErrorSearch ? (
                             <Alert variant="destructive" className="my-3">
                               <AlertCircle className="h-4 w-4" />
@@ -617,11 +600,11 @@ const Search = () => {
                         </div>
                       )}
                       
-                      {/* Only show professionals section if there are results */}
-                      {paginatedProfessionals.length > 0 && (
+                      {/* Only show professionals section if there are results or loading */}
+                      {(paginatedProfessionals.length > 0 || isAnyLoading) && (
                         <div className="bg-white rounded-lg p-4 shadow-sm">
                           <h2 className="text-lg font-semibold mb-3 text-iazi-text border-b pb-2">Profissionais</h2>
-                          {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'professional') : 
+                          {isAnyLoading ? renderEnhancedLoadingState(2, 'professional') : 
                            isErrorSearch ? (
                             <Alert variant="destructive" className="my-3">
                               <AlertCircle className="h-4 w-4" />
@@ -633,11 +616,11 @@ const Search = () => {
                         </div>
                       )}
 
-                      {/* Only show companies section if there are results */}
-                      {paginatedCompanies.length > 0 && (
+                      {/* Only show companies section if there are results or loading */}
+                      {(paginatedCompanies.length > 0 || isAnyLoading) && (
                         <div className="bg-white rounded-lg p-4 shadow-sm">
                           <h2 className="text-lg font-semibold mb-3 text-iazi-text border-b pb-2">Empresas</h2>
-                          {isFetchingSearch && !services.length ? renderEnhancedLoadingState(2, 'company') : 
+                          {isAnyLoading ? renderEnhancedLoadingState(2, 'company') : 
                            isErrorSearch ? (
                             <Alert variant="destructive" className="my-3">
                               <AlertCircle className="h-4 w-4" />
@@ -650,7 +633,7 @@ const Search = () => {
                       )}
                       
                       {/* Global empty state if all sections are empty and not in loading/error state */}
-                      {!isAnyFetching && !isAnyError &&
+                      {!isAnyLoading && !isAnyError &&
                         paginatedServices.length === 0 &&
                         paginatedCompanies.length === 0 &&
                         paginatedProfessionals.length === 0 && (
@@ -663,7 +646,7 @@ const Search = () => {
 
                   <TabsContent value="service">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
-                      {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'service') : 
+                      {isAnyLoading ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'service') : 
                        isErrorSearch ? (
                         <Alert variant="destructive" className="my-3">
                           <AlertCircle className="h-4 w-4" />
@@ -678,7 +661,7 @@ const Search = () => {
                     </div>
                     
                     {/* Pagination for services */}
-                    {!isFetchingSearch && !isErrorSearch && totalPagesServices > 1 && (
+                    {!isAnyLoading && !isErrorSearch && totalPagesServices > 1 && (
                       <div className="mt-4 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
@@ -691,7 +674,7 @@ const Search = () => {
                   
                   <TabsContent value="company">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
-                      {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'company') : 
+                      {isAnyLoading ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'company') : 
                        isErrorSearch ? (
                         <Alert variant="destructive" className="my-3">
                           <AlertCircle className="h-4 w-4" />
@@ -706,7 +689,7 @@ const Search = () => {
                     </div>
                     
                     {/* Pagination for companies */}
-                    {!isFetchingSearch && !isErrorSearch && totalPagesCompanies > 1 && (
+                    {!isAnyLoading && !isErrorSearch && totalPagesCompanies > 1 && (
                       <div className="mt-4 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
@@ -733,7 +716,7 @@ const Search = () => {
                         </Select>
                       </div>
                       
-                      {isFetchingSearch && !services.length ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'professional') : 
+                      {isAnyLoading ? renderEnhancedLoadingState(ITEMS_PER_PAGE, 'professional') : 
                        isErrorSearch ? (
                         <Alert variant="destructive" className="my-3">
                           <AlertCircle className="h-4 w-4" />
@@ -748,7 +731,7 @@ const Search = () => {
                     </div>
                     
                     {/* Pagination for professionals */}
-                    {!isFetchingSearch && !isErrorSearch && totalPagesProfessionals > 1 && (
+                    {!isAnyLoading && !isErrorSearch && totalPagesProfessionals > 1 && (
                       <div className="mt-4 flex justify-center">
                         <ServicePagination
                           currentPage={currentPage}
@@ -764,7 +747,7 @@ const Search = () => {
           )}
 
           {/* Pagination for all tabs except "all" */}
-          {viewType !== "all" && !isAnyFetching && !isAnyError && totalPages > 0 && (
+          {viewType !== "all" && !isAnyLoading && !isAnyError && totalPages > 0 && (
             <div className="mt-8 flex justify-center">
               <ServicePagination
                 currentPage={currentPage}

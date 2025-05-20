@@ -166,199 +166,167 @@ export const ServiceCard = ({
   // For compact mode
   if (compact) {
     return (
-      <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${isHighlighted ? "border-l-4 border-l-[#4664EA] ring-1 ring-[#4664EA]" : ""
-        }`}>
-        <CardContent className="p-3">          <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
-            <AvatarFallback className="bg-sky-100 text-sky-700">
-              {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
-            </AvatarFallback>
-          </Avatar><div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold truncate">{serviceName}</h4>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <span>{servicePrice}</span>
-              <span>•</span>
-              <span>{serviceDuration}</span>
-            </div>
-            {professionalName && (
-              <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                {professionalImage ? (
-                  <Avatar className="h-4 w-4">
-                    <AvatarImage src={professionalImage} alt={professionalName} />
-                    <AvatarFallback className="bg-sky-50 text-sky-700 text-[10px]">
-                      {professionalName.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                ) : null}
-                <span className="truncate">{professionalName}</span>
+      <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${isHighlighted ? "border-l-4 border-l-[#4664EA] ring-1 ring-[#4664EA]" : ""}`}>
+        <CardContent className="p-3">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 flex-shrink-0">
+              <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
+              <AvatarFallback className="bg-sky-100 text-sky-700">
+                {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold truncate">{serviceName}</h4>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span className="font-medium text-iazi-primary">{servicePrice}</span>
+                <span>•</span>
+                <span>{serviceDuration}</span>
               </div>
-            )}
-          </div>            <Button size="sm" variant="default" className="h-8" asChild>
-            <Link to={professionalId ? `/booking/service/${serviceId}?professional=${professionalId}` : `/booking/service/${serviceId}`}>
-              <Calendar className="h-3.5 w-3.5 mr-1" />
-              Agendar
-            </Link>
-          </Button>
-        </div>
+              {professionalName && (
+                <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                  {professionalImage ? (
+                    <Avatar className="h-4 w-4">
+                      <AvatarImage src={professionalImage} alt={professionalName} />
+                      <AvatarFallback className="bg-sky-50 text-sky-700 text-[10px]">
+                        {professionalName.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : null}
+                  <span className="truncate">{professionalName}</span>
+                </div>
+              )}
+            </div>
+            <Button size="sm" variant="default" className="h-8 flex-shrink-0" asChild>
+              <Link to={professionalId ? `/booking/service/${serviceId}?professional=${professionalId}` : `/booking/service/${serviceId}`}>
+                <Calendar className="h-3.5 w-3.5 mr-1" />
+                Agendar
+              </Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 border-l-4 ${isHighlighted ? "border-l-[#4664EA] ring-2 ring-[#4664EA]" : "border-l-sky-500"
-      }`}>
-      <CardContent className="p-0">        <div className="flex flex-col md:flex-row">
-        <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-[#f8f9ff]">
-          {/* If we have professional data, show it prominently */}
-          {service.profissional ? (
-            <>
-              <Avatar className="h-20 w-20 mb-3 border-2 border-[#eef1ff] shadow-sm">
-                <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
-                <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
-                  {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
-                </AvatarFallback>
-              </Avatar>
-              <h4 className="font-semibold text-sm text-center mb-1">{professionalName}</h4>
-              {professionalRole && (
-                <div className="text-xs text-gray-500 text-center mb-2">{professionalRole}</div>
-              )}
-              <div className="flex items-center gap-1 mb-1">
-                {service.profissional.rating ? renderStars(service.profissional.rating) : renderStars(serviceRating)}
-              </div>
-              <div className="text-sm text-center">
-                <span className="font-semibold">{(service.profissional.rating || serviceRating).toFixed(1)}</span>
-                <span className="text-gray-500"> ({serviceReviews} avaliações)</span>
-              </div>
-            </>
-          ) : (
-            <>
-              <Avatar className="h-20 w-20 mb-3 border-2 border-[#eef1ff] shadow-sm">
-                <AvatarImage src={service.image} alt={serviceName} />
-                <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
-                  {serviceInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex items-center gap-1 mb-1">
-                {renderStars(serviceRating)}
-              </div>
-              <div className="text-sm text-center">
-                <span className="font-semibold">{serviceRating.toFixed(1)}</span>
-                <span className="text-gray-500"> ({serviceReviews} avaliações)</span>
-              </div>
-            </>
-          )}
-        </div>
-
-        <div className="md:w-3/4 p-6">            <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-lg font-semibold mb-1">{serviceName}</h3>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="bg-gray-50">
-                {serviceCategory}
-              </Badge>
-              <Badge variant="secondary" className="bg-sky-100 text-sky-700 border-none">
-                {serviceType}
-              </Badge>
-              {service.profissional && (
-                <Badge variant="outline" className="bg-[#f0f4ff] text-[#4664EA] border-[#e1e7ff]">
-                  Profissional Disponível
-                </Badge>
-              )}
-            </div>
-          </div>
-          <div className="text-lg font-medium text-iazi-primary">
-            {servicePrice}
-          </div>
-        </div>
-
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-            {serviceDescription}
-          </p>
-
-          <div className="flex flex-wrap items-center gap-4 my-3">
-            {serviceDuration && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Clock className="h-4 w-4 mr-1" />
-                <span>{serviceDuration}</span>
-              </div>
-            )}              {professionalName && (
-              <div className="flex items-center text-sm text-gray-600">
-                {professionalId ? (
-                  <Link to={`/professional/${professionalId}`} className="hover:text-iazi-primary font-medium">
-                    Ver perfil
-                  </Link>
-                ) : (
-                  <span className="font-medium">{professionalName}</span>
-                )}
-                {professionalRole && (
-                  <span className="ml-1 text-gray-400 text-xs">({professionalRole})</span>
-                )}
-                {service.profissional?.rating !== undefined && service.profissional.rating > 0 && (
-                  <span className="ml-2 flex items-center">
-                    <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 mr-0.5" />
-                    <span className="text-xs">{service.profissional.rating.toFixed(1)}</span>
-                  </span>
-                )}
-              </div>
-            )}
-
-            {companyName && companyId && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Link to={`/company/${companyId}`} className="hover:text-iazi-primary">
-                  {companyName}
-                </Link>
-              </div>
-            )}
-
-            {displayAddress && (
-              <div className="flex items-center text-sm text-gray-600">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span>{displayAddress}</span>
-                {displayDistance && (
-                  <Badge variant="outline" className="ml-1 text-xs py-0 h-5">
-                    {displayDistance}
-                  </Badge>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2 mt-4 border-t pt-4">
-            {onPause && (
-              <Button variant="outline" size="sm" onClick={onPause}>
-                <PauseCircle className="h-4 w-4 mr-1" />
-                Pausar
-              </Button>
-            )}
-            {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                <Pencil className="h-4 w-4 mr-1" />
-                Editar
-              </Button>
-            )}
-            {onDelete && (
-              <Button variant="destructive" size="sm" onClick={onDelete}>
-                <Trash className="h-4 w-4 mr-1" />
-                Remover
-              </Button>
-            )}
-            {!onEdit && !onPause && !onDelete && (
+    <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 border-l-4 ${isHighlighted ? "border-l-[#4664EA] ring-2 ring-[#4664EA]" : "border-l-sky-500"}`}>
+      <CardContent className="p-0">
+        <div className="flex flex-col md:flex-row">
+          {/* Coluna da esquerda - Informações do profissional */}
+          <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-[#f8f9ff]">
+            {service.profissional ? (
               <>
-                <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <Link to={`/service/${serviceId}`}>Ver detalhes</Link>
-                </Button>                  <Button size="sm" className="flex-1" asChild>
-                  <Link to={professionalId ? `/booking/${serviceId}?professional=${professionalId}` : `/booking/${serviceId}`}>
-                    <Calendar className="h-4 w-4 mr-1" />
-                    Agendar agora
-                  </Link>
-                </Button>
+                <Avatar className="h-16 w-16 md:h-20 md:w-20 mb-2 md:mb-3 border-2 border-[#eef1ff] shadow-sm">
+                  <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
+                  <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
+                    {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <h4 className="font-semibold text-sm text-center mb-1">{professionalName}</h4>
+                {professionalRole && (
+                  <div className="text-xs text-gray-500 text-center mb-2">{professionalRole}</div>
+                )}
+                <div className="flex items-center gap-1 mb-1">
+                  {service.profissional.rating ? renderStars(service.profissional.rating) : renderStars(serviceRating)}
+                </div>
+                <div className="text-sm text-center">
+                  <span className="font-semibold">{(service.profissional.rating || serviceRating).toFixed(1)}</span>
+                  <span className="text-gray-500"> ({serviceReviews} avaliações)</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <Avatar className="h-16 w-16 md:h-20 md:w-20 mb-2 md:mb-3 border-2 border-[#eef1ff] shadow-sm">
+                  <AvatarImage src={service.image} alt={serviceName} />
+                  <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
+                    {serviceInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex items-center gap-1 mb-1">
+                  {renderStars(serviceRating)}
+                </div>
+                <div className="text-sm text-center">
+                  <span className="font-semibold">{serviceRating.toFixed(1)}</span>
+                  <span className="text-gray-500"> ({serviceReviews} avaliações)</span>
+                </div>
               </>
             )}
           </div>
+
+          {/* Coluna da direita - Informações do serviço */}
+          <div className="flex-1 p-4">
+            <div className="flex flex-col h-full">
+              {/* Cabeçalho */}
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 mb-3">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold mb-1 truncate">{serviceName}</h3>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                    <Badge variant="secondary" className="bg-sky-50 text-sky-700">
+                      {serviceCategory}
+                    </Badge>
+                    {companyName && (
+                      <span className="flex items-center gap-1">
+                        <User className="h-3.5 w-3.5" />
+                        {companyName}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <div className="text-xl font-bold text-iazi-primary">{servicePrice}</div>
+                  <div className="text-sm text-gray-500 flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {serviceDuration}
+                  </div>
+                </div>
+              </div>
+
+              {/* Descrição */}
+              <p className="text-sm text-gray-600 mb-4 line-clamp-2">{serviceDescription}</p>
+
+              {/* Rodapé */}
+              <div className="mt-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
+                {displayAddress && (
+                  <div className="flex items-center gap-1 text-sm text-gray-500">
+                    <MapPin className="h-4 w-4" />
+                    <span className="truncate">{displayAddress}</span>
+                    {displayDistance && (
+                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full">
+                        {displayDistance}
+                      </span>
+                    )}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  {onEdit && (
+                    <Button variant="outline" size="sm" onClick={onEdit}>
+                      <Pencil className="h-4 w-4 mr-1" />
+                      Editar
+                    </Button>
+                  )}
+                  {onPause && (
+                    <Button variant="outline" size="sm" onClick={onPause}>
+                      <PauseCircle className="h-4 w-4 mr-1" />
+                      Pausar
+                    </Button>
+                  )}
+                  {onDelete && (
+                    <Button variant="outline" size="sm" onClick={onDelete}>
+                      <Trash className="h-4 w-4 mr-1" />
+                      Excluir
+                    </Button>
+                  )}
+                  <Button size="sm" className="bg-iazi-primary hover:bg-iazi-primary-hover" asChild>
+                    <Link to={professionalId ? `/booking/service/${serviceId}?professional=${professionalId}` : `/booking/service/${serviceId}`}>
+                      <Calendar className="h-4 w-4 mr-1" />
+                      Agendar
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
       </CardContent>
     </Card>
   );

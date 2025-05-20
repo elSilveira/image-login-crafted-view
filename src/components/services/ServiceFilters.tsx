@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Calendar, ChevronDown, ChevronUp, Filter, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -67,8 +66,8 @@ export const ServiceFilters = ({
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   return (
-    <div className="bg-white p-5 rounded-lg shadow-sm mb-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+    <div className="bg-white p-4 rounded-lg shadow-sm mb-4">
+      <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
           <Input 
@@ -80,7 +79,7 @@ export const ServiceFilters = ({
         </div>
 
         <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-full md:w-60 bg-white border-iazi-border">
+          <SelectTrigger className="w-full md:w-48 bg-white border-iazi-border">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
@@ -93,33 +92,34 @@ export const ServiceFilters = ({
         </Select>
 
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-full md:w-60 bg-white border-iazi-border">
+          <SelectTrigger className="w-full md:w-48 bg-white border-iazi-border">
             <SelectValue placeholder="Ordenar por" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="rating">Melhor avaliação</SelectItem>
-            <SelectItem value="reviews">Mais avaliações</SelectItem>
-            <SelectItem value="price-asc">Menor preço</SelectItem>
-            <SelectItem value="price-desc">Maior preço</SelectItem>
+            <SelectItem value="price_asc">Menor preço</SelectItem>
+            <SelectItem value="price_desc">Maior preço</SelectItem>
+            <SelectItem value="name_asc">Nome A-Z</SelectItem>
+            <SelectItem value="name_desc">Nome Z-A</SelectItem>
+            <SelectItem value="recent">Mais recentes</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-      
-      <div className="mt-4 flex justify-center">
+
         <Button 
-          variant="ghost" 
-          className="text-sm text-primary hover:text-primary-hover transition-colors flex items-center gap-1"
+          variant="outline" 
+          className="w-full md:w-auto flex items-center gap-2 border-iazi-border hover:bg-gray-50"
           onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
         >
-          {showAdvancedFilters ? 'Ocultar filtros avançados' : 'Mostrar filtros avançados'}
+          <Filter className="h-4 w-4" />
+          {showAdvancedFilters ? 'Ocultar filtros' : 'Filtros'}
           {showAdvancedFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </Button>
       </div>
-
+      
       {showAdvancedFilters && (
-        <div className="flex flex-col md:flex-row gap-6 pt-4 mt-4 border-t border-iazi-border">
-          <div className="w-full md:w-1/3">
-            <label className="flex items-center text-sm font-medium mb-2 text-iazi-text">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 mt-4 border-t border-iazi-border">
+          <div className="space-y-2">
+            <label className="flex items-center text-sm font-medium text-iazi-text">
               <Filter className="h-4 w-4 mr-2" />
               Avaliação mínima: {ratingFilter[0]}+ estrelas
             </label>
@@ -133,8 +133,8 @@ export const ServiceFilters = ({
             />
           </div>
 
-          <div className="w-full md:w-1/3">
-            <label className="flex items-center text-sm font-medium mb-2 text-iazi-text">
+          <div className="space-y-2">
+            <label className="flex items-center text-sm font-medium text-iazi-text">
               <Calendar className="h-4 w-4 mr-2" />
               Disponibilidade
             </label>
@@ -152,8 +152,8 @@ export const ServiceFilters = ({
             </Select>
           </div>
 
-          <div className="w-full md:w-1/3">
-            <label className="flex items-center text-sm font-medium mb-2 text-iazi-text">
+          <div className="space-y-2">
+            <label className="flex items-center text-sm font-medium text-iazi-text">
               <Filter className="h-4 w-4 mr-2" />
               Faixa de preço
             </label>

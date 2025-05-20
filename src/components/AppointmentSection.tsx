@@ -96,7 +96,7 @@ const AppointmentSection = () => {
     queryFn: () => fetchAppointments({ 
       include: "service,professional,services.service", 
       limit: 10, 
-      sort: "startTime_asc" 
+      sort: "startTime_desc"
     }),
     select: (data) => {
       // Ensure data is an array before filtering
@@ -108,7 +108,7 @@ const AppointmentSection = () => {
           ["confirmed", "pending", "in-progress"].includes(appt.status) &&
           new Date(appt.startTime) >= new Date()
         )
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+        .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
     },
     staleTime: 5 * 60 * 1000,
   });

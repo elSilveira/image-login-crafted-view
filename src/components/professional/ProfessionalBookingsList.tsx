@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,16 +13,16 @@ import AppointmentDetailsModal from "../booking/AppointmentDetailsModal";
 
 // This follows the API's APPOINTMENT_STATUS documentation
 const STATUS_COLORS = {
-  "PENDING": "bg-yellow-400",
-  "CONFIRMED": "bg-blue-500",
-  "IN_PROGRESS": "bg-purple-500", 
-  "INPROGRESS": "bg-purple-500",
-  "IN-PROGRESS": "bg-purple-500", 
-  "COMPLETED": "bg-green-500",
-  "CANCELLED": "bg-red-500",
-  "NO_SHOW": "bg-orange-500", 
-  "NOSHOW": "bg-orange-500",
-  "NO-SHOW": "bg-orange-500"
+  "PENDING": "bg-yellow-100 text-yellow-800 border-yellow-300",
+  "CONFIRMED": "bg-blue-100 text-blue-800 border-blue-300",
+  "IN_PROGRESS": "bg-purple-100 text-purple-800 border-purple-300", 
+  "INPROGRESS": "bg-purple-100 text-purple-800 border-purple-300",
+  "IN-PROGRESS": "bg-purple-100 text-purple-800 border-purple-300", 
+  "COMPLETED": "bg-green-100 text-green-800 border-green-300",
+  "CANCELLED": "bg-red-100 text-red-800 border-red-300",
+  "NO_SHOW": "bg-orange-100 text-orange-800 border-orange-300", 
+  "NOSHOW": "bg-orange-100 text-orange-800 border-orange-300",
+  "NO-SHOW": "bg-orange-100 text-orange-800 border-orange-300"
 };
 
 const STATUS_LABELS = {
@@ -73,6 +72,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
       
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["professionalBookings"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
     } catch (error: any) {
       // Error toast
       toast({
@@ -121,6 +121,14 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
     return "Serviço não especificado";
   };
 
+  // Helper to get status color and label
+  const getStatusInfo = (status: string) => {
+    const statusKey = status.toUpperCase() as keyof typeof STATUS_LABELS;
+    const statusLabel = STATUS_LABELS[statusKey] || "Desconhecido";
+    const statusColor = STATUS_COLORS[statusKey] || "bg-gray-100 text-gray-800 border-gray-300";
+    return { statusLabel, statusColor };
+  };
+
   if (appointments.length === 0) {
     return (
       <div className="text-center p-8 bg-white rounded-lg shadow-sm border">
@@ -137,11 +145,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
         const startTime = parseISO(appointment.startTime);
         const serviceName = getServiceName(appointment);
         const clientName = getClientName(appointment);
-        
-        // Upper case status for consistent mapping
-        const statusKey = appointment.status.toUpperCase() as keyof typeof STATUS_LABELS;
-        const statusLabel = STATUS_LABELS[statusKey] || "Desconhecido";
-        const statusColor = STATUS_COLORS[statusKey] || "bg-gray-400";
+        const { statusLabel, statusColor } = getStatusInfo(appointment.status);
         
         return (
           <Card 
@@ -185,7 +189,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
               {showActions && (
                 <div className="bg-muted/30 p-2 flex flex-wrap gap-2 justify-end border-t">
                   {/* Show actions based on current appointment status */}
-                  {(statusKey === "PENDING") && (
+                  {(appointment.status === "PENDING") && (
                     <>
                       <Button
                         size="sm"
@@ -217,7 +221,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                     </>
                   )}
                   
-                  {(statusKey === "CONFIRMED") && (
+                  {(appointment.status === "CONFIRMED") && (
                     <>
                       <Button
                         size="sm"
@@ -226,25 +230,11 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                         disabled={isUpdatingStatus}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleStatusUpdate(appointment.id, "IN_PROGRESS");
+                          handleStatusUpdate(appointment.id, "COMPLETED");
                         }}
                       >
                         <CheckCircle className="h-3.5 w-3.5" />
-                        Iniciar
-                      </Button>
-                      
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="gap-1 text-xs"
-                        disabled={isUpdatingStatus}
-                        onClick={(e) => {
-                          e.stopPropagation(); 
-                          openRescheduleModal(appointment, e);
-                        }}
-                      >
-                        <Calendar className="h-3.5 w-3.5" />
-                        Reagendar
+                        Finalizar
                       </Button>
                       
                       <Button
@@ -263,7 +253,7 @@ const ProfessionalBookingsList: React.FC<ProfessionalBookingsListProps> = ({
                     </>
                   )}
                   
-                  {(statusKey === "IN_PROGRESS" || statusKey === "INPROGRESS" || statusKey === "IN-PROGRESS") && (
+                  {(appointment.status === "IN_PROGRESS" || appointment.status === "INPROGRESS" || appointment.status === "IN-PROGRESS") && (
                     <Button
                       size="sm"
                       variant="outline"

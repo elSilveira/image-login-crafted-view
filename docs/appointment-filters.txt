@@ -1,0 +1,120 @@
+# Documentação dos Filtros de Agendamentos
+
+## 1. Parâmetros Básicos de Filtro
+
+```typescript
+interface AppointmentFilters {
+  // Filtros de Data
+  dateFrom?: string;      // Formato: YYYY-MM-DD
+  dateTo?: string;        // Formato: YYYY-MM-DD
+  
+  // Filtros de Status
+  status?: string;        // Pode ser um único status ou múltiplos separados por vírgula
+                        // Valores possíveis: PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+  
+  // Filtros de Serviço
+  serviceId?: string;     // ID do serviço específico
+  serviceType?: string;   // Tipo de serviço (opcional)
+  
+  // Filtros de Profissional
+  professionalId?: string; // ID do profissional
+  
+  // Filtros de Cliente
+  userId?: string;        // ID do cliente
+  
+  // Filtros de Empresa
+  companyId?: string;     // ID da empresa
+  
+  // Parâmetros de Inclusão
+  include?: string;       // Relacionamentos a serem incluídos (ex: "user,service,professional")
+  
+  // Parâmetros de Ordenação
+  sort?: string;          // Campo para ordenação (ex: "startTime_asc", "startTime_desc")
+  
+  // Parâmetros de Paginação
+  limit?: number;         // Limite de registros por página
+  page?: number;          // Número da página
+  
+  // Filtros de Busca
+  search?: string;        // Termo de busca para filtrar por nome do cliente ou serviço
+}
+```
+
+## 2. Valores de Status Suportados
+
+```typescript
+type AppointmentStatus = 
+  | "PENDING"      // Pendente
+  | "CONFIRMED"    // Confirmado
+  | "IN_PROGRESS"  // Em Andamento
+  | "COMPLETED"    // Concluído
+  | "CANCELLED"    // Cancelado
+  | "NO_SHOW"      // Não Compareceu
+```
+
+## 3. Exemplos de Uso
+
+```typescript
+// Exemplo 1: Buscar agendamentos de um profissional em um período
+GET /appointments?professionalId=123&dateFrom=2024-03-01&dateTo=2024-03-31
+
+// Exemplo 2: Buscar agendamentos por status
+GET /appointments?status=PENDING,CONFIRMED
+
+// Exemplo 3: Buscar agendamentos incluindo relacionamentos
+GET /appointments?include=user,service,professional
+
+// Exemplo 4: Buscar agendamentos com ordenação
+GET /appointments?sort=startTime_asc
+
+// Exemplo 5: Buscar agendamentos com paginação
+GET /appointments?limit=10&page=1
+```
+
+## 4. Considerações Importantes
+
+- O backend deve suportar múltiplos valores para o parâmetro `status` (separados por vírgula)
+- Os status devem ser case-insensitive na comparação
+- O parâmetro `include` deve suportar múltiplos relacionamentos
+- A ordenação deve suportar sufixos `_asc` e `_desc`
+- Os filtros de data devem ser tratados como inclusivos (incluindo o dia inicial e final)
+
+## 5. Resposta Esperada
+
+```typescript
+interface AppointmentResponse {
+  data: Array<{
+    id: string;
+    startTime: string;    // ISO Date string
+    endTime: string;      // ISO Date string
+    status: string;
+    notes?: string | null;
+    userId: string;
+    professionalId: string;
+    serviceId: string;
+    companyId: string;
+    user?: {
+      id: string;
+      name: string | null;
+      email?: string;
+      phone?: string;
+    };
+    professional?: {
+      id: string;
+      name: string;
+    };
+    service?: {
+      id: string;
+      name: string;
+      duration?: string;
+      price?: number;
+    };
+  }>;
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+``` 

@@ -46,13 +46,14 @@ interface ApiAppointment {
 
 // Map API appointment to the format expected by calendar views
 const adaptApiAppointment = (apiAppt: ApiAppointment): AppointmentType => {
-  // Map API status to AppointmentStatus type (handling no-show as cancelled)
+  // Map API status to AppointmentStatus type
   let mappedStatus: AppointmentStatus = 
     apiAppt.status.toLowerCase() === "confirmed" ? "confirmed" :
     apiAppt.status.toLowerCase() === "pending" ? "pending" :
     apiAppt.status.toLowerCase() === "in-progress" || apiAppt.status.toLowerCase() === "in_progress" ? "in-progress" :
     apiAppt.status.toLowerCase() === "completed" ? "completed" :
-    "cancelled"; // Default for cancelled and no-show
+    apiAppt.status.toLowerCase() === "no-show" || apiAppt.status.toLowerCase() === "no_show" ? "no-show" :
+    "cancelled";
 
   return {
     id: apiAppt.id,
@@ -82,10 +83,11 @@ interface ProfessionalCalendarViewProps {
 
 const statusColors: Record<AppointmentStatus, string> = {
   "pending": "bg-yellow-100 text-yellow-800 border-yellow-300",
-  "confirmed": "bg-green-100 text-green-800 border-green-300",
-  "in-progress": "bg-blue-100 text-blue-800 border-blue-300",
-  "completed": "bg-purple-100 text-purple-800 border-purple-300",
-  "cancelled": "bg-red-100 text-red-800 border-red-300"
+  "confirmed": "bg-blue-100 text-blue-800 border-blue-300",
+  "in-progress": "bg-purple-100 text-purple-800 border-purple-300",
+  "completed": "bg-green-100 text-green-800 border-green-300",
+  "cancelled": "bg-red-100 text-red-800 border-red-300",
+  "no-show": "bg-orange-100 text-orange-800 border-orange-300"
 };
 
 const statusLabels: Record<AppointmentStatus, string> = {
@@ -163,20 +165,26 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
       try {
         const queryParams = new URLSearchParams({
           professionalId: professionalId,
-          dateFrom: dateRange.start.toISOString().substring(0, 10), // YYYY-MM-DD
-          dateTo: dateRange.end.toISOString().substring(0, 10),     // YYYY-MM-DD
+          dateFrom: dateRange.start.toISOString().substring(0, 10),
+          dateTo: dateRange.end.toISOString().substring(0, 10),
           include: "user,service",
-          limit: "500", // Fetch a larger number for calendar views
-          sort: "startTime_asc" // Sort by start time ascending
+          limit: "500",
+          sort: "startTime_asc"
         });
 
         // Add filters to query params if not "all"
         if (filters.status !== "all") {
-          queryParams.append("status", filters.status);
+          // Handle multiple status values
+          const statusValues = filters.status.split(",");
+          statusValues.forEach(status => {
+            queryParams.append("status", status);
+          });
         }
+        
         if (filters.service !== "all") {
           queryParams.append("serviceId", filters.service);
-        }        
+        }
+
         const response = await apiClient.get(`/appointments?${queryParams.toString()}`);
         const result = response.data;
         const data: ApiAppointment[] = result.data ?? [];
@@ -187,7 +195,7 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
       } catch (err: any) {
         console.error("Erro ao buscar agendamentos:", err);
         setError(err.message || "Erro ao carregar agendamentos.");
-        setAppointments([]); // Clear appointments on error
+        setAppointments([]);
       } finally {
         setIsLoading(false);
       }
@@ -206,7 +214,7 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
       // Success toast
       toast({
         title: "Status atualizado",
-        description: `Agendamento ${statusLabels[newStatus as AppointmentStatus].toLowerCase()} com sucesso.`,
+        description: `Agendamento ${statusLabels[newStatus.toLowerCase() as AppointmentStatus].toLowerCase()} com sucesso.`,
       });
       
       // Close the modal
@@ -532,10 +540,10 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
                       variant="outline"
                       className="gap-1"
                       disabled={isUpdating}
-                      onClick={() => handleStatusUpdate(selectedAppointment.id, "in-progress")}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "completed")}
                     >
                       <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                      Iniciar
+                      Finalizar
                     </Button>
                     
                     <Button
@@ -543,18 +551,7 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
                       variant="outline"
                       className="gap-1"
                       disabled={isUpdating}
-                      onClick={openRescheduleModal}
-                    >
-                      <CalendarDays className="h-3.5 w-3.5 mr-1" />
-                      Reagendar
-                    </Button>
-                    
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      disabled={isUpdating}
-                      onClick={() => handleStatusUpdate(selectedAppointment.id, "cancelled")}
+                      onClick={() => handleStatusUpdate(selectedAppointment.id, "no-show")}
                     >
                       <AlertTriangle className="h-3.5 w-3.5 mr-1" />
                       Não Compareceu
