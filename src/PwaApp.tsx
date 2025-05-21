@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import ProfessionalAreaLayout from "@/components/ProfessionalAreaLayout";
@@ -9,6 +9,7 @@ import { InstallAppBanner } from "@/components/ui/install-app-banner";
 import { ClearCacheButton } from "@/components/ui/clear-cache-button";
 import { registerServiceWorker } from "@/lib/register-sw";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Routes
 const Home = lazy(() => import("./pages/Home"));
@@ -117,101 +118,139 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-function PwaApp() {
+// Componente wrapper para gerenciar histórico de navegação
+function AppWrapper() {
   // Register service worker for PWA functionality
   useEffect(() => {
     registerServiceWorker();
   }, []);
 
-  console.log("PwaApp rendering");
   return (
     <Router>
       <AuthProvider>
-        <ErrorBoundary>
-          <Suspense fallback={<Loading />}>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              
-              {/* Protected routes */}
-              <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-              <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-              <Route path="/service/:id" element={<ProtectedRoute><ServiceDetails /></ProtectedRoute>} />
-              <Route path="/professional/:id" element={<ProtectedRoute><ProfessionalProfile /></ProtectedRoute>} />
-              <Route path="/booking-history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
-              <Route path="/booking/:serviceId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
-              <Route path="/booking/company/:companyId" element={<ProtectedRoute><CompanyBooking /></ProtectedRoute>} />
-              <Route path="/booking/reschedule/:appointmentId" element={<ProtectedRoute><BookingReschedule /></ProtectedRoute>} />
-              <Route path="/company/:id" element={<ProtectedRoute><CompanyProfile /></ProtectedRoute>} />
-              <Route path="/company/register" element={<ProtectedRoute><CompanyRegister /></ProtectedRoute>} />
-              <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
-              <Route path="/gamification" element={<ProtectedRoute><Gamification /></ProtectedRoute>} />
-              <Route path="/professionals" element={<ProtectedRoute><Professionals /></ProtectedRoute>} />
-              
-              {/* Professional area submenu routes */}
-              <Route path="/profile/professional" element={<ProtectedRoute><ProfessionalAreaLayout /></ProtectedRoute>}>
-                {/* Perfil tab */}
-                <Route index element={<ProfessionalProfileSettings />} />
-                {/* Serviços tab */}
-                <Route path="services" element={<ProfessionalServicesAdmin />} />
-                {/* Dashboard tab */}
-                <Route path="dashboard" element={<ProfessionalDashboard />} />
-                {/* Agenda tab */}
-                <Route path="calendar" element={<ProfessionalCalendar />} />
-                {/* Agendamentos tab */}
-                <Route path="bookings" element={<ProfessionalBookings />} />
-                {/* Avaliações tab */}
-                <Route path="reviews" element={<Reviews />} />
-                {/* Relatórios tab */}
-                <Route path="reports" element={<ProfessionalReports />} />
-                {/* Configurações tab */}
-                <Route path="settings" element={<ProfessionalSettings />} />
-              </Route>
-              
-              {/* Company Admin Routes */}
-              <Route path="/company/my-company/dashboard" element={<ProtectedRoute><CompanyDashboard /></ProtectedRoute>} />
-              <Route path="/company/my-company/services" element={<ProtectedRoute><CompanyServicesAdmin /></ProtectedRoute>} />
-              <Route path="/company/my-company/profile" element={<ProtectedRoute><CompanyProfileAdmin /></ProtectedRoute>} />
-              <Route path="/company/my-company/settings" element={<ProtectedRoute><CompanySettingsAdmin /></ProtectedRoute>} />
-              <Route path="/company/my-company/reviews" element={<ProtectedRoute><CompanyReviewsAdmin /></ProtectedRoute>} />
-              <Route path="/company/my-company/reports" element={<ProtectedRoute><CompanyReportsAdmin /></ProtectedRoute>} />
-              <Route path="/company/my-company/staff" element={<ProtectedRoute><CompanyStaff /></ProtectedRoute>} />
-              <Route path="/company/my-company/calendar" element={<ProtectedRoute><CompanyCalendar /></ProtectedRoute>} />
-              <Route path="/company/my-company/staff/:staffId/calendar" element={<ProtectedRoute><StaffCalendar /></ProtectedRoute>} />
-              <Route path="/company/:id/services" element={<ProtectedRoute><CompanyServices /></ProtectedRoute>} />
-              
-              {/* Test routes */}
-              <Route path="/test/bookings" element={<ProtectedRoute><TestBookingsList /></ProtectedRoute>} />
-              <Route path="/test/debug-bookings" element={<ProtectedRoute><DebugBookingsPage /></ProtectedRoute>} />
-              <Route path="/profile/professional/schedule" element={<ProtectedRoute><ProfessionalAreaLayout /></ProtectedRoute>} />
-              
-              {/* 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            
-            {/* PWA and global UI components */}
-            <Toaster />
-            <NetworkStatus />
-            <PwaUpdateNotification />
-            <InstallAppBanner />
-            
-            {/* Botão para limpeza de cache - Visível apenas em Settings */}
-            {window.location.pathname === '/settings' && (
-              <div className="fixed bottom-28 right-4 z-50">
-                <ClearCacheButton />
-              </div>
-            )}
-          </Suspense>
-        </ErrorBoundary>
+        <AppContent />
       </AuthProvider>
     </Router>
   );
 }
 
-export default PwaApp;
+// Componente de conteúdo principal que pode acessar hooks de roteamento
+function AppContent() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Manipular redirecionamentos baseados na autenticação e na rota atual
+  useEffect(() => {
+    const publicRoutes = ['/login', '/register', '/forgot-password'];
+    const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+    
+    // Se a página estiver carregando, não faça nada ainda
+    if (isLoading) return;
+    
+    // Se o usuário não estiver autenticado e não estiver em rota pública, redirecione para login
+    if (!isAuthenticated && !isPublicRoute) {
+      console.log('Usuário não autenticado acessando rota protegida:', location.pathname);
+      navigate('/login', { state: { from: location }, replace: true });
+    }
+    
+    // Se o usuário estiver autenticado e tentar acessar uma rota pública, redirecione para home
+    if (isAuthenticated && isPublicRoute) {
+      console.log('Usuário autenticado tentando acessar rota pública:', location.pathname);
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, location, navigate]);
+
+  // Mostrar tela de carregamento enquanto verifica autenticação
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<Loading />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          
+          {/* Protected routes */}
+          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+          <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+          <Route path="/service/:id" element={<ProtectedRoute><ServiceDetails /></ProtectedRoute>} />
+          <Route path="/professional/:id" element={<ProtectedRoute><ProfessionalProfile /></ProtectedRoute>} />
+          <Route path="/booking-history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
+          <Route path="/booking/:serviceId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
+          <Route path="/booking/company/:companyId" element={<ProtectedRoute><CompanyBooking /></ProtectedRoute>} />
+          <Route path="/booking/reschedule/:appointmentId" element={<ProtectedRoute><BookingReschedule /></ProtectedRoute>} />
+          <Route path="/company/:id" element={<ProtectedRoute><CompanyProfile /></ProtectedRoute>} />
+          <Route path="/company/register" element={<ProtectedRoute><CompanyRegister /></ProtectedRoute>} />
+          <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
+          <Route path="/gamification" element={<ProtectedRoute><Gamification /></ProtectedRoute>} />
+          <Route path="/professionals" element={<ProtectedRoute><Professionals /></ProtectedRoute>} />
+          
+          {/* Professional area submenu routes */}
+          <Route path="/profile/professional" element={<ProtectedRoute><ProfessionalAreaLayout /></ProtectedRoute>}>
+            {/* Perfil tab */}
+            <Route index element={<ProfessionalProfileSettings />} />
+            {/* Serviços tab */}
+            <Route path="services" element={<ProfessionalServicesAdmin />} />
+            {/* Dashboard tab */}
+            <Route path="dashboard" element={<ProfessionalDashboard />} />
+            {/* Agenda tab */}
+            <Route path="calendar" element={<ProfessionalCalendar />} />
+            {/* Agendamentos tab */}
+            <Route path="bookings" element={<ProfessionalBookings />} />
+            {/* Avaliações tab */}
+            <Route path="reviews" element={<Reviews />} />
+            {/* Relatórios tab */}
+            <Route path="reports" element={<ProfessionalReports />} />
+            {/* Configurações tab */}
+            <Route path="settings" element={<ProfessionalSettings />} />
+          </Route>
+          
+          {/* Company Admin Routes */}
+          <Route path="/company/my-company/dashboard" element={<ProtectedRoute><CompanyDashboard /></ProtectedRoute>} />
+          <Route path="/company/my-company/services" element={<ProtectedRoute><CompanyServicesAdmin /></ProtectedRoute>} />
+          <Route path="/company/my-company/profile" element={<ProtectedRoute><CompanyProfileAdmin /></ProtectedRoute>} />
+          <Route path="/company/my-company/settings" element={<ProtectedRoute><CompanySettingsAdmin /></ProtectedRoute>} />
+          <Route path="/company/my-company/reviews" element={<ProtectedRoute><CompanyReviewsAdmin /></ProtectedRoute>} />
+          <Route path="/company/my-company/reports" element={<ProtectedRoute><CompanyReportsAdmin /></ProtectedRoute>} />
+          <Route path="/company/my-company/staff" element={<ProtectedRoute><CompanyStaff /></ProtectedRoute>} />
+          <Route path="/company/my-company/calendar" element={<ProtectedRoute><CompanyCalendar /></ProtectedRoute>} />
+          <Route path="/company/my-company/staff/:staffId/calendar" element={<ProtectedRoute><StaffCalendar /></ProtectedRoute>} />
+          <Route path="/company/:id/services" element={<ProtectedRoute><CompanyServices /></ProtectedRoute>} />
+          
+          {/* Test routes */}
+          <Route path="/test/bookings" element={<ProtectedRoute><TestBookingsList /></ProtectedRoute>} />
+          <Route path="/test/debug-bookings" element={<ProtectedRoute><DebugBookingsPage /></ProtectedRoute>} />
+          <Route path="/profile/professional/schedule" element={<ProtectedRoute><ProfessionalAreaLayout /></ProtectedRoute>} />
+          
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        
+        {/* PWA and global UI components */}
+        <Toaster />
+        <NetworkStatus />
+        <PwaUpdateNotification />
+        <InstallAppBanner />
+        
+        {/* Botão para limpeza de cache - Visível apenas em Settings */}
+        {location.pathname === '/settings' && (
+          <div className="fixed bottom-28 right-4 z-50">
+            <ClearCacheButton />
+          </div>
+        )}
+      </Suspense>
+    </ErrorBoundary>
+  );
+}
+
+// Componente principal exportado
+export default AppWrapper;
