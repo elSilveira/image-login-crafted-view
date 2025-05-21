@@ -1,5 +1,5 @@
 // This is the Service Worker file for the iAzi PWA
-const CACHE_VERSION = '2.1';
+const CACHE_VERSION = '2.2';
 const CACHE_NAME = `iazi-app-v${CACHE_VERSION}`;
 
 // Lista de versões antigas para serem excluídas
@@ -7,6 +7,7 @@ const OLD_CACHES = [
   'iazi-app-v1',
   'iazi-app-v1.1',
   'iazi-app-v2',
+  'iazi-app-v2.1',
 ];
 
 // Resources to cache immediately when SW installs
@@ -26,6 +27,14 @@ const APP_SHELL_URLS = [
   '/booking-history',
   '/settings',
   '/profile',
+  '/profile/professional',
+  '/profile/professional/services',
+  '/profile/professional/dashboard',
+  '/profile/professional/calendar',
+  '/profile/professional/bookings',
+  '/profile/professional/reviews',
+  '/profile/professional/reports',
+  '/profile/professional/settings',
 ];
 
 // Service Worker Install Event
@@ -89,21 +98,21 @@ self.addEventListener('fetch', event => {
   
   const requestURL = new URL(event.request.url);
   
-  // Detectar solicitações de navegação - quando o usuário está navegando para URLs da aplicação
+  // IMPORTANTE: Detectar solicitações de navegação - usuário acessando URLs da aplicação
   const isNavigationRequest = 
     event.request.mode === 'navigate' || 
     (event.request.headers.get('accept') && 
      event.request.headers.get('accept').includes('text/html'));
   
-  // Para solicitações de navegação, sempre servir o index.html e permitir
-  // que o roteador do lado do cliente lide com a navegação - isso evita 404
+  // Se for uma requisição de navegação, sempre servir o index.html
+  // Isso garante que o React Router possa lidar com todas as rotas internas
   if (isNavigationRequest) {
     event.respondWith(
-      // Tentar a rede primeiro
+      // Verificar se está online
       fetch(event.request)
         .then(response => {
+          // Se conseguiu acessar online, retorna a resposta e a salva no cache
           if (response && response.status === 200) {
-            // Cache a resposta bem sucedida
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then(cache => {
               cache.put(event.request, responseClone);
@@ -111,20 +120,21 @@ self.addEventListener('fetch', event => {
             return response;
           }
           
-          // Se a resposta não for 200 (como 404), fallback para index.html
-          throw new Error('Navigation response not OK');
+          // Se o status não for 200 (como 404), servir o index.html
+          return caches.match('/index.html');
         })
-        .catch(() => {
-          // Tentar encontrar no cache específico dessa URL primeiro
+        .catch(error => {
+          console.log('Erro na navegação, usando fallback para index.html:', error);
+          
+          // Se estiver offline, tentar pegar do cache específico da URL
           return caches.match(event.request)
             .then(cachedResponse => {
-              // Se encontrar no cache específico da URL, retornar
+              // Se a URL específica estiver em cache, use-a
               if (cachedResponse) {
                 return cachedResponse;
               }
               
-              // Se não encontrar, voltar para o index.html para permitir
-              // que o roteador do cliente lide com isso
+              // Caso contrário, retorna o index.html do cache
               return caches.match('/index.html');
             });
         })

@@ -16,10 +16,18 @@ async function clearAppCaches() {
 
       await Promise.all(deletionPromises);
       console.log('🧹 Limpeza de cache concluída');
+      return true;
     } catch (error) {
       console.error('❌ Erro ao limpar caches:', error);
+      return false;
     }
   }
+  return false;
+}
+
+// Verificar se o dispositivo está online
+function isOnline(): boolean {
+  return navigator.onLine;
 }
 
 // Função para verificar e atualizar o Service Worker
@@ -28,7 +36,14 @@ export function registerServiceWorker() {
     window.addEventListener('load', async () => {
       console.log('🔄 ServiceWorker Debug - Attempting to register ServiceWorker');
       
+      // Evitar recarregamentos infinitos em caso de falha de rede
+      let isRegistering = false;
+      
       try {
+        // Se já estiver tentando registrar, não tente novamente
+        if (isRegistering) return;
+        isRegistering = true;
+        
         // Detectar plataforma
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
         console.log(`📱 Plataforma detectada: ${isIOS ? 'iOS' : 'Não iOS'}`);
@@ -43,30 +58,40 @@ export function registerServiceWorker() {
           await clearAppCaches();
         }
         
-        // Verificar registros existentes
-        const existingRegistrations = await navigator.serviceWorker.getRegistrations();
-        
-        // Verificar se precisamos atualizar registros existentes
-        if (existingRegistrations.length > 0) {
-          console.log(`🔄 ${existingRegistrations.length} Service Worker(s) registrado(s)`);
+        // Verificar registros existentes apenas se online
+        if (isOnline()) {
+          const existingRegistrations = await navigator.serviceWorker.getRegistrations();
           
-          for (const reg of existingRegistrations) {
-            if (isIOS || reg.waiting || forceClear) {
+          // Verificar se precisamos atualizar registros existentes
+          if (existingRegistrations.length > 0) {
+            console.log(`🔄 ${existingRegistrations.length} Service Worker(s) registrado(s)`);
+            
+            for (const reg of existingRegistrations) {
               console.log('🔄 Atualizando ServiceWorker existente');
-              await reg.update();
+              
+              try {
+                await reg.update();
+              } catch (updateError) {
+                console.error('❌ Erro ao atualizar registro existente:', updateError);
+                // Não interromper a execução por falha na atualização
+              }
               
               if (reg.waiting) {
                 console.log('⏭️ ServiceWorker em waiting - enviando SKIP_WAITING');
+                // Ativar automaticamente o novo service worker
                 reg.waiting.postMessage({ type: 'SKIP_WAITING' });
               }
             }
           }
+        } else {
+          console.log('📵 Dispositivo offline - pulando atualização do Service Worker');
         }
         
         // Registrar com uma marca de tempo para evitar cache do navegador
         const swUrl = `/sw.js?v=${Date.now()}`;
         console.log(`🔄 Registrando ServiceWorker de: ${swUrl}`);
         
+        // Registrar o service worker mesmo offline (usará a versão em cache)
         const registration = await navigator.serviceWorker.register(swUrl);
         console.log('✅ ServiceWorker registrado com sucesso:', registration.scope);
         
@@ -79,24 +104,32 @@ export function registerServiceWorker() {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 console.log('🆕 Nova versão do ServiceWorker instalada');
                 
-                // Se no iOS, forçar ativação imediatamente
-                if (isIOS) {
-                  newWorker.postMessage({ type: 'SKIP_WAITING' });
-                }
+                // Sempre ativar automaticamente o novo service worker
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
               }
             });
           }
         });
         
-        // Configurar ouvinte para controllerchange
+        // Configurar ouvinte para controllerchange - com proteção contra recargas repetidas
+        let reloadAttempted = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('🔄 Service Worker controller changed - reloading page');
-          // Recarregar a página quando o controlador mudar
-          window.location.reload();
+          console.log('🔄 Service Worker controller changed');
+          
+          // Só recarregar se estiver online e for o primeiro controllerchange
+          if (isOnline() && !reloadAttempted) {
+            reloadAttempted = true;
+            console.log('🔁 Recarregando página após alteração do controller');
+            window.location.reload();
+          } else {
+            console.log('🛑 Evitando recarga repetida ou dispositivo offline');
+          }
         });
         
       } catch (error) {
         console.error('❌ Falha ao registrar o ServiceWorker:', error);
+      } finally {
+        isRegistering = false;
       }
     });
   }

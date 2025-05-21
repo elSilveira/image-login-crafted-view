@@ -108,6 +108,7 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
       if (professionalId) {
         queryClient.invalidateQueries({ queryKey: ["reviews", professionalId] });
         queryClient.invalidateQueries({ queryKey: ["professionalDetails", professionalId] });
+        queryClient.invalidateQueries({ queryKey: ["professionalReviewsWithStats", professionalId] });
       }
       if (serviceId) {
         queryClient.invalidateQueries({ queryKey: ["reviews", serviceId] });
@@ -117,6 +118,12 @@ const ReviewForm: React.FC<ReviewFormProps> = ({
         queryClient.invalidateQueries({ queryKey: ["reviews", companyId] });
         queryClient.invalidateQueries({ queryKey: ["companyDetails", companyId] });
       }
+      if (appointmentId) {
+        queryClient.invalidateQueries({ queryKey: ["pendingReviews"] });
+      }
+      
+      // Invalidar histórico de avaliações do usuário
+      queryClient.invalidateQueries({ queryKey: ["userReviews"] });
       
       toast({
         title: "Avaliação enviada",

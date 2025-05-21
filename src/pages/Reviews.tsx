@@ -9,7 +9,7 @@ import ReviewForm from "@/components/reviews/ReviewForm";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProfessionalDetails, fetchProfessionalReviewsWithStats } from "@/lib/api";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfessionalReviewStats from "@/components/reviews/ProfessionalReviewStats";
 import ProfessionalReviewsList from "@/components/reviews/ProfessionalReviewsList";
@@ -39,6 +39,8 @@ const ReviewsPage = () => {
     enabled: !!professionalId,
     retry: 3, // Limitar o número de tentativas para 3
     retryDelay: 1000, // Atraso entre tentativas (1 segundo)
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false,
   });
 
   // Buscar reviews específicas do profissional, incluindo estatísticas
@@ -51,6 +53,10 @@ const ReviewsPage = () => {
     queryKey: ["professionalReviewsWithStats", professionalId],
     queryFn: () => fetchProfessionalReviewsWithStats(professionalId!),
     enabled: !!professionalId && !isErrorProfessional && !isLoadingProfessional,
+    retry: 3,
+    retryDelay: 2000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
   
   // Configurar limpeza quando o componente for desmontado
@@ -107,7 +113,7 @@ const ReviewsPage = () => {
         <Navigation />
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-center items-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-iazi-primary"></div>
+            <Loader2 className="h-12 w-12 animate-spin text-iazi-primary" />
             <span className="ml-3 text-iazi-primary font-medium">Carregando...</span>
           </div>
         </div>
@@ -165,11 +171,17 @@ const ReviewsPage = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="col-span-1">
-                  <ProfessionalReviewStats professionalId={professionalId} />
+                  <ProfessionalReviewStats 
+                    professionalId={professionalId}
+                    useDetailedEndpoint={true}
+                  />
                 </div>
                 
                 <div className="col-span-1 md:col-span-2">
-                  <ProfessionalReviewsList professionalId={professionalId} />
+                  <ProfessionalReviewsList 
+                    professionalId={professionalId}
+                    useDetailedEndpoint={true}
+                  />
                 </div>
               </div>
               

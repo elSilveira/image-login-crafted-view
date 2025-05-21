@@ -593,50 +593,74 @@ export async function fetchProfessionalAvailableDates(professionalId: string): P
 
 export const fetchProfessionalAppointments = async (professionalId: string, dateFrom: string, dateTo: string) => {
   // Fetch all appointments for a professional in a date range, including user and service
-  const response = await apiClient.get(`/appointments`, {
-    params: {
-      professionalId,
-      dateFrom,
-      dateTo,
-      include: 'user,service,services,professional,services.service', // Include service details for services array
-      limit: 100,
-      sort: 'startTime_asc',
-    },
-  });
+  console.log(`[DEBUG] Fetching appointments for professional ${professionalId} from ${dateFrom} to ${dateTo}`);
   
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`Appointments fetched for ${professionalId} from ${dateFrom} to ${dateTo}:`, 
-      response.data.data.length > 0 ? 
-      `${response.data.data.length} appointments found` : 
-      'No appointments found');
+  try {
+    const response = await apiClient.get(`/appointments`, {
+      params: {
+        professionalId,
+        dateFrom,
+        dateTo,
+        include: 'user,service,services,professional,services.service', // Include service details for services array
+        limit: 100,
+        sort: 'startTime_asc',
+      },
+    });
+    
+    // Process the response to ensure service data is accessible
+    const responseData = response.data;
+    const appointments = Array.isArray(responseData) ? responseData : 
+                        responseData.data && Array.isArray(responseData.data) ? responseData.data : [];
+    
+    // Normalize each appointment to ensure service data is available
+    const normalizedAppointments = appointments.map((appointment: any) => {
+      // Ensure appointment has serviceId if it's not already there but in the service object
+      if (!appointment.serviceId && appointment.service?.id) {
+        appointment.serviceId = appointment.service.id;
+      }
       
-    // Log appointment data structure for debugging if there are appointments
-    if (response.data.data.length > 0) {
-      const sample = response.data.data[0];
-      console.log('Sample appointment structure:', {
-        id: sample.id,
-        startTime: sample.startTime,
-        endTime: sample.endTime,
-        service: sample.service ? {
-          id: sample.service.id,
-          name: sample.service.name,
-          duration: sample.service.duration
-        } : null,
-        services: Array.isArray(sample.services) ? 
-          sample.services.map((s: any) => ({
-            id: s.id,
-            service: s.service ? {
-              id: s.service.id,
-              name: s.service.name,
-              duration: s.service.duration
-            } : null,
-            duration: s.duration
-          })) : null
+      // Process services array if it exists
+      if (Array.isArray(appointment.services)) {
+        appointment.services = appointment.services.map((serviceItem: any) => {
+          // Handle case where service details are nested under a 'service' property
+          if (serviceItem.service) {
+            return {
+              ...serviceItem,
+              id: serviceItem.id || serviceItem.service.id,
+              name: serviceItem.name || serviceItem.service.name,
+              duration: serviceItem.duration || serviceItem.service.duration,
+              price: serviceItem.price || serviceItem.service.price,
+              // Preserve the original service object for reference
+              service: serviceItem.service
+            };
+          }
+          return serviceItem;
+        });
+      }
+      
+      return appointment;
+    });
+    
+    // Debug log the normalized data structure
+    if (normalizedAppointments.length > 0) {
+      console.log('[DEBUG] Normalized appointment structure:', {
+        appointment: normalizedAppointments[0],
+        serviceData: normalizedAppointments[0].service,
+        servicesArray: normalizedAppointments[0].services
       });
+    } else {
+      console.log('[DEBUG] No appointments found for the selected date range');
     }
+    
+    // Return the data in the expected format
+    return {
+      ...responseData,
+      data: normalizedAppointments
+    };
+  } catch (error) {
+    console.error('[ERROR] Failed to fetch professional appointments:', error);
+    throw error;
   }
-  
-  return response.data;
 };
 
 export const fetchProfessionalServicesViaSearch = async (professionalId: string) => {

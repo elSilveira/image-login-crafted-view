@@ -1,28 +1,13 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchReviews } from "@/lib/api";
+import { fetchReviews, fetchProfessionalReviewsWithStats } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Loader2, Star, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
-
-interface Review {
-  id: string;
-  rating: number;
-  comment: string;
-  userId: string;
-  serviceId?: string;
-  professionalId?: string;
-  companyId?: string;
-  updatedAt: string;
-  user: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-}
+import { Review } from "@/types/reviews.model";
 
 const renderStars = (rating: number) => {
   const stars = [];
@@ -50,19 +35,52 @@ interface ProfessionalReviewsListProps {
   limit?: number;
   showSeeAllButton?: boolean;
   onSeeAllClick?: () => void;
+  useDetailedEndpoint?: boolean;
 }
 
 const ProfessionalReviewsList: React.FC<ProfessionalReviewsListProps> = ({
   professionalId,
   limit = 5,
   showSeeAllButton = false,
-  onSeeAllClick
+  onSeeAllClick,
+  useDetailedEndpoint = false
 }) => {
-  const { data: reviews, isLoading, isError, error } = useQuery<Review[]>({
-    queryKey: ["reviews", professionalId],
-    queryFn: () => fetchReviews({ professionalId, limit }),
+  // Referência para controlar se o componente está montado
+  const isMounted = useRef(true);
+
+  // Usar o endpoint adequado com base na prop useDetailedEndpoint
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: useDetailedEndpoint 
+      ? ["professionalReviewsWithStats", professionalId] 
+      : ["reviews", professionalId],
+    queryFn: async () => {
+      if (useDetailedEndpoint) {
+        // Usar o endpoint que retorna tanto as reviews quanto as estatísticas
+        const result = await fetchProfessionalReviewsWithStats(professionalId);
+        return result.reviews || [];
+      } else {
+        // Usar o endpoint de reviews padrão com limite
+        return fetchReviews({ professionalId, limit });
+      }
+    },
     enabled: !!professionalId,
+    // Evitar atualização infinita quando API estiver offline
+    retry: 3,
+    retryDelay: 2000,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false
   });
+
+  // Extrair as reviews da resposta e aplicar o limite se necessário
+  const reviews = React.useMemo(() => {
+    if (!data) return [];
+    
+    // Se já tivermos os dados no formato correto, usar diretamente
+    const reviewsArray = Array.isArray(data) ? data : [];
+    
+    // Aplicar o limite se necessário
+    return limit > 0 ? reviewsArray.slice(0, limit) : reviewsArray;
+  }, [data, limit]);
 
   if (isLoading) {
     return (
@@ -96,20 +114,20 @@ const ProfessionalReviewsList: React.FC<ProfessionalReviewsListProps> = ({
 
   return (
     <div className="space-y-4">
-      {reviews.map((review) => (
+      {reviews.map((review: Review) => (
         <Card key={review.id} className="border-l-4 border-l-iazi-primary/50">
           <CardContent className="p-4">
             <div className="flex items-start gap-4">
               <Avatar className="h-10 w-10">
-                {review.user.avatar ? (
+                {review.user?.avatar ? (
                   <AvatarImage src={review.user.avatar} alt={review.user.name} />
                 ) : (
-                  <AvatarFallback>{review.user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{review.user?.name.substring(0, 2).toUpperCase() || "??"}</AvatarFallback>
                 )}
               </Avatar>
               <div className="flex-1">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-semibold">{review.user.name}</span>
+                  <span className="font-semibold">{review.user?.name || "Usuário"}</span>
                   <span className="text-xs text-gray-500">
                     {format(new Date(review.updatedAt), "dd/MM/yyyy", { locale: pt })}
                   </span>

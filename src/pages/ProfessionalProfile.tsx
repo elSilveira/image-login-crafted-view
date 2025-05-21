@@ -207,8 +207,6 @@ const ProfessionalProfile = () => {
   const [selectedServicesForSlot, setSelectedServicesForSlot] = useState<string[]>([]);
   const [serviceFilter, setServiceFilter] = useState<string>("");
   const dropdownRef = useRef<HTMLDivElement | null>(null);
-  // Contador para evitar requisições infinitas
-  const [apiErrorCount, setApiErrorCount] = useState(0);
   // Referência para controlar se o componente está montado
   const isMounted = useRef(true);
 
@@ -237,36 +235,30 @@ const ProfessionalProfile = () => {
     };
   }, []);
 
-  // Fetch available dates when professional loads - com tratamento de erro aprimorado
+  // Fetch available dates when professional loads
   useEffect(() => {
-    if (!professional?.id || apiErrorCount > 3) return;
+    if (!professional?.id) return;
     
     setLoadingDates(true);
     fetchProfessionalAvailableDates(professional.id)
       .then(dates => {
         if (isMounted.current) {
           setAvailableDates(dates);
-          // Resetar contador de erros em caso de sucesso
-          setApiErrorCount(0);
         }
       })
       .catch(err => {
         console.error("Erro ao buscar datas disponíveis:", err);
-        if (isMounted.current) {
-          // Incrementar contador de erros
-          setApiErrorCount(prev => prev + 1);
-        }
       })
       .finally(() => {
         if (isMounted.current) {
           setLoadingDates(false);
         }
       });
-  }, [professional?.id, apiErrorCount]);
+  }, [professional?.id]);
 
-  // Fetch slots when date changes - com tratamento de erro aprimorado
+  // Fetch slots when date changes
   useEffect(() => {
-    if (!date || !professional?.id || apiErrorCount > 3) {
+    if (!date || !professional?.id) {
       setAppointments([]);
       return;
     }
@@ -277,24 +269,20 @@ const ProfessionalProfile = () => {
     fetchProfessionalAppointments(professional.id, iso, iso)
       .then(data => {
         if (isMounted.current) {
+          console.log("[DEBUG] Appointments data:", data);
+          console.log("[DEBUG] Professional services:", professional.services);
           setAppointments(data?.data || []);
-          // Resetar contador de erros em caso de sucesso
-          setApiErrorCount(0);
         }
       })
       .catch(err => {
         console.error("Erro ao buscar agendamentos:", err);
-        if (isMounted.current) {
-          // Incrementar contador de erros
-          setApiErrorCount(prev => prev + 1);
-        }
       })
       .finally(() => {
         if (isMounted.current) {
           setLoadingSlots(false);
         }
       });
-  }, [date, professional?.id, apiErrorCount]);
+  }, [date, professional?.id, professional?.services]);
 
   // Debug: log professional.services and availableDates
   useEffect(() => {
@@ -387,33 +375,6 @@ const ProfessionalProfile = () => {
               {error && <p className="text-xs">Detalhes: {error instanceof Error ? error.message : String(error)}</p>}
               <Button variant="destructive" asChild className="mt-4">
                 <Link to="/">Voltar para Home</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </>
-    );
-  }
-
-  // Exibir mensagem quando a API está fora e atingiu o limite de tentativas
-  if (apiErrorCount > 3) {
-    return (
-      <>
-        <Navigation />
-        <div className="container mx-auto px-4 py-6 mt-6">
-          <Card className="border-destructive bg-destructive/10">
-            <CardContent className="p-6 flex flex-col items-center text-center text-destructive">
-              <AlertCircle className="h-10 w-10 mb-4" />
-              <h2 className="text-xl font-semibold mb-2">Erro de Conexão</h2>
-              <p className="text-sm mb-4">
-                Não foi possível conectar ao servidor. Verifique sua conexão com a internet.
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => setApiErrorCount(0)} 
-                className="mt-4"
-              >
-                Tentar Novamente
               </Button>
             </CardContent>
           </Card>
@@ -1223,7 +1184,10 @@ const ProfessionalProfile = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="col-span-1 md:col-span-1">
-                <ProfessionalReviewStats professionalId={professional.id} />
+                <ProfessionalReviewStats 
+                  professionalId={professional.id}
+                  useDetailedEndpoint={true}
+                />
               </div>
               
               <div className="col-span-1 md:col-span-2">
@@ -1232,6 +1196,7 @@ const ProfessionalProfile = () => {
                   limit={5} 
                   showSeeAllButton={professional.reviewCount && professional.reviewCount > 5}
                   onSeeAllClick={() => navigate(`/reviews?professionalId=${professional.id}`)}
+                  useDetailedEndpoint={true}
                 />
               </div>
             </div>

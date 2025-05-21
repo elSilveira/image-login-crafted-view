@@ -1,29 +1,112 @@
-
 /**
  * Tipos para API de Avaliações
  */
 
-// Rating deve estar entre 1 e 5
+// Tipos para o sistema de reviews (avaliações)
+
+// Valores de avaliação possíveis (1-5 estrelas)
 export type Rating = 1 | 2 | 3 | 4 | 5;
 
 // Tipo de avaliação (profissional ou usuário)
 export type ReviewType = "professional" | "user";
 
-// Interface para criação de uma avaliação
+// Interface para uma avaliação (review)
+export interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  userId: string;
+  serviceId?: string;
+  professionalId?: string;
+  companyId?: string;
+  createdAt?: string;
+  updatedAt: string;
+  // Dados relacionados que podem vir incluídos
+  user?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+  service?: {
+    id: string;
+    name: string;
+  };
+  professional?: {
+    id: string;
+    name: string;
+    image?: string;
+    avatarUrl?: string;
+  };
+  company?: {
+    id: string;
+    name: string;
+    logo?: string;
+  };
+  // Campo para resposta do profissional, se implementado
+  professionalResponse?: string;
+}
+
+// Interface para distribuição das avaliações
+export interface RatingDistribution {
+  stars: Rating;
+  count: number;
+  percentage: number;
+}
+
+// Interface para estatísticas de avaliação
+export interface ReviewStats {
+  averageRating: number;
+  totalReviews: number;
+  ratingDistribution: RatingDistribution[];
+}
+
+// Interface para a resposta do endpoint de avaliações de profissional com estatísticas
+export interface ProfessionalReviewsWithStats {
+  professional: {
+    id: string;
+    name: string;
+    image?: string;
+    avatarUrl?: string;
+    coverImage?: string;
+    coverImageUrl?: string;
+    bio?: string;
+    rating: number;
+    totalReviews: number;
+    role?: string;
+  };
+  reviews: Review[];
+  count: number;
+}
+
+// Interface para parâmetros da requisição de avaliações
+export interface ReviewsQueryParams {
+  professionalId?: string;
+  serviceId?: string;
+  companyId?: string;
+  userId?: string;
+  limit?: number;
+  offset?: number;
+  sort?: string; // ex: "updatedAt_desc", "rating_asc"
+  startDate?: string; // ISO date string YYYY-MM-DD
+  endDate?: string; // ISO date string YYYY-MM-DD
+  rating?: number; // Filtrar por avaliação específica
+}
+
+// Interface para dados necessários para criar uma avaliação
 export interface CreateReviewData {
-  rating: Rating;
+  rating: number;
   comment?: string;
   serviceId?: string;
   professionalId?: string;
   companyId?: string;
-  userId?: string;
-  appointmentId?: string;
-  reviewType?: ReviewType;
+  userId?: string; // Adicionado para compatibilidade
+  appointmentId?: string; // Adicionado para compatibilidade
+  reviewType?: ReviewType; // Adicionado para compatibilidade
 }
 
-// Interface para atualização de uma avaliação
+// Interface para dados necessários para atualizar uma avaliação
 export interface UpdateReviewData {
-  rating?: Rating;
+  rating?: number;
   comment?: string;
 }
 
