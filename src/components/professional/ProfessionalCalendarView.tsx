@@ -631,11 +631,11 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
+                        className="gap-1 border-iazi-primary text-iazi-primary hover:bg-iazi-primary hover:text-white"
                         disabled={isUpdating}
                         onClick={handleOpenReviewModal}
                       >
-                        <Star className="h-3.5 w-3.5 mr-1 fill-amber-400" />
+                        <Star className="h-3.5 w-3.5 mr-1" />
                         Avaliar Cliente
                       </Button>
                     )}
@@ -671,11 +671,11 @@ const ProfessionalCalendarView: React.FC<ProfessionalCalendarViewProps> = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1 bg-amber-50 hover:bg-amber-100 border-amber-200 text-amber-700"
+                        className="gap-1 border-iazi-primary text-iazi-primary hover:bg-iazi-primary hover:text-white"
                         disabled={isUpdating}
                         onClick={handleOpenReviewModal}
                       >
-                        <Star className="h-3.5 w-3.5 mr-1 fill-amber-400" />
+                        <Star className="h-3.5 w-3.5 mr-1" />
                         Avaliar Cliente
                       </Button>
                     )}

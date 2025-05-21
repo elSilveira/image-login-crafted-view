@@ -126,6 +126,7 @@ export const ServiceCard = ({
     service.company?.name || "Empresa não informada";
   const companyId = typeof service.company === "object" && service.company?.id ?
     service.company.id : service.company_id;
+  
   // Professional information - first try the new profissional format, then fall back to legacy professional format
   const profissionalFromAPI = service.profissional;
   const professionalName = profissionalFromAPI?.name ||
@@ -163,18 +164,32 @@ export const ServiceCard = ({
   // Get service initials for avatar fallback (safely)
   const serviceInitials = serviceName ? serviceName.substring(0, 2).toUpperCase() : "SV";
 
+  // Create path to professional profile if professional ID is available
+  const professionalProfilePath = professionalId ? `/professional/${professionalId}` : undefined;
+
   // For compact mode
   if (compact) {
     return (
       <Card className={`overflow-hidden hover:shadow-md transition-shadow duration-300 ${isHighlighted ? "border-l-4 border-l-[#4664EA] ring-1 ring-[#4664EA]" : ""}`}>
         <CardContent className="p-3">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 flex-shrink-0">
-              <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
-              <AvatarFallback className="bg-sky-100 text-sky-700">
-                {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
-              </AvatarFallback>
-            </Avatar>
+            {professionalId ? (
+              <Link to={professionalProfilePath} className="flex-shrink-0">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
+                  <AvatarFallback className="bg-sky-100 text-sky-700">
+                    {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            ) : (
+              <Avatar className="h-10 w-10 flex-shrink-0">
+                <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
+                <AvatarFallback className="bg-sky-100 text-sky-700">
+                  {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
+                </AvatarFallback>
+              </Avatar>
+            )}
             <div className="flex-1 min-w-0">
               <h4 className="text-sm font-semibold truncate">{serviceName}</h4>
               <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -184,15 +199,13 @@ export const ServiceCard = ({
               </div>
               {professionalName && (
                 <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
-                  {professionalImage ? (
-                    <Avatar className="h-4 w-4">
-                      <AvatarImage src={professionalImage} alt={professionalName} />
-                      <AvatarFallback className="bg-sky-50 text-sky-700 text-[10px]">
-                        {professionalName.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  ) : null}
-                  <span className="truncate">{professionalName}</span>
+                  {professionalId ? (
+                    <Link to={professionalProfilePath} className="flex items-center gap-1 truncate hover:text-iazi-primary">
+                      {professionalName}
+                    </Link>
+                  ) : (
+                    <span className="truncate">{professionalName}</span>
+                  )}
                 </div>
               )}
             </div>
@@ -214,23 +227,40 @@ export const ServiceCard = ({
         <div className="flex flex-col md:flex-row">
           {/* Coluna da esquerda - Informações do profissional */}
           <div className="md:w-1/4 p-4 flex flex-col items-center justify-center bg-[#f8f9ff]">
-            {service.profissional ? (
+            {service.profissional || professionalId ? (
               <>
-                <Avatar className="h-16 w-16 md:h-20 md:w-20 mb-2 md:mb-3 border-2 border-[#eef1ff] shadow-sm">
-                  <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
-                  <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
-                    {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
-                  </AvatarFallback>
-                </Avatar>
-                <h4 className="font-semibold text-sm text-center mb-1">{professionalName}</h4>
-                {professionalRole && (
-                  <div className="text-xs text-gray-500 text-center mb-2">{professionalRole}</div>
+                {professionalId ? (
+                  <Link to={professionalProfilePath} className="flex flex-col items-center">
+                    <Avatar className="h-16 w-16 md:h-20 md:w-20 mb-2 md:mb-3 border-2 border-[#eef1ff] shadow-sm">
+                      <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
+                      <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
+                        {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <h4 className="font-semibold text-sm text-center mb-1 hover:text-iazi-primary">{professionalName}</h4>
+                    {professionalRole && (
+                      <div className="text-xs text-gray-500 text-center mb-2">{professionalRole}</div>
+                    )}
+                  </Link>
+                ) : (
+                  <>
+                    <Avatar className="h-16 w-16 md:h-20 md:w-20 mb-2 md:mb-3 border-2 border-[#eef1ff] shadow-sm">
+                      <AvatarImage src={professionalImage || service.image} alt={professionalName || serviceName} />
+                      <AvatarFallback className="bg-sky-100 text-sky-700 text-lg">
+                        {professionalName ? professionalName.substring(0, 2).toUpperCase() : serviceInitials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <h4 className="font-semibold text-sm text-center mb-1">{professionalName}</h4>
+                    {professionalRole && (
+                      <div className="text-xs text-gray-500 text-center mb-2">{professionalRole}</div>
+                    )}
+                  </>
                 )}
                 <div className="flex items-center gap-1 mb-1">
-                  {service.profissional.rating ? renderStars(service.profissional.rating) : renderStars(serviceRating)}
+                  {service.profissional?.rating ? renderStars(service.profissional.rating) : renderStars(serviceRating)}
                 </div>
                 <div className="text-sm text-center">
-                  <span className="font-semibold">{(service.profissional.rating || serviceRating).toFixed(1)}</span>
+                  <span className="font-semibold">{(service.profissional?.rating || serviceRating).toFixed(1)}</span>
                   <span className="text-gray-500"> ({serviceReviews} avaliações)</span>
                 </div>
               </>
@@ -264,7 +294,13 @@ export const ServiceCard = ({
                     <Badge variant="secondary" className="bg-sky-50 text-sky-700">
                       {serviceCategory}
                     </Badge>
-                    {companyName && (
+                    {companyName && companyId && (
+                      <Link to={`/company/${companyId}`} className="flex items-center gap-1 hover:text-iazi-primary">
+                        <User className="h-3.5 w-3.5" />
+                        {companyName}
+                      </Link>
+                    )}
+                    {companyName && !companyId && (
                       <span className="flex items-center gap-1">
                         <User className="h-3.5 w-3.5" />
                         {companyName}

@@ -44,6 +44,7 @@ interface FormattedAppointment {
   notes?: string;
   location?: string;
   canReview?: boolean;
+  hasBeenReviewed?: boolean;
 }
 
 const BookingHistoryList = ({ 
@@ -156,6 +157,9 @@ const BookingHistoryList = ({
           // Check if appointment can be reviewed (completed and not yet reviewed)
           const canReview = mappedStatus === "completed";
           
+          // Verificar se já foi avaliado
+          const hasBeenReviewed = appointment.hasBeenReviewed === true;
+          
           return {
             id: appointment.id,
             services: appointmentServices,
@@ -167,7 +171,8 @@ const BookingHistoryList = ({
             status: mappedStatus,
             notes: appointment.notes || '',
             location: appointment.location || '',
-            canReview: canReview
+            canReview: canReview,
+            hasBeenReviewed: hasBeenReviewed
           };
         });
         
@@ -352,8 +357,8 @@ const BookingHistoryList = ({
                       <div className="flex items-center gap-2">
                         {getStatusBadge(appointment.status)}
                         
-                        {/* Add review button for completed appointments that can be reviewed */}
-                        {appointment.canReview && (
+                        {/* Mostrar botão de avaliar para agendamentos concluídos que podem ser avaliados */}
+                        {appointment.canReview && !appointment.hasBeenReviewed ? (
                           <TooltipProvider>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -372,7 +377,12 @@ const BookingHistoryList = ({
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
-                        )}
+                        ) : appointment.hasBeenReviewed ? (
+                          <Badge variant="outline" className="text-xs gap-1 border-green-200 text-green-600">
+                            <Star className="h-3 w-3 fill-green-500" />
+                            Avaliado
+                          </Badge>
+                        ) : null}
                       </div>
                       <span className="font-medium text-iazi-text">
                         R$ {typeof appointment.totalPrice === 'number' ? 
@@ -414,6 +424,14 @@ const BookingHistoryList = ({
           }}
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ["appointments"] });
+            
+            // Atualizar o estado local para mostrar que foi avaliado
+            const updatedAppointments = appointments.map(apt => 
+              apt.id === appointmentToReview.id 
+                ? { ...apt, hasBeenReviewed: true }
+                : apt
+            );
+            setAppointments(updatedAppointments);
             
             // Show success toast
             toast({

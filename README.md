@@ -72,6 +72,35 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
 
+## Nova Estrutura de API
+
+A aplicação possui uma estrutura de API modular e otimizada para melhor organização e desempenho:
+
+### Principais Características
+
+- **Estrutura Modular**: Serviços organizados por domínio (appointments, professionals, services, etc.)
+- **Cliente HTTP Centralizado**: Cliente Axios com interceptadores para autenticação e refresh token
+- **Cache Otimizado**: Diferentes tempos de cache para diferentes tipos de dados
+- **Hooks Especializados**: Hooks otimizados para cada tipo de endpoint
+- **Tipagem Forte**: Interface bem definidas para todas as entidades
+- **Tratamento de Erros Consistente**: Abordagem padronizada para lidar com erros
+
+### Documentação
+
+- **API Requests**: Consulte `docs/api-requests.md` para ver todas as requisições disponíveis
+- **Guia de Migração**: Siga `docs/api-migration-guide.md` para migrar componentes da API antiga para a nova estrutura
+
+### Módulos Disponíveis
+
+- `appointments.ts`: Serviços de agendamentos
+- `professionals.ts`: Serviços de profissionais
+- `services.ts`: Serviços oferecidos
+- `categories.ts`: Categorias de serviços
+- `companies.ts`: Empresas e estabelecimentos
+- `users.ts`: Perfis de usuários e autenticação
+- `reviews.ts`: Sistema de avaliações
+- `search.ts`: Funcionalidades de busca
+
 ## Integração com a API de Reviews
 
 A integração com a API de Reviews foi implementada com sucesso, incluindo os seguintes componentes e funcionalidades:

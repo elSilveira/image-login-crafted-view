@@ -86,6 +86,7 @@ export interface AppointmentWithDetails extends AppointmentData {
   service?: ServiceData;
   services?: ServiceData[];
   professional?: ProfessionalData;
+  hasBeenReviewed?: boolean;
 }
 
 // Criar um novo serviço

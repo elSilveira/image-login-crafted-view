@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Loader2, ArrowRight } from "lucide-react"; 
@@ -6,7 +5,7 @@ import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from ".
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Badge } from "./ui/badge";
 import { SearchInputDebounced } from "./search/SearchInputDebounced";
-import { getQuickBookingOptions } from "@/api/searchResults";
+import { getQuickBookingOptions } from "@/api/search";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";

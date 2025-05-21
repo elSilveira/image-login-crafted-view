@@ -428,6 +428,18 @@ const Search = () => {
               category: service?.category || 
                 (service?.categoryName ? { name: service?.categoryName } : 
                   (service?.service?.categoryName ? { name: service?.service?.categoryName } : undefined)),
+              // Add or transform professional information to ensure it's correctly structured
+              professional: service?.professional || (service?.professional_id ? { 
+                id: service?.professional_id,
+                name: service?.professionalName || "Profissional" 
+              } : undefined),
+              // Ensure profissional object is properly structured if available
+              profissional: service?.profissional || (service?.professional_id ? {
+                id: service?.professional_id.toString(),
+                name: service?.professionalName || service?.professional?.name || "Profissional",
+                image: service?.professional?.image,
+                rating: service?.professional?.rating || service?.rating
+              } : undefined)
             };
             
             return (

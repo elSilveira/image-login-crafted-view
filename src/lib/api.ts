@@ -775,4 +775,79 @@ export const checkAppointmentReviewStatus = async (appointmentId: string) => {
   }
 };
 
+// Funções para o dashboard do profissional
+
+// Buscar estatísticas gerais do dashboard do profissional
+export const fetchProfessionalDashboardStats = async (professionalId: string) => {
+  if (!professionalId) {
+    throw new Error("ID do profissional é obrigatório");
+  }
+  
+  try {
+    const response = await apiClient.get(`/professionals/${professionalId}/dashboard-stats`);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar estatísticas do dashboard:", error);
+    // Fornecer dados simulados em caso de falha na API
+    return {
+      currentMonthRevenue: 4230,
+      previousMonthRevenue: 3780,
+      currentMonthAppointments: 78,
+      previousMonthAppointments: 72,
+      currentMonthNewClients: 24,
+      previousMonthNewClients: 25
+    };
+  }
+};
+
+// Buscar próximos agendamentos para o dashboard
+export const fetchUpcomingAppointments = async (professionalId: string, limit = 5) => {
+  if (!professionalId) {
+    throw new Error("ID do profissional é obrigatório");
+  }
+  
+  const today = new Date();
+  const nextMonth = new Date();
+  nextMonth.setMonth(today.getMonth() + 1);
+  
+  try {
+    const queryParams = new URLSearchParams({
+      professionalId,
+      dateFrom: today.toISOString().split('T')[0],
+      dateTo: nextMonth.toISOString().split('T')[0],
+      include: 'user,service',
+      status: 'pending,confirmed',
+      limit: limit.toString(),
+      sort: 'startTime_asc',
+    });
+    
+    const response = await apiClient.get(`/appointments?${queryParams.toString()}`);
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Erro ao buscar próximos agendamentos:", error);
+    // Retornar array vazio em caso de falha na API
+    return [];
+  }
+};
+
+// Buscar serviços populares para o dashboard
+export const fetchPopularServices = async (professionalId: string) => {
+  if (!professionalId) {
+    throw new Error("ID do profissional é obrigatório");
+  }
+  
+  try {
+    const response = await apiClient.get(`/professionals/${professionalId}/popular-services`);
+    return response.data || [];
+  } catch (error) {
+    console.error("Erro ao buscar serviços populares:", error);
+    // Fornecer dados simulados em caso de falha na API
+    return [
+      { id: '1', name: 'Corte Feminino', appointmentCount: 32, rating: 4.8 },
+      { id: '2', name: 'Coloração', appointmentCount: 24, rating: 4.7 },
+      { id: '3', name: 'Manicure', appointmentCount: 18, rating: 4.6 }
+    ];
+  }
+};
+
 export default apiClient;

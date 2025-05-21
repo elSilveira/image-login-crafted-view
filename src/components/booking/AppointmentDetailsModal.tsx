@@ -91,8 +91,15 @@ export default function AppointmentDetailsModal({
   };
 
   const handleReviewSuccess = () => {
-    // Aqui poderia atualizar o estado do agendamento 
-    // para refletir que ele já foi avaliado
+    // Atualizar o estado do agendamento para refletir que ele já foi avaliado
+    if (appointment) {
+      onClose(); // Fechamos o modal de detalhes
+      
+      // Aguardar um pouco para dar tempo da API atualizar
+      setTimeout(() => {
+        window.location.reload(); // Recarregar a página para atualizar todos os dados
+      }, 1000);
+    }
   };
 
   const getActionButtons = (status: AppointmentStatus, id: string | number) => {
@@ -118,10 +125,10 @@ export default function AppointmentDetailsModal({
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1 text-amber-600 hover:bg-amber-50"
+                className="gap-1 border-iazi-primary text-iazi-primary hover:bg-iazi-primary hover:text-white"
                 onClick={handleOpenReviewDialog}
               >
-                <Star className="h-3.5 w-3.5 fill-amber-400" />
+                <Star className="h-3.5 w-3.5" />
                 Avaliar
               </Button>
             )}
