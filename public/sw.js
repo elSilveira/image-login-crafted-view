@@ -1,5 +1,5 @@
 // This is the Service Worker file for the iAzi PWA
-const CACHE_VERSION = '2.2';
+const CACHE_VERSION = '2.3';
 const CACHE_NAME = `iazi-app-v${CACHE_VERSION}`;
 
 // Lista de versões antigas para serem excluídas
@@ -8,6 +8,7 @@ const OLD_CACHES = [
   'iazi-app-v1.1',
   'iazi-app-v2',
   'iazi-app-v2.1',
+  'iazi-app-v2.2',
 ];
 
 // Resources to cache immediately when SW installs
@@ -30,225 +31,231 @@ const APP_SHELL_URLS = [
   '/profile/professional',
   '/profile/professional/services',
   '/profile/professional/dashboard',
-  '/profile/professional/calendar',
   '/profile/professional/bookings',
   '/profile/professional/reviews',
-  '/profile/professional/reports',
+  '/profile/professional/calendar',
   '/profile/professional/settings',
 ];
 
-// Service Worker Install Event
-self.addEventListener('install', event => {
-  console.log('Service Worker instalado ✅ - Nova versão:', CACHE_VERSION);
+// Instalar Service Worker
+self.addEventListener('install', (event) => {
+  console.log('[Service Worker] Instalando nova versão v' + CACHE_VERSION);
   
-  // Skip waiting forces the waiting service worker to become the active service worker
+  // Forçar o serviço worker atual a se tornar o serviço worker ativo
   self.skipWaiting();
-  
-  // Precaching static resources
+
+  // Fazer cache dos arquivos essenciais
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(PRECACHE_URLS);
-      })
-      .then(() => {
-        console.log('Recursos iniciais em cache ✅');
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[Service Worker] Pre-caching app shell');
+      return cache.addAll(PRECACHE_URLS);
+    })
   );
 });
 
-// Service Worker Activate Event - Clean up old caches
-self.addEventListener('activate', event => {
-  console.log('Service Worker ativado ✅ - Versão:', CACHE_VERSION);
+// Ativar Service Worker
+self.addEventListener('activate', (event) => {
+  console.log('[Service Worker] Ativando nova versão v' + CACHE_VERSION);
   
-  // Limpar todos os caches antigos
+  // Tomar controle de todas as páginas clientes sem recarregar
+  event.waitUntil(self.clients.claim());
+  
+  // Apagar caches antigos
   event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        console.log('Caches existentes:', cacheNames);
-        return Promise.all(
-          cacheNames
-            .filter(cacheName => {
-              // Remover caches antigos conhecidos e qualquer outro que não seja o atual
-              return (OLD_CACHES.includes(cacheName) || cacheName !== CACHE_NAME);
-            })
-            .map(cacheName => {
-              console.log('Removendo cache antigo:', cacheName);
-              return caches.delete(cacheName);
-            })
-        );
-      })
-      .then(() => {
-        console.log('Limpeza de cache concluída');
-        // Claim any clients that match the worker's scope
-        return self.clients.claim();
-      })
-  );
-});
-
-// Service Worker Fetch Event - Estratégia otimizada para evitar problemas de cache e erros 404
-self.addEventListener('fetch', event => {
-  // Ignorar solicitações não-GET, APIs, e cross-origin
-  if (
-    event.request.method !== 'GET' || 
-    event.request.url.includes('/api/') ||
-    !event.request.url.startsWith(self.location.origin)
-  ) {
-    return;
-  }
-  
-  const requestURL = new URL(event.request.url);
-  
-  // IMPORTANTE: Detectar solicitações de navegação - usuário acessando URLs da aplicação
-  const isNavigationRequest = 
-    event.request.mode === 'navigate' || 
-    (event.request.headers.get('accept') && 
-     event.request.headers.get('accept').includes('text/html'));
-  
-  // Se for uma requisição de navegação, sempre servir o index.html
-  // Isso garante que o React Router possa lidar com todas as rotas internas
-  if (isNavigationRequest) {
-    event.respondWith(
-      // Verificar se está online
-      fetch(event.request)
-        .then(response => {
-          // Se conseguiu acessar online, retorna a resposta e a salva no cache
-          if (response && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseClone);
-            });
-            return response;
-          }
-          
-          // Se o status não for 200 (como 404), servir o index.html
-          return caches.match('/index.html');
-        })
-        .catch(error => {
-          console.log('Erro na navegação, usando fallback para index.html:', error);
-          
-          // Se estiver offline, tentar pegar do cache específico da URL
-          return caches.match(event.request)
-            .then(cachedResponse => {
-              // Se a URL específica estiver em cache, use-a
-              if (cachedResponse) {
-                return cachedResponse;
-              }
-              
-              // Caso contrário, retorna o index.html do cache
-              return caches.match('/index.html');
-            });
-        })
-    );
-    return;
-  }
-  
-  // Adicionar parâmetro de versão para evitar cache do navegador
-  // para recursos importantes como HTML e JavaScript
-  const shouldBypassCache = (
-    requestURL.pathname.endsWith('.html') || 
-    requestURL.pathname.endsWith('.js') || 
-    requestURL.pathname.endsWith('.json') ||
-    requestURL.pathname === '/'
-  );
-  
-  if (shouldBypassCache) {
-    // Para recursos críticos, sempre verificar a rede primeiro
-    const networkFirstStrategy = async () => {
-      try {
-        // Tentar buscar da rede com cabeçalho cache-control para evitar cache
-        const networkRequest = new Request(event.request.url, {
-          cache: 'no-store',
-          headers: new Headers({
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => {
+            return (
+              cacheName.startsWith('iazi-app-') && 
+              cacheName !== CACHE_NAME && 
+              OLD_CACHES.includes(cacheName)
+            );
           })
-        });
-        
-        const networkResponse = await fetch(networkRequest);
-        
-        // Se tiver sucesso, atualizar o cache
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(event.request, responseClone);
-        }
-        
-        return networkResponse;
-      } catch (error) {
-        // Se falhar, tentar o cache
-        const cachedResponse = await caches.match(event.request);
-        return cachedResponse || caches.match('/index.html');
-      }
-    };
-    
-    event.respondWith(networkFirstStrategy());
-  } else {
-    // Para outros recursos, usar estratégia de cache first
+          .map((cacheName) => {
+            console.log('[Service Worker] Excluindo cache antigo:', cacheName);
+            return caches.delete(cacheName);
+          })
+      );
+    })
+  );
+});
+
+// Estratégia de interceptação de solicitações
+self.addEventListener('fetch', (event) => {
+  // Extrair a URL e o método da solicitação
+  const requestUrl = new URL(event.request.url);
+  const requestMethod = event.request.method;
+  
+  // Verificar se é uma requisição de navegação (HTML)
+  const isNavigationRequest = event.request.mode === 'navigate';
+  
+  // Verificar se é uma requisição para a mesma origem
+  const isFromSameOrigin = requestUrl.origin === self.location.origin;
+  
+  // Verificar se é uma requisição GET
+  const isGetRequest = requestMethod === 'GET';
+
+  // Para requisições de navegação (quando o usuário acessa uma URL diretamente)
+  if (isNavigationRequest && isFromSameOrigin) {
+    // Sempre retornar o index.html para requisições de navegação
     event.respondWith(
-      caches.match(event.request)
+      caches.match('/index.html')
         .then(cachedResponse => {
+          // Se temos um cache de index.html, usamos ele
           if (cachedResponse) {
-            // Retornar do cache, mas também atualizar em segundo plano
-            const fetchPromise = fetch(event.request)
+            // Tenta atualizar o cache em segundo plano
+            fetch('/index.html')
               .then(networkResponse => {
-                if (networkResponse && networkResponse.status === 200) {
-                  const responseClone = networkResponse.clone();
-                  caches.open(CACHE_NAME)
-                    .then(cache => cache.put(event.request, responseClone));
+                if (networkResponse && networkResponse.ok) {
+                  caches.open(CACHE_NAME).then(cache => {
+                    cache.put('/index.html', networkResponse.clone());
+                  });
                 }
-                return networkResponse;
               })
-              .catch(() => cachedResponse);
-            
-            // Usar o que está em cache enquanto atualiza em segundo plano
+              .catch(() => {
+                // Se falhar, usaremos o cache que já temos
+              });
+              
             return cachedResponse;
           }
           
-          // Se não estiver no cache, buscar da rede
-          return fetch(event.request)
+          // Se não temos cache, tenta obter da rede
+          return fetch('/index.html')
             .then(response => {
               if (!response || response.status !== 200) {
                 return response;
               }
               
-              const responseClone = response.clone();
-              caches.open(CACHE_NAME)
-                .then(cache => cache.put(event.request, responseClone));
+              // Cache a resposta para uso futuro
+              const responseToCache = response.clone();
+              caches.open(CACHE_NAME).then(cache => {
+                cache.put('/index.html', responseToCache);
+              });
               
               return response;
+            })
+            .catch(() => {
+              // Se tudo mais falhar, retorna uma página de erro offline
+              return new Response('Você está offline. Por favor, verifique sua conexão.', {
+                headers: { 'Content-Type': 'text/html' }
+              });
             });
         })
+    );
+    return;
+  }
+
+  // Para recursos estáticos e outras requisições não-navegação
+  if (isGetRequest) {
+    event.respondWith(
+      caches.match(event.request).then(cachedResponse => {
+        // Se temos um cache, usamos ele
+        if (cachedResponse) {
+          // Tenta atualizar o cache em segundo plano
+          fetch(event.request)
+            .then(networkResponse => {
+              if (networkResponse && networkResponse.ok) {
+                caches.open(CACHE_NAME).then(cache => {
+                  cache.put(event.request, networkResponse.clone());
+                });
+              }
+            })
+            .catch(() => {
+              // Se falhar, usaremos o cache que já temos
+            });
+            
+          return cachedResponse;
+        }
+        
+        // Se não temos cache, tenta obter da rede
+        return fetch(event.request)
+          .then(response => {
+            if (!response || response.status !== 200) {
+              return response;
+            }
+            
+            // Cache a resposta para uso futuro
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseToCache);
+            });
+            
+            return response;
+          })
+          .catch(error => {
+            // Se a requisição for para uma página da aplicação, retornamos o index.html
+            if (isFromSameOrigin && APP_SHELL_URLS.some(url => requestUrl.pathname.startsWith(url))) {
+              return caches.match('/index.html');
+            }
+            
+            console.error('[Service Worker] Erro ao buscar:', error);
+            return new Response('Falha ao carregar o recurso. Por favor, tente novamente.', {
+              headers: { 'Content-Type': 'text/plain' }
+            });
+          });
+      })
     );
   }
 });
 
-// Listen for push notifications
-self.addEventListener('push', event => {
-  const title = 'iAzi';
-  const options = {
-    body: event.data && event.data.text() || 'Notificação iAzi',
-    icon: '/lovable-uploads/15a72fb5-bede-4307-816e-037a944ec286.png',
-    badge: '/favicon.ico'
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+// Sincronizar dados quando ficar online novamente
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-data') {
+    console.log('[Service Worker] Sincronizando dados');
+    // Implementar lógica de sincronização
+  }
 });
 
-// Listen for notification click
-self.addEventListener('notificationclick', event => {
+// Receber mensagens do cliente
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((cacheName) => {
+            return cacheName.startsWith('iazi-');
+          })
+          .map((cacheName) => {
+            console.log('[Service Worker] Limpando cache:', cacheName);
+            return caches.delete(cacheName);
+          })
+      );
+    });
+  }
+});
+
+// Lidar com notificações push
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const data = event.data.json();
+    
+    const options = {
+      body: data.body,
+      icon: '/icon-192x192.png',
+      badge: '/icon-72x72.png',
+      data: {
+        url: data.url
+      }
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  }
+});
+
+// Lidar com cliques em notificações
+self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   
-  event.waitUntil(
-    clients.openWindow('/')
-  );
-});
-
-// Evento para lidar com mensagens, incluindo skip waiting
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('Recebido comando para pular waiting');
-    self.skipWaiting();
+  if (event.notification.data && event.notification.data.url) {
+    event.waitUntil(
+      clients.openWindow(event.notification.data.url)
+    );
   }
 });
