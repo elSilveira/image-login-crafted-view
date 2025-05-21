@@ -122,7 +122,33 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 function AppWrapper() {
   // Register service worker for PWA functionality
   useEffect(() => {
-    registerServiceWorker();
+    // Verificar se estamos no Safari do iOS
+    const ua = navigator.userAgent;
+    const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+    const isSafariOnIOS = isIOS && isSafari;
+    
+    // Verificar se a página já foi recarregada recentemente
+    const hasReloaded = sessionStorage.getItem('app_initial_load_complete');
+    
+    // Marcar a primeira carga concluída
+    if (!hasReloaded) {
+      console.log('Primeira carga da aplicação - marcando sessão');
+      sessionStorage.setItem('app_initial_load_complete', 'true');
+    }
+    
+    // Em iOS, só registrar o service worker se não for primeira carga
+    if (isSafariOnIOS && !hasReloaded) {
+      console.log('Primeira carga no Safari iOS - adiando registro do Service Worker');
+      // Na primeira carga do Safari iOS, adiar o registro do SW para evitar problemas
+      setTimeout(() => {
+        console.log('Registrando Service Worker após atraso inicial');
+        registerServiceWorker();
+      }, 3000);
+    } else {
+      // Para outros navegadores ou após a primeira carga, registrar normalmente
+      registerServiceWorker();
+    }
   }, []);
 
   return (

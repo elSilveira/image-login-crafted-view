@@ -1,6 +1,6 @@
 // This is the Service Worker file for the iAzi PWA
-const CACHE_VERSION = '2.3';
-const CACHE_NAME = `iazi-app-v${CACHE_VERSION}`;
+const CACHE_VERSION = '1.0.0';
+const CACHE_NAME = 'iazi-app-v' + CACHE_VERSION;
 
 // Lista de versões antigas para serem excluídas
 const OLD_CACHES = [
@@ -37,163 +37,145 @@ const APP_SHELL_URLS = [
   '/profile/professional/settings',
 ];
 
+// Arquivos essenciais para funcionamento offline
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/favicon.ico',
+  '/assets/logo.png',
+  '/assets/icons/icon-192x192.png',
+  '/assets/icons/icon-512x512.png'
+];
+
+// Detectar se estamos em ambiente de desenvolvimento
+const isDev = self.location.hostname === 'localhost';
+
+// Detectar navegadores problemáticos (Safari em iOS)
+const isSafariOnIOS = () => {
+  // Service Worker não tem acesso ao navigator.userAgent, então usamos heurísticas
+  // para detectar se há comportamentos problemáticos
+  const clientId = self.registration.scope;
+  return clientId.includes('icloud') || clientId.includes('apple');
+};
+
 // Instalar Service Worker
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Instalando nova versão v' + CACHE_VERSION);
+  console.log('🚀 Service Worker: Instalando...');
   
-  // Forçar o serviço worker atual a se tornar o serviço worker ativo
-  self.skipWaiting();
-
-  // Fazer cache dos arquivos essenciais
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Pre-caching app shell');
-      return cache.addAll(PRECACHE_URLS);
-    })
-  );
+  // Verificar se estamos em um ambiente problemático
+  const isProblematicBrowser = isSafariOnIOS();
+  
+  if (isProblematicBrowser) {
+    console.log('⚠️ Detectado navegador com comportamento problemático - instalação conservadora');
+    // Configuração mínima para Safari no iOS
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => {
+        // Apenas cache mínimo para evitar problemas em iOS
+        return cache.addAll(['/']);
+      })
+    );
+  } else {
+    // Instalação normal para outros navegadores
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => {
+        console.log('📦 Caching arquivos estáticos');
+        return cache.addAll(STATIC_ASSETS);
+      })
+    );
+  }
+  
+  // Skip waiting apenas em ambientes não problemáticos
+  if (!isProblematicBrowser) {
+    self.skipWaiting();
+  }
 });
 
 // Ativar Service Worker
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Ativando nova versão v' + CACHE_VERSION);
+  console.log('🔄 Service Worker: Ativando...');
   
-  // Tomar controle de todas as páginas clientes sem recarregar
-  event.waitUntil(self.clients.claim());
-  
-  // Apagar caches antigos
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames
-          .filter((cacheName) => {
-            return (
-              cacheName.startsWith('iazi-app-') && 
-              cacheName !== CACHE_NAME && 
-              OLD_CACHES.includes(cacheName)
-            );
-          })
-          .map((cacheName) => {
-            console.log('[Service Worker] Excluindo cache antigo:', cacheName);
-            return caches.delete(cacheName);
-          })
+        cacheNames.filter((cacheName) => {
+          return cacheName.startsWith('iazi-') && cacheName !== CACHE_NAME;
+        }).map((cacheName) => {
+          console.log('🧹 Removendo cache antigo:', cacheName);
+          return caches.delete(cacheName);
+        })
       );
+    }).then(() => {
+      console.log('✅ Service Worker: Agora está ativo e controlando a página');
+      return self.clients.claim();
     })
   );
 });
 
 // Estratégia de interceptação de solicitações
 self.addEventListener('fetch', (event) => {
-  // Extrair a URL e o método da solicitação
-  const requestUrl = new URL(event.request.url);
-  const requestMethod = event.request.method;
-  
-  // Verificar se é uma requisição de navegação (HTML)
-  const isNavigationRequest = event.request.mode === 'navigate';
-  
-  // Verificar se é uma requisição para a mesma origem
-  const isFromSameOrigin = requestUrl.origin === self.location.origin;
-  
-  // Verificar se é uma requisição GET
-  const isGetRequest = requestMethod === 'GET';
-
-  // Para requisições de navegação (quando o usuário acessa uma URL diretamente)
-  if (isNavigationRequest && isFromSameOrigin) {
-    // Sempre retornar o index.html para requisições de navegação
-    event.respondWith(
-      caches.match('/index.html')
-        .then(cachedResponse => {
-          // Se temos um cache de index.html, usamos ele
-          if (cachedResponse) {
-            // Tenta atualizar o cache em segundo plano
-            fetch('/index.html')
-              .then(networkResponse => {
-                if (networkResponse && networkResponse.ok) {
-                  caches.open(CACHE_NAME).then(cache => {
-                    cache.put('/index.html', networkResponse.clone());
-                  });
-                }
-              })
-              .catch(() => {
-                // Se falhar, usaremos o cache que já temos
-              });
-              
-            return cachedResponse;
-          }
-          
-          // Se não temos cache, tenta obter da rede
-          return fetch('/index.html')
-            .then(response => {
-              if (!response || response.status !== 200) {
-                return response;
-              }
-              
-              // Cache a resposta para uso futuro
-              const responseToCache = response.clone();
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put('/index.html', responseToCache);
-              });
-              
-              return response;
-            })
-            .catch(() => {
-              // Se tudo mais falhar, retorna uma página de erro offline
-              return new Response('Você está offline. Por favor, verifique sua conexão.', {
-                headers: { 'Content-Type': 'text/html' }
-              });
-            });
-        })
-    );
+  // Não interceptar requisições de API em desenvolvimento
+  if (isDev && event.request.url.includes('/api/')) {
     return;
   }
-
-  // Para recursos estáticos e outras requisições não-navegação
-  if (isGetRequest) {
+  
+  // Evitar interceptar requisições para analytics, reCAPTCHA, etc.
+  if (
+    event.request.url.includes('google-analytics.com') ||
+    event.request.url.includes('googletagmanager.com') ||
+    event.request.url.includes('recaptcha') ||
+    event.request.url.includes('analytics')
+  ) {
+    return;
+  }
+  
+  // Estratégia de cache para navegação e arquivos estáticos
+  if (
+    event.request.mode === 'navigate' ||
+    (event.request.method === 'GET' && 
+     (event.request.destination === 'style' || 
+      event.request.destination === 'script' || 
+      event.request.destination === 'image' || 
+      event.request.destination === 'font'))
+  ) {
     event.respondWith(
-      caches.match(event.request).then(cachedResponse => {
-        // Se temos um cache, usamos ele
-        if (cachedResponse) {
-          // Tenta atualizar o cache em segundo plano
-          fetch(event.request)
-            .then(networkResponse => {
-              if (networkResponse && networkResponse.ok) {
-                caches.open(CACHE_NAME).then(cache => {
-                  cache.put(event.request, networkResponse.clone());
+      caches.match(event.request).then((cacheResponse) => {
+        // Network first para navegação em Safari/iOS para evitar problemas
+        if (event.request.mode === 'navigate' && isSafariOnIOS()) {
+          return fetch(event.request)
+            .then((networkResponse) => {
+              // Se a resposta foi bem-sucedida, adiciona ao cache
+              if (networkResponse && networkResponse.ok && networkResponse.status === 200) {
+                const clonedResponse = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                  cache.put(event.request, clonedResponse);
                 });
               }
+              return networkResponse;
             })
             .catch(() => {
-              // Se falhar, usaremos o cache que já temos
+              // Em caso de falha na rede, usa o cache
+              return cacheResponse || caches.match('/');
             });
-            
-          return cachedResponse;
         }
         
-        // Se não temos cache, tenta obter da rede
-        return fetch(event.request)
-          .then(response => {
-            if (!response || response.status !== 200) {
-              return response;
-            }
-            
-            // Cache a resposta para uso futuro
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(event.request, responseToCache);
+        // Para outros recursos, tenta o cache primeiro, depois a rede
+        return cacheResponse || fetch(event.request).then((response) => {
+          // Só faz cache de respostas bem-sucedidas
+          if (response && response.ok && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
             });
-            
-            return response;
-          })
-          .catch(error => {
-            // Se a requisição for para uma página da aplicação, retornamos o index.html
-            if (isFromSameOrigin && APP_SHELL_URLS.some(url => requestUrl.pathname.startsWith(url))) {
-              return caches.match('/index.html');
-            }
-            
-            console.error('[Service Worker] Erro ao buscar:', error);
-            return new Response('Falha ao carregar o recurso. Por favor, tente novamente.', {
-              headers: { 'Content-Type': 'text/plain' }
-            });
-          });
+          }
+          return response;
+        }).catch(() => {
+          // Se for uma requisição de página e não tem cache, redireciona para a página inicial
+          if (event.request.mode === 'navigate') {
+            return caches.match('/');
+          }
+          return null;
+        });
       })
     );
   }
@@ -210,7 +192,14 @@ self.addEventListener('sync', (event) => {
 // Receber mensagens do cliente
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+    console.log('⏭️ Service Worker: Recebido comando para SKIP_WAITING');
+    
+    // No Safari iOS, não ativar skip_waiting para evitar loops de recarga
+    if (!isSafariOnIOS()) {
+      self.skipWaiting();
+    } else {
+      console.log('⚠️ Comando SKIP_WAITING ignorado em Safari iOS para evitar loops');
+    }
   }
   
   if (event.data && event.data.type === 'CLEAR_CACHE') {
