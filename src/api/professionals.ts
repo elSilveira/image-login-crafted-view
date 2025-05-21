@@ -109,11 +109,33 @@ export const fetchProfessionalDashboardStats = async (professionalId: string): P
     throw new Error("ID do profissional é obrigatório");
   }
   
+  const defaultStats: DashboardStats = {
+    currentMonthRevenue: 0,
+    previousMonthRevenue: 0,
+    currentMonthAppointments: 0,
+    previousMonthAppointments: 0,
+    currentMonthNewClients: 0,
+    previousMonthNewClients: 0
+  };
+  
   try {
-    return await apiRequest({
+    const response = await apiRequest({
       method: 'GET',
       url: `/professionals/${professionalId}/dashboard-stats`
     });
+    
+    // Garantindo que todos os valores estejam presentes, usando valores padrão se necessário
+    return {
+      ...defaultStats,
+      ...response,
+      // Garantir explicitamente que cada propriedade seja um número
+      currentMonthRevenue: typeof response?.currentMonthRevenue === 'number' ? response.currentMonthRevenue : 0,
+      previousMonthRevenue: typeof response?.previousMonthRevenue === 'number' ? response.previousMonthRevenue : 0,
+      currentMonthAppointments: typeof response?.currentMonthAppointments === 'number' ? response.currentMonthAppointments : 0,
+      previousMonthAppointments: typeof response?.previousMonthAppointments === 'number' ? response.previousMonthAppointments : 0,
+      currentMonthNewClients: typeof response?.currentMonthNewClients === 'number' ? response.currentMonthNewClients : 0,
+      previousMonthNewClients: typeof response?.previousMonthNewClients === 'number' ? response.previousMonthNewClients : 0
+    };
   } catch (error) {
     console.error(`Erro ao buscar estatísticas do dashboard para o profissional ${professionalId}:`, error);
     // Fornece dados simulados em caso de falha na API
@@ -139,10 +161,24 @@ export const fetchPopularServices = async (professionalId: string): Promise<Popu
   }
   
   try {
-    return await apiRequest({
+    const response = await apiRequest({
       method: 'GET',
       url: `/professionals/${professionalId}/popular-services`
     });
+    
+    // Verificando se a resposta é um array
+    if (Array.isArray(response)) {
+      return response;
+    }
+    
+    // Verificando se temos um objeto com propriedade data que é um array
+    if (response && Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    // Se não for nenhum dos formatos esperados, retornamos array vazio
+    console.warn("Resposta da API de serviços populares em formato inesperado:", response);
+    return [];
   } catch (error) {
     console.error(`Erro ao buscar serviços populares do profissional ${professionalId}:`, error);
     // Fornece dados simulados em caso de falha na API

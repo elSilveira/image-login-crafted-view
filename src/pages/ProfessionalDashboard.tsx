@@ -164,21 +164,30 @@ const ProfessionalDashboard = () => {
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="text-2xl font-bold">
-                R$ {stats?.currentMonthRevenue.toLocaleString('pt-BR') || '0'}
+                R$ {(stats?.currentMonthRevenue !== undefined ? stats.currentMonthRevenue.toLocaleString('pt-BR') : '0')}
               </div>
               {stats && (
                 <p className="text-xs text-muted-foreground mt-1">
                   <span className={`inline-flex items-center ${
-                    calculatePercentageChange(stats.currentMonthRevenue, stats.previousMonthRevenue) >= 0
+                    calculatePercentageChange(
+                      stats.currentMonthRevenue ?? 0, 
+                      stats.previousMonthRevenue ?? 0
+                    ) >= 0
                       ? 'text-emerald-500'
                       : 'text-rose-500'
                   }`}>
-                    {calculatePercentageChange(stats.currentMonthRevenue, stats.previousMonthRevenue) >= 0 ? (
+                    {calculatePercentageChange(
+                      stats.currentMonthRevenue ?? 0, 
+                      stats.previousMonthRevenue ?? 0
+                    ) >= 0 ? (
                       <ArrowUp className="mr-1 h-3 w-3" />
                     ) : (
                       <ArrowDown className="mr-1 h-3 w-3" />
                     )}
-                    {Math.abs(calculatePercentageChange(stats.currentMonthRevenue, stats.previousMonthRevenue))}%
+                    {Math.abs(calculatePercentageChange(
+                      stats.currentMonthRevenue ?? 0, 
+                      stats.previousMonthRevenue ?? 0
+                    ))}%
                   </span>{" "}
                   em relação ao mês passado
                 </p>
@@ -191,21 +200,30 @@ const ProfessionalDashboard = () => {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="text-2xl font-bold">
-                {stats?.currentMonthAppointments || '0'}
+                {stats?.currentMonthAppointments ?? '0'}
               </div>
               {stats && (
                 <p className="text-xs text-muted-foreground mt-1">
                   <span className={`inline-flex items-center ${
-                    calculatePercentageChange(stats.currentMonthAppointments, stats.previousMonthAppointments) >= 0
+                    calculatePercentageChange(
+                      stats.currentMonthAppointments ?? 0, 
+                      stats.previousMonthAppointments ?? 0
+                    ) >= 0
                       ? 'text-emerald-500'
                       : 'text-rose-500'
                   }`}>
-                    {calculatePercentageChange(stats.currentMonthAppointments, stats.previousMonthAppointments) >= 0 ? (
+                    {calculatePercentageChange(
+                      stats.currentMonthAppointments ?? 0, 
+                      stats.previousMonthAppointments ?? 0
+                    ) >= 0 ? (
                       <ArrowUp className="mr-1 h-3 w-3" />
                     ) : (
                       <ArrowDown className="mr-1 h-3 w-3" />
                     )}
-                    {Math.abs(calculatePercentageChange(stats.currentMonthAppointments, stats.previousMonthAppointments))}%
+                    {Math.abs(calculatePercentageChange(
+                      stats.currentMonthAppointments ?? 0, 
+                      stats.previousMonthAppointments ?? 0
+                    ))}%
                   </span>{" "}
                   em relação ao mês passado
                 </p>
@@ -218,21 +236,30 @@ const ProfessionalDashboard = () => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="text-2xl font-bold">
-                {stats?.currentMonthNewClients || '0'}
+                {stats?.currentMonthNewClients ?? '0'}
               </div>
               {stats && (
                 <p className="text-xs text-muted-foreground mt-1">
                   <span className={`inline-flex items-center ${
-                    calculatePercentageChange(stats.currentMonthNewClients, stats.previousMonthNewClients) >= 0
+                    calculatePercentageChange(
+                      stats.currentMonthNewClients ?? 0, 
+                      stats.previousMonthNewClients ?? 0
+                    ) >= 0
                       ? 'text-emerald-500'
                       : 'text-rose-500'
                   }`}>
-                    {calculatePercentageChange(stats.currentMonthNewClients, stats.previousMonthNewClients) >= 0 ? (
+                    {calculatePercentageChange(
+                      stats.currentMonthNewClients ?? 0, 
+                      stats.previousMonthNewClients ?? 0
+                    ) >= 0 ? (
                       <ArrowUp className="mr-1 h-3 w-3" />
                     ) : (
                       <ArrowDown className="mr-1 h-3 w-3" />
                     )}
-                    {Math.abs(calculatePercentageChange(stats.currentMonthNewClients, stats.previousMonthNewClients))}%
+                    {Math.abs(calculatePercentageChange(
+                      stats.currentMonthNewClients ?? 0, 
+                      stats.previousMonthNewClients ?? 0
+                    ))}%
                   </span>{" "}
                   em relação ao mês passado
                 </p>
@@ -255,11 +282,11 @@ const ProfessionalDashboard = () => {
                   {appointments.map((appointment) => (
                     <div key={appointment.id} className="flex items-center justify-between border-b pb-3">
                       <div>
-                        <p className="font-medium">{appointment.service.name}</p>
+                        <p className="font-medium">{appointment.service?.name || 'Serviço não disponível'}</p>
                         <p className="text-sm text-muted-foreground">
                           {format(parseISO(appointment.startTime), "eee, dd/MM 'às' HH:mm", { locale: ptBR })}
                         </p>
-                        <p className="text-xs text-muted-foreground">{appointment.user.name}</p>
+                        <p className="text-xs text-muted-foreground">{appointment.user?.name || 'Cliente não identificado'}</p>
                       </div>
                       <Badge 
                         variant="outline" 

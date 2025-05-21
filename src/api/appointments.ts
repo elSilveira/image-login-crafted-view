@@ -128,7 +128,16 @@ export const fetchUpcomingAppointments = async (
       params
     });
     
-    return Array.isArray(response) ? response : (response.data || []);
+    let appointments = Array.isArray(response) ? response : (response.data || []);
+    
+    // Garantir que todos os agendamentos têm as propriedades necessárias
+    appointments = appointments.map(appointment => ({
+      ...appointment,
+      service: appointment.service || { id: 'unknown', name: 'Serviço não disponível' },
+      user: appointment.user || { id: 'unknown', name: 'Cliente não identificado' }
+    }));
+    
+    return appointments;
   } catch (error) {
     console.error('Erro ao buscar próximos agendamentos:', error);
     return [];

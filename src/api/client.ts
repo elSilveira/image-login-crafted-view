@@ -141,16 +141,138 @@ apiClient.interceptors.response.use(
 );
 
 /**
- * Função para fazer requisições HTTP com tratamento de erros e resposta formatada
- * @param config Configuração da requisição
- * @returns Promise com dados da resposta
+ * Interface para as opções de requisição à API
  */
-export const apiRequest = async<T = any>(config: AxiosRequestConfig): Promise<T> => {
+export interface ApiRequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  url: string;
+  params?: Record<string, any>;
+  data?: any;
+  headers?: Record<string, string>;
+  timeout?: number;
+}
+
+/**
+ * Função centralizada para realizar requisições à API
+ * @param options Opções da requisição
+ * @returns Resposta da API
+ */
+export const apiRequest = async <T>(options: ApiRequestOptions): Promise<T> => {
+  const { method = 'GET', url, params = {}, data, headers = {}, timeout = 30000 } = options;
+  
+  // Lista de endpoints críticos que devem ter cache local
+  const criticalEndpoints = [
+    '/professionals/.*/dashboard-stats',
+    '/professionals/.*/popular-services',
+    '/appointments',
+    '/categories'
+  ];
+  
+  // Gera uma chave de cache baseada na URL e parâmetros
+  const getCacheKey = (url: string, params: Record<string, any> = {}) => {
+    return `api_cache_${url}_${JSON.stringify(params)}`;
+  };
+  
+  // Salva dados no cache local
+  const saveToCache = (url: string, params: Record<string, any> = {}, data: any) => {
+    const cacheKey = getCacheKey(url, params);
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+      console.log(`Dados salvos no cache: ${cacheKey}`);
+    } catch (error) {
+      console.warn('Erro ao salvar dados no cache:', error);
+    }
+  };
+  
+  // Tenta recuperar dados do cache local
+  const getFromCache = (url: string, params: Record<string, any> = {}, maxAge = 3600000) => {
+    const cacheKey = getCacheKey(url, params);
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsedCache = JSON.parse(cached);
+        const age = Date.now() - parsedCache.timestamp;
+        if (age < maxAge) {
+          console.log(`Usando dados do cache: ${cacheKey}, idade: ${Math.round(age / 1000)}s`);
+          return parsedCache.data;
+        } else {
+          console.log(`Cache expirado: ${cacheKey}, idade: ${Math.round(age / 1000)}s`);
+        }
+      }
+    } catch (error) {
+      console.warn('Erro ao recuperar dados do cache:', error);
+    }
+    return null;
+  };
+  
+  // Verifica se o endpoint é considerado crítico (usando RegExp)
+  const isEndpointCritical = (url: string) => {
+    return criticalEndpoints.some(pattern => {
+      const regex = new RegExp(pattern);
+      return regex.test(url);
+    });
+  };
+  
   try {
-    const response = await apiClient(config);
+    const response = await apiClient.request({
+      method,
+      url,
+      params,
+      data,
+      headers,
+      timeout
+    });
+    
+    // Se for um GET em endpoint crítico, salva no cache
+    if (method === 'GET' && isEndpointCritical(url)) {
+      saveToCache(url, params, response.data);
+    }
+    
     return response.data;
   } catch (error) {
-    // Propaga o erro para ser tratado pelo chamador
+    // Tratamento especial para erros de rede
+    if (error instanceof Error && 'message' in error) {
+      if (
+        error.message === 'Network Error' || 
+        error.message === 'Failed to fetch' ||
+        error.message.includes('network') ||
+        error.message.includes('ECONNREFUSED') ||
+        error.message.includes('ECONNABORTED')
+      ) {
+        console.error('Erro de rede detectado:', error.message);
+        
+        // Se for um GET em endpoint crítico, tenta buscar do cache
+        if (method === 'GET' && isEndpointCritical(url)) {
+          console.warn('Usando fallback para dados em cache local');
+          const cachedData = getFromCache(url, params);
+          if (cachedData) {
+            console.log('Dados recuperados do cache com sucesso');
+            // Adiciona metadados indicando que são dados em cache
+            if (typeof cachedData === 'object' && cachedData !== null) {
+              // Se for um array, encapsulamos em um objeto com a propriedade _fromCache
+              if (Array.isArray(cachedData)) {
+                return {
+                  data: cachedData,
+                  _fromCache: true,
+                  _cacheDate: new Date().toISOString()
+                } as unknown as T;
+              }
+              // Se for um objeto, adicionamos as propriedades diretamente
+              return {
+                ...cachedData,
+                _fromCache: true,
+                _cacheDate: new Date().toISOString()
+              } as unknown as T;
+            }
+            return cachedData as T;
+          }
+        }
+      }
+    }
+    
     throw error;
   }
 };
