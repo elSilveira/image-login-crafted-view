@@ -1,0 +1,12 @@
+# Configuração para forçar Railway a usar apenas Docker
+# Desabilita qualquer tentativa de usar Nixpacks/npm
+
+[build]
+cmd = "echo 'Use Docker only'"
+
+[start]
+cmd = "echo 'Container should use Docker CMD'"
+
+[variables]
+NIXPACKS_NO_AUTO_INSTALL = "1"
+DISABLE_NPM_INSTALL = "1" 
