@@ -33,7 +33,7 @@ const config = {
       }
     },
     env: {
-      VITE_API_URL: "https://iazi.up.railway.app",
+      VITE_API_URL: "https://iazi.up.railway.app/api",
       VITE_APP_NAME: "Iazi Professional Dashboard"
     },
     headers: [
@@ -63,13 +63,13 @@ const config = {
     publish: "dist",
     functions: "netlify/functions",
     environment: {
-      VITE_API_URL: "https://iazi.up.railway.app",
+      VITE_API_URL: "https://iazi.up.railway.app/api",
       VITE_APP_NAME: "Iazi Professional Dashboard"
     },
     redirects: [
       {
         from: "/api/*",
-        to: "https://iazi.up.railway.app/:splat",
+        to: "https://iazi.up.railway.app/api/:splat",
         status: 200
       },
       {
@@ -86,7 +86,7 @@ const config = {
     startCommand: "npm run preview",
     environment: {
       NODE_ENV: "production",
-      VITE_API_URL: "https://iazi.up.railway.app",
+      VITE_API_URL: "https://iazi.up.railway.app/api",
       VITE_APP_NAME: "Iazi Professional Dashboard"
     },
     healthcheckPath: "/",
@@ -99,7 +99,7 @@ const config = {
     s3Bucket: "iazi-dashboard-static",
     cloudFrontDistribution: true,
     environment: {
-      VITE_API_URL: "https://iazi.up.railway.app",
+      VITE_API_URL: "https://iazi.up.railway.app/api",
       VITE_APP_NAME: "Iazi Professional Dashboard"
     }
   }
