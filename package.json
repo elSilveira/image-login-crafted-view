@@ -9,7 +9,13 @@
     "start": "vite preview",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docker:build": "docker build -t iazi-dashboard .",
+    "docker:run": "docker run -p 3000:80 iazi-dashboard",
+    "deploy:railway": "railway deploy",
+    "deploy:vercel": "vercel --prod",
+    "deploy:netlify": "netlify deploy --prod",
+    "serve": "vite preview --port 4173 --host"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

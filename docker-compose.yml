@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Aplicação principal
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iazi-dashboard
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=https://api.iazi.com.br
+      - VITE_APP_NAME=Iazi Professional Dashboard
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+
+  # Nginx reverse proxy (opcional, para load balancing)
+  nginx:
+    image: nginx:alpine
+    container_name: iazi-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.proxy.conf:/etc/nginx/conf.d/default.conf:ro
+      # Para SSL certificates (se necessário)
+      # - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - dashboard
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - dashboard-network
+
+networks:
+  dashboard-network:
+    driver: bridge
+
+# Volumes para persistência (se necessário no futuro)
+volumes:
+  dashboard-data:
+    driver: local 

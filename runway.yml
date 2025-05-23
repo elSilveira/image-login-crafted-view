@@ -1,0 +1,61 @@
+# Runway configuration for AWS deployment
+# Iazi Professional Dashboard
+deployments:
+  - modules:
+      - path: .
+        type: static
+        name: iazi-dashboard
+        options:
+          build_steps:
+            - npm ci
+            - npm run build
+          source_hashing:
+            enabled: true
+            directories:
+              - src/
+              - public/
+            files:
+              - package.json
+              - package-lock.json
+              - vite.config.ts
+          staticsite_cf_disable: false
+          staticsite_aliases:
+            - dashboard.iazi.com.br
+          staticsite_acmcert_arn: ${acm_certificate_arn}
+          staticsite_auth_at_edge: false
+          staticsite_enable_cf_logging: true
+          staticsite_lambda_function_associations: []
+          staticsite_web_acl: false
+          staticsite_rewrite_directory_index: index.html
+          staticsite_role_boundary_arn: ${role_boundary_arn:-}
+        environments:
+          dev:
+            staticsite_name: iazi-dashboard-dev
+            staticsite_aliases:
+              - dev-dashboard.iazi.com.br
+          prod:
+            staticsite_name: iazi-dashboard-prod
+            staticsite_aliases:
+              - dashboard.iazi.com.br
+    regions:
+      - us-east-1
+    environments:
+      dev:
+        AWS_PROFILE: iazi-dev
+      prod:
+        AWS_PROFILE: iazi-prod
+    parameters:
+      namespace: iazi
+      customer: iazi
+      environment: ${DEPLOY_ENVIRONMENT}
+      region: ${AWS_REGION}
+      
+# Variables can be defined here or in separate files
+variables:
+  acm_certificate_arn:
+    dev: "arn:aws:acm:us-east-1:123456789012:certificate/dev-cert-id"
+    prod: "arn:aws:acm:us-east-1:123456789012:certificate/prod-cert-id"
+  
+  role_boundary_arn:
+    dev: ""
+    prod: "arn:aws:iam::123456789012:policy/runway-boundary" 
