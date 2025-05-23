@@ -24,39 +24,55 @@ PORT=4173
 
 ### 1. Railway (Recomendado)
 
-Railway é uma plataforma moderna e fácil de usar para deployment de aplicações.
+Railway oferece duas opções de deployment:
 
-#### Passos para Railway:
+#### **Opção A: Docker (Padrão - Mais Estável)**
+Usa o arquivo `railway.json` (já configurado)
 
-1. **Instalar Railway CLI:**
-   ```bash
-   npm install -g @railway/cli
-   ```
+```bash
+# 1. Instalar Railway CLI
+npm install -g @railway/cli
 
-2. **Fazer login:**
-   ```bash
-   railway login
-   ```
+# 2. Login
+railway login
 
-3. **Inicializar projeto:**
-   ```bash
-   railway init
-   ```
+# 3. Inicializar projeto
+railway init
 
-4. **Configurar variáveis de ambiente:**
-   ```bash
-   railway variables set VITE_API_URL=https://api.iazi.com.br
-   railway variables set VITE_APP_NAME="Iazi Professional Dashboard"
-   railway variables set NODE_ENV=production
-   ```
+# 4. Deploy
+railway deploy
+```
 
-5. **Deploy:**
-   ```bash
-   railway deploy
-   ```
+**Vantagens:**
+- Mais estável e previsível
+- Usa Nginx otimizado
+- Menor uso de recursos
+- Health check configurado
 
-#### Arquivo de configuração:
-O projeto já inclui `railway.json` com todas as configurações necessárias.
+#### **Opção B: Nixpacks (Alternativa)**
+Para usar esta opção, renomeie os arquivos:
+
+```bash
+# Trocar para Nixpacks
+mv railway.json railway.docker.json
+mv railway.nixpacks.json railway.json
+railway deploy
+```
+
+**Vantagens:**
+- Deployment mais rápido
+- Menos configuração
+- Detecção automática de dependências
+
+### Configurar Variáveis de Ambiente no Railway:
+
+No dashboard do Railway, adicione:
+
+```
+VITE_API_URL=https://api.iazi.com.br
+VITE_APP_NAME=Iazi Professional Dashboard
+NODE_ENV=production
+```
 
 ### 2. Vercel
 
@@ -186,6 +202,10 @@ npm run deploy:netlify
    - Verificar CORS no backend
    - Verificar conectividade de rede
 
+4. **Railway: "npm command not found":**
+   - Usar a configuração Docker (railway.json atual)
+   - Ou trocar para Nixpacks (railway.nixpacks.json)
+
 ## Configuração de CI/CD
 
 Para automatizar o deployment, configure os workflows do GitHub Actions ou GitLab CI usando os scripts já disponíveis no `package.json`.
@@ -196,6 +216,16 @@ Para automatizar o deployment, configure os workflows do GitHub Actions ou GitLa
 - HTTPS é obrigatório em produção
 - Variáveis sensíveis devem ser configuradas no dashboard da plataforma
 - Never commit `.env` files to version control
+
+## Arquivos de Configuração
+
+- `railway.json` - Railway com Docker (padrão)
+- `railway.nixpacks.json` - Railway com Nixpacks (alternativa)
+- `Dockerfile` - Container Docker
+- `nginx.conf` - Configuração Nginx
+- `docker-compose.yml` - Docker Compose
+- `runway.yml` - AWS Runway
+- `vercel.json` - Vercel (já existente)
 
 ## Suporte
 
