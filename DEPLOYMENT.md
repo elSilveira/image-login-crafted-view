@@ -13,7 +13,7 @@ Este guia contém instruções para fazer o deployment do dashboard profissional
 Antes do deployment, configure as seguintes variáveis de ambiente:
 
 ```env
-VITE_API_URL=https://api.iazi.com.br
+VITE_API_URL=https://iazi.up.railway.app
 VITE_APP_NAME=Iazi Professional Dashboard
 VITE_APP_VERSION=1.0.0
 NODE_ENV=production
@@ -69,7 +69,7 @@ railway deploy
 No dashboard do Railway, adicione:
 
 ```
-VITE_API_URL=https://api.iazi.com.br
+VITE_API_URL=https://iazi.up.railway.app
 VITE_APP_NAME=Iazi Professional Dashboard
 NODE_ENV=production
 ```

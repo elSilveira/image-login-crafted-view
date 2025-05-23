@@ -6,7 +6,7 @@
  */
 
 // URL base para todas as requisições da API
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3002/api";
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3002";
 
 // Configuração global para cache e otimização
 export const API_CACHE_CONFIG = {

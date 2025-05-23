@@ -116,7 +116,7 @@ O projeto está **100% configurado** e testado para deployment em:
    ```
 
 3. Configurar variáveis de ambiente no dashboard do Railway:
-   - `VITE_API_URL=https://api.iazi.com.br`
+   - `VITE_API_URL=https://iazi.up.railway.app`
    - `VITE_APP_NAME=Iazi Professional Dashboard`
    - `NODE_ENV=production`
 
