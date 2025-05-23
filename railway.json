@@ -6,10 +6,11 @@
   },
   "deploy": {
     "healthcheckPath": "/health",
-    "healthcheckTimeout": 60,
+    "healthcheckTimeout": 300,
+    "healthcheckInterval": 30,
     "startCommand": null,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 5
+    "restartPolicyMaxRetries": 3
   },
   "environment": {
     "NODE_ENV": "production",
