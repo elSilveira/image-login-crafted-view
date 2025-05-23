@@ -777,7 +777,11 @@ export const checkAppointmentReviewStatus = async (appointmentId: string) => {
 
 // Funções para o dashboard do profissional
 
-// Buscar estatísticas gerais do dashboard do profissional
+/**
+ * Busca estatísticas gerais do dashboard do profissional
+ * @param professionalId ID do profissional
+ * @returns Estatísticas do dashboard
+ */
 export const fetchProfessionalDashboardStats = async (professionalId: string) => {
   if (!professionalId) {
     throw new Error("ID do profissional é obrigatório");
@@ -800,37 +804,43 @@ export const fetchProfessionalDashboardStats = async (professionalId: string) =>
   }
 };
 
-// Buscar próximos agendamentos para o dashboard
+/**
+ * Busca agendamentos próximos para o dashboard
+ * @param professionalId ID do profissional
+ * @param limit Limite de resultados
+ * @returns Lista de próximos agendamentos
+ */
 export const fetchUpcomingAppointments = async (professionalId: string, limit = 5) => {
   if (!professionalId) {
     throw new Error("ID do profissional é obrigatório");
   }
   
-  const today = new Date();
-  const nextMonth = new Date();
-  nextMonth.setMonth(today.getMonth() + 1);
-  
   try {
-    const queryParams = new URLSearchParams({
-      professionalId,
-      dateFrom: today.toISOString().split('T')[0],
-      dateTo: nextMonth.toISOString().split('T')[0],
-      include: 'user,service',
-      status: 'pending,confirmed',
-      limit: limit.toString(),
-      sort: 'startTime_asc',
+    // Atualizado para usar o endpoint correto conforme a documentação
+    const response = await apiClient.get('/appointments/upcoming', {
+      params: {
+        professionalId,
+        limit,
+        sort: 'startTime_asc'
+      }
     });
     
-    const response = await apiClient.get(`/appointments?${queryParams.toString()}`);
-    return response.data.data || [];
+    // Verificar se a resposta tem um objeto "data" para paginação
+    const data = response.data && response.data.data ? response.data.data : response.data;
+    
+    // Garantir que é um array
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("Erro ao buscar próximos agendamentos:", error);
-    // Retornar array vazio em caso de falha na API
     return [];
   }
 };
 
-// Buscar serviços populares para o dashboard
+/**
+ * Busca serviços populares do profissional para o dashboard
+ * @param professionalId ID do profissional
+ * @returns Lista de serviços populares
+ */
 export const fetchPopularServices = async (professionalId: string) => {
   if (!professionalId) {
     throw new Error("ID do profissional é obrigatório");
@@ -838,7 +848,18 @@ export const fetchPopularServices = async (professionalId: string) => {
   
   try {
     const response = await apiClient.get(`/professionals/${professionalId}/popular-services`);
-    return response.data || [];
+    
+    // Verificando se a resposta é um array
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    // Verificando se temos um objeto com propriedade data que é um array
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    
+    return [];
   } catch (error) {
     console.error("Erro ao buscar serviços populares:", error);
     // Fornecer dados simulados em caso de falha na API

@@ -16,3 +16,5 @@ alwaysApply: true
 +refactor when necessary for a better pattern or practice
 
 +avoid create new layouts if possible, everything should already be there.
+
++ for api references follow C:\Users\duti_\apps\iazi-be\swagger.json 
