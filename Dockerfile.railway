@@ -34,22 +34,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-
-# Change ownership
-RUN chown -R nextjs:nodejs /usr/share/nginx/html
-RUN chown -R nextjs:nodejs /var/cache/nginx
-RUN chown -R nextjs:nodejs /var/log/nginx
-RUN chown -R nextjs:nodejs /etc/nginx/conf.d
-RUN touch /var/run/nginx.pid
-RUN chown -R nextjs:nodejs /var/run/nginx.pid
-
 # Expose port for both IPv4 and IPv6
 EXPOSE 80
 
-# Switch to non-root user
-USER nextjs
-
-# Start nginx
+# Start nginx (como root, que é o padrão)
 CMD ["nginx", "-g", "daemon off;"] 
