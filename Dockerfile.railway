@@ -25,6 +25,9 @@ FROM nginx:alpine AS production
 # Install curl for health checks
 RUN apk add --no-cache curl
 
+# Enable IPv6 in Alpine Linux
+RUN echo 'net.ipv6.conf.all.disable_ipv6 = 0' >> /etc/sysctl.conf
+
 # Copy built application
 COPY --from=builder /app/dist /usr/share/nginx/html
 
@@ -42,7 +45,7 @@ RUN chown -R nextjs:nodejs /etc/nginx/conf.d
 RUN touch /var/run/nginx.pid
 RUN chown -R nextjs:nodejs /var/run/nginx.pid
 
-# Expose port
+# Expose port for both IPv4 and IPv6
 EXPOSE 80
 
 # Switch to non-root user
