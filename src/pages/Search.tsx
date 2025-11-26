@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navigation from "@/components/Navigation";
@@ -19,7 +19,6 @@ import { ServiceFilters } from "@/components/services/ServiceFilters";
 import { Loading, LoadingInline, PageLoading } from "@/components/ui/loading";
 import { PageContainer } from "@/components/ui/page-container";
 import { SearchInputDebounced } from "@/components/search/SearchInputDebounced";
-import { debounce } from "lodash";
 
 // Interfaces
 interface Service { 
@@ -98,23 +97,30 @@ const Search = () => {
   // Local state for search input (avoids triggering search API calls on every keystroke)
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
 
-  // Debounced function that updates URL parameters
-  const debouncedUpdateSearchParams = debounce((value: string) => {
-    const newSearchParams = new URLSearchParams(searchParams);
-    if (value) { 
-      newSearchParams.set("q", value); 
-    } else { 
-      newSearchParams.delete("q"); 
-    }
-    newSearchParams.set("page", "1");
-    setSearchParams(newSearchParams);
-  }, 500);
+  // Use ref for debounce timer
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Search term handler that uses debouncing
-  const handleSearchChange = (value: string) => {
+  // Search term handler with built-in debouncing
+  const handleSearchChange = useCallback((value: string) => {
     setLocalSearchTerm(value);
-    debouncedUpdateSearchParams(value);
-  };
+    
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    
+    // Set new timer
+    debounceTimerRef.current = setTimeout(() => {
+      const newSearchParams = new URLSearchParams(searchParams);
+      if (value) { 
+        newSearchParams.set("q", value); 
+      } else { 
+        newSearchParams.delete("q"); 
+      }
+      newSearchParams.set("page", "1");
+      setSearchParams(newSearchParams);
+    }, 500);
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     console.log("[Search Final Effect] Updating state from URL params:", { typeFilter, categoryFilter, pageParam });
@@ -127,7 +133,9 @@ const Search = () => {
   // Clean up the debounce on unmount
   useEffect(() => {
     return () => {
-      debouncedUpdateSearchParams.cancel();
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
     };
   }, []);
 

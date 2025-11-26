@@ -30,7 +30,7 @@ export const InviteModal: React.FC<InviteModalProps> = ({ open, onOpenChange, in
   };
 
   // Link de convite
-  const inviteLink = inviteCode ? `https://iazi-be.vercel.app/register?inviteCode=${inviteCode}` : "";
+  const inviteLink = inviteCode ? `https://iazi.io/register?inviteCode=${inviteCode}` : "";
 
   // Novo onCopy: copia o link com mensagem
   const handleCopyLink = () => {

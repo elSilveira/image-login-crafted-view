@@ -1,5 +1,5 @@
 // This is the Service Worker file for the iAzi PWA
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '1.0.1';
 const CACHE_NAME = 'iazi-app-v' + CACHE_VERSION;
 
 // Lista de versões antigas para serem excluídas

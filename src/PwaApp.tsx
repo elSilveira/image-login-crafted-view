@@ -120,35 +120,41 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
 // Componente wrapper para gerenciar histórico de navegação
 function AppWrapper() {
-  // Register service worker for PWA functionality
+  // Register service worker for PWA functionality - with significant delay
   useEffect(() => {
-    // Verificar se estamos no Safari do iOS
-    const ua = navigator.userAgent;
-    const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
-    const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
-    const isSafariOnIOS = isIOS && isSafari;
-    
-    // Verificar se a página já foi recarregada recentemente
-    const hasReloaded = sessionStorage.getItem('app_initial_load_complete');
-    
-    // Marcar a primeira carga concluída
-    if (!hasReloaded) {
-      console.log('Primeira carga da aplicação - marcando sessão');
-      sessionStorage.setItem('app_initial_load_complete', 'true');
-    }
-    
-    // Em iOS, só registrar o service worker se não for primeira carga
-    if (isSafariOnIOS && !hasReloaded) {
-      console.log('Primeira carga no Safari iOS - adiando registro do Service Worker');
-      // Na primeira carga do Safari iOS, adiar o registro do SW para evitar problemas
-      setTimeout(() => {
-        console.log('Registrando Service Worker após atraso inicial');
+    // Delay service worker registration to ensure React is fully mounted
+    // This prevents the "useRef null" error that occurs when SW triggers reload during mount
+    const swRegistrationDelay = setTimeout(() => {
+      // Verificar se estamos no Safari do iOS
+      const ua = navigator.userAgent;
+      const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+      const isSafari = /Safari/i.test(ua) && !/Chrome/i.test(ua);
+      const isSafariOnIOS = isIOS && isSafari;
+      
+      // Verificar se a página já foi recarregada recentemente
+      const hasReloaded = sessionStorage.getItem('app_initial_load_complete');
+      
+      // Marcar a primeira carga concluída
+      if (!hasReloaded) {
+        console.log('Primeira carga da aplicação - marcando sessão');
+        sessionStorage.setItem('app_initial_load_complete', 'true');
+      }
+      
+      // Em iOS, só registrar o service worker se não for primeira carga
+      if (isSafariOnIOS && !hasReloaded) {
+        console.log('Primeira carga no Safari iOS - adiando registro do Service Worker');
+        // Na primeira carga do Safari iOS, adiar o registro do SW para evitar problemas
+        setTimeout(() => {
+          console.log('Registrando Service Worker após atraso inicial');
+          registerServiceWorker();
+        }, 3000);
+      } else {
+        // Para outros navegadores ou após a primeira carga, registrar normalmente
         registerServiceWorker();
-      }, 3000);
-    } else {
-      // Para outros navegadores ou após a primeira carga, registrar normalmente
-      registerServiceWorker();
-    }
+      }
+    }, 2000); // Wait 2 seconds before even starting SW registration
+    
+    return () => clearTimeout(swRegistrationDelay);
   }, []);
 
   return (
@@ -168,21 +174,38 @@ function AppContent() {
   
   // Manipular redirecionamentos baseados na autenticação e na rota atual
   useEffect(() => {
-    const publicRoutes = ['/login', '/register', '/forgot-password'];
-    const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+    // Rotas de autenticação (redirecionar para home se logado)
+    const authRoutes = ['/login', '/register', '/forgot-password'];
+    const isAuthRoute = authRoutes.some(route => location.pathname.startsWith(route));
+    
+    // Rotas públicas que qualquer um pode acessar
+    const publicRoutes = [
+      '/', '/search', '/services', '/service/', '/professional/', '/professionals',
+      '/company/', '/reviews', '/login', '/register', '/forgot-password'
+    ];
+    const isPublicRoute = publicRoutes.some(route => 
+      location.pathname === route || location.pathname.startsWith(route)
+    );
+    
+    // Rotas que exigem autenticação
+    const protectedRoutes = [
+      '/profile', '/booking-history', '/booking/', '/notifications', 
+      '/settings', '/gamification', '/company/register', '/company/my-company'
+    ];
+    const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
     
     // Se a página estiver carregando, não faça nada ainda
     if (isLoading) return;
     
-    // Se o usuário não estiver autenticado e não estiver em rota pública, redirecione para login
-    if (!isAuthenticated && !isPublicRoute) {
+    // Se o usuário não estiver autenticado e estiver em rota protegida, redirecione para login
+    if (!isAuthenticated && isProtectedRoute) {
       console.log('Usuário não autenticado acessando rota protegida:', location.pathname);
       navigate('/login', { state: { from: location }, replace: true });
     }
     
-    // Se o usuário estiver autenticado e tentar acessar uma rota pública, redirecione para home
-    if (isAuthenticated && isPublicRoute) {
-      console.log('Usuário autenticado tentando acessar rota pública:', location.pathname);
+    // Se o usuário estiver autenticado e tentar acessar rota de auth, redirecione para home
+    if (isAuthenticated && isAuthRoute) {
+      console.log('Usuário autenticado tentando acessar rota de auth:', location.pathname);
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, isLoading, location, navigate]);
@@ -196,29 +219,31 @@ function AppContent() {
     <ErrorBoundary>
       <Suspense fallback={<Loading />}>
         <Routes>
-          {/* Public routes */}
+          {/* Auth routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           
-          {/* Protected routes */}
-          <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+          {/* Public routes - anyone can access */}
+          <Route path="/" element={<Home />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/service/:id" element={<ServiceDetails />} />
+          <Route path="/professional/:id" element={<ProfessionalProfile />} />
+          <Route path="/professionals" element={<Professionals />} />
+          <Route path="/company/:id" element={<CompanyProfile />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/reviews" element={<Reviews />} />
+          
+          {/* Protected routes - require authentication */}
           <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-          <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-          <Route path="/service/:id" element={<ProtectedRoute><ServiceDetails /></ProtectedRoute>} />
-          <Route path="/professional/:id" element={<ProtectedRoute><ProfessionalProfile /></ProtectedRoute>} />
           <Route path="/booking-history" element={<ProtectedRoute><BookingHistory /></ProtectedRoute>} />
           <Route path="/booking/:serviceId" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
           <Route path="/booking/company/:companyId" element={<ProtectedRoute><CompanyBooking /></ProtectedRoute>} />
           <Route path="/booking/reschedule/:appointmentId" element={<ProtectedRoute><BookingReschedule /></ProtectedRoute>} />
-          <Route path="/company/:id" element={<ProtectedRoute><CompanyProfile /></ProtectedRoute>} />
           <Route path="/company/register" element={<ProtectedRoute><CompanyRegister /></ProtectedRoute>} />
-          <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
           <Route path="/gamification" element={<ProtectedRoute><Gamification /></ProtectedRoute>} />
-          <Route path="/professionals" element={<ProtectedRoute><Professionals /></ProtectedRoute>} />
           
           {/* Professional area submenu routes */}
           <Route path="/profile/professional" element={<ProtectedRoute><ProfessionalAreaLayout /></ProtectedRoute>}>

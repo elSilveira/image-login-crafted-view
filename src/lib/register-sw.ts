@@ -199,8 +199,20 @@ function registerNormally() {
       
       // Configurar ouvinte para controllerchange - com proteção contra recargas repetidas
       let reloadAttempted = false;
+      
+      // Marcar que a página está em carga inicial
+      const pageLoadTime = Date.now();
+      const MIN_TIME_BEFORE_RELOAD = 3000; // Não recarregar nos primeiros 3 segundos
+      
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         console.log('🔄 Service Worker controller changed');
+        
+        // Não recarregar se a página acabou de carregar (evita loops)
+        const timeSinceLoad = Date.now() - pageLoadTime;
+        if (timeSinceLoad < MIN_TIME_BEFORE_RELOAD) {
+          console.log('🛑 Evitando recarga: página acabou de carregar');
+          return;
+        }
         
         // Verificar se já recarregou recentemente para evitar loops
         if (!hasReloadedRecently() && isOnline() && !reloadAttempted) {
